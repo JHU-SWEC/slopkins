@@ -39,6 +39,12 @@ export default function Home() {
         >
           Rank a dish
         </Link>
+        <Link
+          href="/my-list"
+          className="mt-3 block w-full rounded-md border border-gray-200 py-3 text-center font-semibold transition hover:bg-gray-50"
+        >
+          My list
+        </Link>
       </main>
     </div>
   );
