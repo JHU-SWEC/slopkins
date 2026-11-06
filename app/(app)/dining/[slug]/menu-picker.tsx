@@ -36,7 +36,7 @@ export function MenuPicker({ tabs }: { tabs: MockMenuTab[] }) {
 
   return (
     <>
-      <div className="mt-6 flex gap-2 overflow-x-auto">
+      <div className="mt-6 flex flex-wrap gap-2">
         {tabs.map((t, index) => (
           <button
             key={t.label}
