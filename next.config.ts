@@ -4,8 +4,8 @@ const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
-  // Keeps the dev indicator off the bottom nav.
-  devIndicators: { position: "top-right" },
+  // Keeps the dev indicator off the bottom nav and the theme toggle.
+  devIndicators: { position: "top-left" },
   turbopack: {
     rules: {
       "*.css": {

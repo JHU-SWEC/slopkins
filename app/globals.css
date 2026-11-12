@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* `dark:` follows the toggle (data-theme on <html>), not the OS setting. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -12,10 +15,87 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/*
+ * Dark mode without touching components: flip the neutral scales so
+ * gray-50 swaps with gray-950 and so on, and darken the pastel tints.
+ * New components can use `dark:` instead.
+ */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #0a0a0a;
+  --foreground: #ededed;
+
+  --color-black: #ededed;
+
+  --color-gray-50: oklch(13% 0.028 261.692);
+  --color-gray-100: oklch(21% 0.034 264.665);
+  --color-gray-200: oklch(27.8% 0.033 256.848);
+  --color-gray-300: oklch(37.3% 0.034 259.733);
+  --color-gray-400: oklch(44.6% 0.03 256.802);
+  --color-gray-600: oklch(70.7% 0.022 261.325);
+  --color-gray-700: oklch(87.2% 0.01 258.338);
+  --color-gray-800: oklch(92.8% 0.006 264.531);
+  --color-gray-900: oklch(96.7% 0.003 264.542);
+  --color-gray-950: oklch(98.5% 0.002 247.839);
+
+  --color-slate-50: oklch(12.9% 0.042 264.695);
+  --color-slate-100: oklch(20.8% 0.042 265.755);
+  --color-slate-200: oklch(27.9% 0.041 260.031);
+  --color-slate-300: oklch(37.2% 0.044 257.287);
+  --color-slate-400: oklch(44.6% 0.043 257.281);
+  --color-slate-600: oklch(70.4% 0.04 256.788);
+  --color-slate-700: oklch(86.9% 0.022 252.894);
+  --color-slate-800: oklch(92.9% 0.013 255.508);
+  --color-slate-900: oklch(96.8% 0.007 247.896);
+  --color-slate-950: oklch(98.4% 0.003 247.858);
+
+  /* Tinted badges: -50 backgrounds go dark (950), -700 text goes light (300). */
+  --color-blue-50: oklch(28.2% 0.091 267.935);
+  --color-orange-50: oklch(26.6% 0.079 36.259);
+  --color-orange-700: oklch(83.7% 0.128 66.29);
+  --color-amber-50: oklch(27.9% 0.077 45.635);
+  --color-amber-700: oklch(87.9% 0.169 91.605);
+  --color-emerald-50: oklch(26.2% 0.051 172.552);
+  --color-emerald-700: oklch(84.5% 0.143 164.978);
+  --color-sky-50: oklch(29.3% 0.066 243.157);
+  --color-sky-700: oklch(82.8% 0.111 230.318);
+  --color-violet-50: oklch(28.3% 0.141 291.089);
+  --color-violet-700: oklch(81.1% 0.111 293.571);
+  --color-rose-50: oklch(27.1% 0.105 12.094);
+  --color-rose-700: oklch(81% 0.117 11.638);
+}
+
+/*
+ * White stays white so text-white on blue buttons keeps working. Light
+ * surfaces are swapped here instead. :where() keeps these below hover:
+ * utilities in specificity.
+ */
+@layer utilities {
+  :where([data-theme="dark"]) .bg-white {
+    background-color: var(--background);
+  }
+  :where([data-theme="dark"]) .bg-white\/80 {
+    background-color: color-mix(in oklab, var(--background) 80%, transparent);
+  }
+  :where([data-theme="dark"]) .from-\[\#EAF3FC\] {
+    --tw-gradient-from: #0b1a2e;
+  }
+  :where([data-theme="dark"]) .via-white {
+    --tw-gradient-via: var(--background);
+  }
+  :where([data-theme="dark"]) .to-white {
+    --tw-gradient-to: var(--background);
+  }
+  /* RankFlow's "or" badge: keep it dark with a ring that matches the page. */
+  :where([data-theme="dark"]) .bg-slate-900 {
+    background-color: oklch(37.2% 0.044 257.287);
+  }
+  :where([data-theme="dark"]) .border-white {
+    border-color: var(--background);
+  }
+  /* --color-black is light in dark mode, so keep the dialog backdrop dim. */
+  :where([data-theme="dark"]) .backdrop\:bg-black\/40::backdrop {
+    background-color: rgb(0 0 0 / 0.6);
   }
 }
 
