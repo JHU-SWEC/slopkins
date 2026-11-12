@@ -145,7 +145,7 @@ Global score per dish, used to sort the landing page. Build it as a view or a ma
 | created_at   | timestamptz |                                         |
 
 - Create the row with a trigger on `auth.users` insert.
-- Restrict sign-up to JHU accounts in the auth config. The schema doesn't enforce it.
+- Sign-in is Google OAuth through Supabase Auth. The trigger runs on a user's first sign-in.
 
 ### `follows`
 

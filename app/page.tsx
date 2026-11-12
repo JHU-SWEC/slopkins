@@ -13,7 +13,7 @@ export default function SignIn() {
           disabled
           className="mt-10 w-full rounded-md bg-blue-600 py-3 font-semibold text-white opacity-60"
         >
-          Sign in with JHU
+          Sign in with Google
         </button>
         <p className="mt-2 text-xs text-gray-400">Sign-in isn&apos;t built yet.</p>
 
