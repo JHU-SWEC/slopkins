@@ -79,7 +79,6 @@ proxy.ts                refreshes the Supabase session on each request
 ## Docs
 
 - [Project plan](docs/project-plan.md): team, goals, stretch goals, marketing
-- [System design](docs/system-design.md): components, data flows, trust boundaries
 - [Database schema](docs/database-schema.md) and [diagram](docs/schema-diagram.md)
 - [UI refactor](docs/ui-refactor.md): the current skeleton screens
 
