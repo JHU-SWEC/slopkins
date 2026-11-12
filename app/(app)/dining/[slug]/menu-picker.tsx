@@ -35,7 +35,8 @@ type Section = {
   highlight?: boolean;
 };
 
-export function MenuPicker({ tabs }: { tabs: MenuTab[] }) {
+// canLog is false for future days: you can plan a meal but not log it yet.
+export function MenuPicker({ tabs, canLog }: { tabs: MenuTab[]; canLog: boolean }) {
   const router = useRouter();
   const [tabIndex, setTabIndex] = useState(0);
   // Selected dishes and how much of each, in the order they were picked.
@@ -207,7 +208,7 @@ export function MenuPicker({ tabs }: { tabs: MenuTab[] }) {
 
       <div className="mt-6 space-y-6 pb-20">
         {tab.dishes.length === 0 && (
-          <p className="text-gray-500">Nothing posted for {tab.label.toLowerCase()} today.</p>
+          <p className="text-gray-500">Nothing posted for {tab.label.toLowerCase()} {canLog ? "today" : "yet"}.</p>
         )}
         {tab.dishes.length > 0 && sections.length === 0 && (
           <p className="text-gray-500">No dishes match &ldquo;{query.trim()}&rdquo;.</p>
@@ -268,6 +269,7 @@ export function MenuPicker({ tabs }: { tabs: MenuTab[] }) {
         onClose={() => setCartOpen(false)}
         onChange={updateItem}
         onRemove={removeItem}
+        canLog={canLog}
         // Mockup: nothing is saved. Real version logs the meal.
         onLog={() => router.push("/feed")}
       />

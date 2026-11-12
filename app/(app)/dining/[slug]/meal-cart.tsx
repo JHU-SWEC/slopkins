@@ -45,6 +45,7 @@ export function MealCart({
   onChange,
   onRemove,
   onLog,
+  canLog,
 }: {
   items: CartItem[];
   open: boolean;
@@ -52,6 +53,7 @@ export function MealCart({
   onChange: (item: CartItem) => void;
   onRemove: (dishId: number) => void;
   onLog: () => void;
+  canLog: boolean;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -81,7 +83,7 @@ export function MealCart({
       {open && (
         <div className="flex max-h-[85vh] flex-col">
           <div className="flex items-center justify-between gap-4 border-b border-gray-100 px-5 py-4">
-            <h2 className="text-lg font-bold">Your meal</h2>
+            <h2 className="text-lg font-bold">{canLog ? "Your meal" : "Meal plan"}</h2>
             <button
               type="button"
               onClick={onClose}
@@ -146,12 +148,17 @@ export function MealCart({
           <div className="border-t border-gray-100 px-5 py-4">
             <button
               type="button"
-              disabled={items.length === 0}
+              disabled={items.length === 0 || !canLog}
               onClick={onLog}
               className="block w-full rounded-md bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600"
             >
               Log meal
             </button>
+            {!canLog && (
+              <p className="mt-2 text-center text-xs text-gray-500">
+                This menu is for a future day. You can log meals on the day you eat them.
+              </p>
+            )}
           </div>
         </div>
       )}

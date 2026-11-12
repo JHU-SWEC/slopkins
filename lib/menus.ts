@@ -1,4 +1,4 @@
-// Today's menu for a hall, fetched live from Nutrislice on every request.
+// A day's menu for a hall, fetched live from Nutrislice on every request.
 // Server-only: Nutrislice doesn't allow browser requests (no CORS).
 import "server-only";
 import type { Hall, HallMenu } from "@/lib/halls";
@@ -67,14 +67,8 @@ type NutrisliceWeek = {
   }[];
 };
 
-/** Today's date as YYYY-MM-DD in Baltimore, whatever the server's timezone. */
-export function todayISO() {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
-}
-
-/** Every tab on the hall's menu page, with today's dishes. */
-export async function getMenus(hall: Hall): Promise<MenuTab[]> {
-  const date = todayISO();
+/** Every tab on the hall's menu page, with the dishes for a YYYY-MM-DD date. */
+export async function getMenus(hall: Hall, date: string): Promise<MenuTab[]> {
   return Promise.all(
     hall.menus.map(async (menu) => ({
       label: menu.label,

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { getHall, halls } from "@/lib/halls";
+import { formatDay, menuDays, pickMenuDate, todayISO } from "@/lib/dates";
 import { getMenus } from "@/lib/menus";
 import { MenuPicker } from "./menu-picker";
 
@@ -11,8 +12,9 @@ export function generateStaticParams() {
   return halls.map((hall) => ({ slug: hall.slug }));
 }
 
-// Today's menu for this hall, fetched live from Nutrislice.
-export default function HallMenuPage({ params }: PageProps<"/dining/[slug]">) {
+// A day's menu for this hall (today unless ?date= picks a day in the coming
+// week), fetched live from Nutrislice.
+export default function HallMenuPage({ params, searchParams }: PageProps<"/dining/[slug]">) {
   return (
     <>
       <Link href="/dining" className="text-sm text-gray-500 hover:text-gray-700">
@@ -20,28 +22,41 @@ export default function HallMenuPage({ params }: PageProps<"/dining/[slug]">) {
       </Link>
       {/* params is URL data, so it streams in behind Suspense for instant navigation. */}
       <Suspense fallback={<MenuFallback />}>
-        <HallMenu params={params} />
+        <HallMenu params={params} searchParams={searchParams} />
       </Suspense>
     </>
   );
 }
 
-async function HallMenu({ params }: { params: PageProps<"/dining/[slug]">["params"] }) {
+async function HallMenu({
+  params,
+  searchParams,
+}: {
+  params: PageProps<"/dining/[slug]">["params"];
+  searchParams: PageProps<"/dining/[slug]">["searchParams"];
+}) {
   const { slug } = await params;
   const hall = getHall(slug);
   if (!hall) notFound();
 
   // Fetch per request so the menu (and "today") is always current.
   await connection();
+  const today = todayISO();
+  const date = pickMenuDate((await searchParams).date, today);
+  const isToday = date === today;
+
   let tabs;
   try {
-    tabs = await getMenus(hall);
+    tabs = await getMenus(hall, date);
   } catch (error) {
     console.warn("[dining]", (error as Error).message);
     return (
       <>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">{hall.name}</h1>
-        <p className="mt-6 text-gray-500">Couldn&apos;t load today&apos;s menu. Try again in a bit.</p>
+        <DayPicker slug={hall.slug} date={date} today={today} />
+        <p className="mt-6 text-gray-500">
+          Couldn&apos;t load {isToday ? "today's" : `${formatDay(date)}'s`} menu. Try again in a bit.
+        </p>
       </>
     );
   }
@@ -49,10 +64,48 @@ async function HallMenu({ params }: { params: PageProps<"/dining/[slug]">["param
   return (
     <>
       <h1 className="mt-2 text-2xl font-bold tracking-tight">{hall.name}</h1>
-      <p className="mt-1 text-gray-500">Select everything you ate.</p>
+      <p className="mt-1 text-gray-500">
+        {isToday
+          ? "Select everything you ate."
+          : `Plan ahead for ${formatDay(date, { weekday: "long" })}. You can log it that day.`}
+      </p>
+      <DayPicker slug={hall.slug} date={date} today={today} />
 
-      <MenuPicker tabs={tabs} />
+      {/* Keyed by date so picking another day starts a fresh meal. */}
+      <MenuPicker key={date} tabs={tabs} canLog={isToday} />
     </>
+  );
+}
+
+// Today and the next few days. Future days can be browsed and planned, not logged.
+function DayPicker({ slug, date, today }: { slug: string; date: string; today: string }) {
+  return (
+    <nav aria-label="Day" className="-mx-4 mt-4 overflow-x-auto px-4">
+      <ul className="flex gap-2">
+        {menuDays(today).map((day, i) => {
+          const active = day === date;
+          return (
+            <li key={day}>
+              <Link
+                href={day === today ? `/dining/${slug}` : `/dining/${slug}?date=${day}`}
+                scroll={false}
+                aria-current={active ? "date" : undefined}
+                className={`flex w-14 flex-col items-center rounded-xl py-1.5 text-center transition ${
+                  active ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                <span className="text-xs font-medium">
+                  {i === 0 ? "Today" : formatDay(day, { month: undefined, day: undefined })}
+                </span>
+                <span className="text-lg font-semibold leading-tight">
+                  {formatDay(day, { weekday: undefined, month: undefined })}
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 }
 
