@@ -16,11 +16,12 @@ flowchart LR
     end
 
     subgraph supabase["Supabase"]
-        auth["Auth<br/>JHU sign-in"]
+        auth["Auth<br/>Google OAuth"]
         db[("Postgres<br/>RLS on every table")]
         storage["Storage<br/>avatars bucket"]
     end
 
+    google["Google OAuth"]
     nutrislice["Nutrislice API<br/>hopkinsdining.api.nutrislice.com"]
     notify["Notifications<br/>(email or push, TBD)"]
 
@@ -29,6 +30,7 @@ flowchart LR
     pages -- "publishable key + user session" --> db
     actions -- "publishable key + user session" --> db
     proxy --> auth
+    auth -- "sign in with Google" --> google
     user -- "avatar upload" --> storage
     ingest -- "fetch weekly menus" --> nutrislice
     ingest -- "secret key, upsert" --> db
@@ -40,7 +42,7 @@ flowchart LR
 | ---------------- | ------------------------------------------------------------------------ | ------------- |
 | Next.js app      | UI, server-side reads, server actions for writes                         | everyone      |
 | `proxy.ts`       | refreshes the Supabase session on each request, later redirects to `/`   | Lucas, Amy    |
-| Supabase Auth    | JHU sign-in, creates a `profiles` row through a trigger                  | Lucas, Amy    |
+| Supabase Auth    | Google OAuth sign-in, creates a `profiles` row through a trigger         | Lucas, Amy    |
 | Postgres         | all app data. RLS decides who reads and writes what                      | everyone      |
 | Storage          | profile pictures in the `avatars` bucket (not created yet)               | Lucas, Amy    |
 | Ingest job       | pulls Nutrislice menus into `dishes` and `menu_items`                    | Kyle          |
@@ -54,6 +56,15 @@ flowchart LR
 - **Nothing trusts the client** for ids, timestamps or ownership. Column grants and RLS enforce it in the database.
 
 ## Data flows
+
+### 0. Sign-in (Lucas, Amy)
+
+1. The "Sign in with Google" button calls `supabase.auth.signInWithOAuth({ provider: "google" })` with a redirect to `/auth/callback`.
+2. Google sends the user back to Supabase, which redirects to `/auth/callback` with a code.
+3. The `/auth/callback` route handler exchanges the code for a session (`exchangeCodeForSession`), which sets the session cookies, then redirects to `/feed`.
+4. On a user's first sign-in, the `auth.users` trigger creates their `profiles` row.
+
+Setup: a Google Cloud OAuth client, the Google provider enabled in Supabase Auth, and the site's `/auth/callback` URL in the Supabase redirect allow list.
 
 ### 1. Menu ingest (Kyle)
 
@@ -106,7 +117,7 @@ Target: JHU meal-plan students, at most a few thousand users. One Supabase proje
 ## Open decisions
 
 - Hosting: Vercel or something else.
-- JHU sign-in: SSO or SAML, or OAuth restricted to `@jhu.edu`.
+- Who can sign in: any Google account, or only some (for example a JHU allow list). Supabase doesn't restrict Google sign-in by domain on its own.
 - Ingest scheduler: Vercel Cron or Supabase `pg_cron` with an Edge Function.
 - Notification channel: email, web push or in-app.
 - Feed posts: logged meals, rankings, or both.

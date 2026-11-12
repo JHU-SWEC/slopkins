@@ -30,7 +30,7 @@ A Beli-inspired app made specifically for Hopkins students.
 
 ### Auth + Profile + Social (Lucas Kohlmeyer, Amy Yang)
 
-- JHU login
+- Google sign-in (Google OAuth through Supabase Auth)
 - Follow friends and see a feed of their recent postings
 - Profile page showing each user's ranked list
 - School ranking?
