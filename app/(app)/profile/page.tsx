@@ -1,17 +1,40 @@
-import Link from "next/link";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { createClient } from "@/lib/supabase/server";
+import { getProfileData } from "@/features/auth-social/profile/queries";
+import { ProfileView } from "@/features/auth-social/profile/profile-view";
+import { ProfileMessage, ProfileSkeleton } from "@/features/auth-social/profile/profile-shell";
 
-// Profile placeholder. Lucas owns the design.
-export default function Profile() {
+export const metadata: Metadata = { title: "Your profile · Slopkins" };
+
+// /profile — your own profile. Sends you to log in if you aren't.
+export default function MyProfilePage() {
   return (
-    <>
-      <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
-      <p className="mt-10 text-center text-gray-500">In progress</p>
-      <Link
-        href="/my-list"
-        className="mt-6 block w-full rounded-md border border-gray-200 py-3 text-center font-semibold transition hover:bg-gray-50"
-      >
-        My list
-      </Link>
-    </>
+    <Suspense fallback={<ProfileSkeleton />}>
+      <MyProfile />
+    </Suspense>
   );
+}
+
+async function MyProfile() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const data = await getProfileData(supabase, { id: user.id });
+  if (!data) {
+    return (
+      <ProfileMessage
+        title="Your profile isn't ready yet"
+        body="Your account exists, but its profile couldn't be loaded. Try refreshing in a moment."
+        linkHref="/feed"
+        linkLabel="Go to feed"
+      />
+    );
+  }
+
+  return <ProfileView data={data} isOwner />;
 }

@@ -136,16 +136,42 @@ Global score per dish, used to sort the landing page. Build it as a view or a ma
 
 ### `profiles`
 
-| column       | type        | notes                                   |
-| ------------ | ----------- | --------------------------------------- |
-| id           | uuid        | PK, FK `auth.users` `on delete cascade` |
-| username     | text        | unique, not null, not blank             |
-| display_name | text        |                                         |
-| avatar_url   | text        | path in the Storage bucket `avatars`    |
-| created_at   | timestamptz |                                         |
+| column       | type        | notes                                                                |
+| ------------ | ----------- | -------------------------------------------------------------------- |
+| id           | uuid        | PK, FK `auth.users` `on delete cascade`                              |
+| username     | text        | unique, not null, `^[a-z0-9_]{3,20}$`                                |
+| display_name | text        | ≤ 50 chars                                                           |
+| avatar_url   | text        | path in the Storage bucket `avatars`, e.g. `<user id>/<file>.png`    |
+| grade        | text        | nullable, `Freshman`, `Sophomore`, `Junior`, `Senior`, `Graduate`, `Other` |
+| major        | text        | nullable, ≤ 80 chars                                                 |
+| bio          | text        | nullable, ≤ 300 chars                                                |
+| created_at   | timestamptz | shown as "Member since"                                              |
 
 - Create the row with a trigger on `auth.users` insert.
 - Restrict sign-up to JHU accounts in the auth config. The schema doesn't enforce it.
+- Users can update `username`, `display_name`, `avatar_url`, `grade`, `major`, `bio`.
+
+### `user_dining_halls`
+
+Halls a user has been to or wants to try. Shown on the profile.
+
+| column         | type        | notes                         |
+| -------------- | ----------- | ----------------------------- |
+| user_id        | uuid        | FK `profiles`                 |
+| dining_hall_id | bigint      | FK `dining_halls`             |
+| status         | text        | `visited` or `want_to_go`     |
+| created_at     | timestamptz |                               |
+
+- PK: `(user_id, dining_hall_id, status)`. A hall can be both visited and want-to-go.
+- Index: `dining_hall_id`.
+
+### `profile_rank(target uuid)`
+
+Function. Returns `dishes_ranked`, `rank` (1 = most dishes ranked; ties share a rank) and `total_users`. Shown as "Rank on Slopkins".
+
+### Storage: `avatars` bucket
+
+Public bucket, 5 MB limit, JPG/PNG/WebP/GIF. Users can upload, replace and delete only inside the folder named after their user id.
 
 ### `follows`
 
@@ -167,6 +193,7 @@ No table. Query `rankings` joined with `follows` where `follower_id = auth.uid()
 
 - `profiles`: readable by everyone. A user can update only their own row.
 - `follows`: readable by everyone. A user can insert and delete only rows where `follower_id = auth.uid()`.
+- `user_dining_halls`: readable by everyone. A user can insert and delete only their own rows.
 
 ## Workflow
 

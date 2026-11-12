@@ -260,23 +260,32 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           created_at: string
           display_name: string | null
+          grade: string | null
           id: string
+          major: string | null
           username: string
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string | null
+          grade?: string | null
           id: string
+          major?: string | null
           username: string
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string | null
+          grade?: string | null
           id?: string
+          major?: string | null
           username?: string
         }
         Relationships: []
@@ -323,6 +332,42 @@ export type Database = {
           },
         ]
       }
+      user_dining_halls: {
+        Row: {
+          created_at: string
+          dining_hall_id: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dining_hall_id: number
+          status: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dining_hall_id?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_dining_halls_dining_hall_id_fkey"
+            columns: ["dining_hall_id"]
+            isOneToOne: false
+            referencedRelation: "dining_halls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_dining_halls_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       dish_scores: {
@@ -343,7 +388,14 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      profile_rank: {
+        Args: { target: string }
+        Returns: {
+          dishes_ranked: number
+          rank: number
+          total_users: number
+        }[]
+      }
     }
     Enums: {
       meal_type: "breakfast" | "lunch" | "dinner"

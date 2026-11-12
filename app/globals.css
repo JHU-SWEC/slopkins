@@ -12,6 +12,14 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Johns Hopkins brand colors. Use as bg-spirit-blue, text-heritage-blue, etc.
+   Spirit Blue is the light blue; Heritage Blue is the dark navy (use it for
+   text on Spirit Blue, since white text on light blue is hard to read). */
+@theme {
+  --color-spirit-blue: #68ace5;
+  --color-heritage-blue: #002d72;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
