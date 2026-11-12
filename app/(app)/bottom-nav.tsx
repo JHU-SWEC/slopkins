@@ -37,7 +37,7 @@ export function NavLinks({ pathname }: { pathname?: string }) {
       </ul>
       {/* Main page (feed) only. */}
       {pathname === "/feed" && (
-        <div className="absolute right-5 top-1/2 flex -translate-y-1/2 items-center gap-1 text-sm font-semibold text-gray-400">
+        <div className="absolute right-5 top-1/2 hidden lg:flex -translate-y-1/2 items-center gap-1 text-sm font-semibold text-gray-400">
           <span>built by</span>
           <a
             href="https://www.hopbuilds.org/"
