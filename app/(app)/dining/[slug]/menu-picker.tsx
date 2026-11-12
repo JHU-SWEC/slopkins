@@ -42,6 +42,7 @@ export function MenuPicker({ tabs }: { tabs: MenuTab[] }) {
   const [direction, setDirection] = useState<SortDirection>("asc");
   const [basis, setBasis] = useState<Basis>("serving");
   const [detailDish, setDetailDish] = useState<MenuDish | null>(null);
+  const [query, setQuery] = useState("");
 
   // A meal post has one meal, so switching meals clears the selection.
   // Levering kitchens have no meal, so selections carry across tabs.
@@ -68,8 +69,16 @@ export function MenuPicker({ tabs }: { tabs: MenuTab[] }) {
     });
   }
 
+  // Search matches dish or station names, case-insensitively.
+  const search = query.trim().toLowerCase();
+  const matching = search
+    ? tab.dishes.filter(
+        (dish) => dish.name.toLowerCase().includes(search) || dish.station.toLowerCase().includes(search),
+      )
+    : tab.dishes;
+
   // Some dishes are served at several stations; list each one once outside stations.
-  const unique = [...new Map(tab.dishes.map((dish) => [dish.id, dish])).values()];
+  const unique = [...new Map(matching.map((dish) => [dish.id, dish])).values()];
   if (sortKey !== "menu") {
     // Ranked by the chosen nutrient, dishes missing that value last.
     const key = sortKey as keyof Nutrition;
@@ -89,7 +98,7 @@ export function MenuPicker({ tabs }: { tabs: MenuTab[] }) {
   if (mains.length) sections.push({ title: "Mains", dishes: mains, showStation: true, highlight: true });
   if (sortKey === "menu") {
     const stations = new Map<string, MenuDish[]>();
-    for (const dish of tab.dishes) {
+    for (const dish of matching) {
       stations.set(dish.station, [...(stations.get(dish.station) ?? []), dish]);
     }
     for (const [station, dishes] of stations) sections.push({ title: station, dishes, showStation: false });
@@ -124,7 +133,30 @@ export function MenuPicker({ tabs }: { tabs: MenuTab[] }) {
       </div>
 
       {tab.dishes.length > 0 && (
-        <div className="mt-4 flex flex-wrap items-center gap-2">
+        <div className="relative mt-4">
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={`Search ${tab.label.toLowerCase()}`}
+            aria-label="Search dishes"
+            className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 pr-9 text-sm placeholder:text-gray-400 focus:border-blue-600 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              aria-label="Clear search"
+              className="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-gray-600"
+            >
+              ×
+            </button>
+          )}
+        </div>
+      )}
+
+      {tab.dishes.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <label htmlFor="sort" className="text-sm text-gray-500">
             Sort by
           </label>
@@ -154,8 +186,11 @@ export function MenuPicker({ tabs }: { tabs: MenuTab[] }) {
       )}
 
       <div className="mt-6 space-y-6 pb-20">
-        {sections.length === 0 && (
+        {tab.dishes.length === 0 && (
           <p className="text-gray-500">Nothing posted for {tab.label.toLowerCase()} today.</p>
+        )}
+        {tab.dishes.length > 0 && sections.length === 0 && (
+          <p className="text-gray-500">No dishes match &ldquo;{query.trim()}&rdquo;.</p>
         )}
         {sections.map(({ title, dishes, showStation, highlight }) => (
           <section key={highlight ? "mains" : `station:${title}`}>
