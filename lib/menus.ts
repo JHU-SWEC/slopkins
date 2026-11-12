@@ -34,6 +34,7 @@ export type MenuDish = {
   servingGrams: number | null; // serving weight, for comparing per 100 g
   ingredients: string | null;
   tags: string[]; // e.g. "Vegan", "Contains Milk"
+  isMain: boolean; // an entrée rather than a side, topping or drink; see isMainDish
 };
 
 export type MenuTab = {
@@ -110,6 +111,7 @@ async function getDishes(schoolSlug: string, menuTypeSlug: string, date: string)
 
     const nutrition = toNutrition(food.rounded_nutrition_info ?? {});
     const serving = food.serving_size_info;
+    const servingGrams = toGrams(serving?.serving_size_amount, serving?.serving_size_unit);
     dishes.push({
       id: food.id,
       name: food.name.trim(),
@@ -119,15 +121,32 @@ async function getDishes(schoolSlug: string, menuTypeSlug: string, date: string)
       servingSize: serving?.serving_size_amount
         ? `${serving.serving_size_amount} ${serving.serving_size_unit ?? ""}`.trim()
         : null,
-      servingGrams: toGrams(serving?.serving_size_amount, serving?.serving_size_unit),
+      servingGrams,
       ingredients: food.ingredients?.trim() || null,
       tags: (food.icons?.food_icons ?? []).flatMap((icon) => (icon.name ? [icon.name] : [])),
+      isMain: isMainDish(food.name, servingGrams, nutrition),
     });
   }
   return dishes;
 }
 
-const GRAMS_PER_UNIT: Record<string, number> = { g: 1, oz: 28.3495, lb: 453.592 };
+// Nutrislice doesn't say which dishes are entrées (food_category is always
+// empty, and station names are unreliable), so guess from the numbers: a main
+// is a real portion with real protein and calories. Tuned on actual JHU menus.
+const OZ = 28.3495;
+// Protein-heavy extras that pass the numbers but aren't a meal on their own.
+const NOT_MAINS =
+  /\b(cheerios|loops|charms|puffs|flakes|toast crunch|cereal|granola|oatmeal|yogurt|milk|bread|seasoning|sauce|dressing|liquid egg|egg salad|salami|edamame|juice|chips and)\b|^(halal )?pepperoni$/i;
+// Entrées that are lighter on protein, like cheese pizza or a veggie bowl.
+const MAIN_NAMES = /\b(pizza|bowl|pho|burrito|sandwich|wrap|lasagna|alfredo|curry|dumplings)\b/i;
+
+function isMainDish(name: string, grams: number | null, n: Nutrition) {
+  if (!grams || n.calories === null || NOT_MAINS.test(name)) return false;
+  if (grams >= 3 * OZ && n.calories >= 150 && (n.protein ?? 0) >= 12) return true;
+  return MAIN_NAMES.test(name) && grams >= 4 * OZ && n.calories >= 200;
+}
+
+const GRAMS_PER_UNIT: Record<string, number> = { g: 1, oz: OZ, lb: 453.592 };
 
 // Nearly every Nutrislice serving is in oz. Volume units like "cup" can't be
 // turned into a weight, so those return null.

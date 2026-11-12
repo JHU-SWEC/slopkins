@@ -27,6 +27,13 @@ const SORTS: {
   { key: "sodium", label: "Sodium", unit: "mg sodium", defaultDirection: "asc" },
 ];
 
+type Section = {
+  title: string;
+  dishes: MenuDish[];
+  showStation: boolean; // true when the list mixes stations
+  highlight?: boolean;
+};
+
 export function MenuPicker({ tabs }: { tabs: MenuTab[] }) {
   const router = useRouter();
   const [tabIndex, setTabIndex] = useState(0);
@@ -61,27 +68,33 @@ export function MenuPicker({ tabs }: { tabs: MenuTab[] }) {
     });
   }
 
-  // Menu order: group the tab's dishes by station.
-  // Any other sort: one ranked list across stations, dishes missing that value last.
-  const sections: [string | null, MenuDish[]][] = [];
-  if (sortKey === "menu") {
-    const stations = new Map<string, MenuDish[]>();
-    for (const dish of tab.dishes) {
-      stations.set(dish.station, [...(stations.get(dish.station) ?? []), dish]);
-    }
-    sections.push(...stations);
-  } else {
+  // Some dishes are served at several stations; list each one once outside stations.
+  const unique = [...new Map(tab.dishes.map((dish) => [dish.id, dish])).values()];
+  if (sortKey !== "menu") {
+    // Ranked by the chosen nutrient, dishes missing that value last.
     const key = sortKey as keyof Nutrition;
     const sign = direction === "asc" ? 1 : -1;
-    // Some dishes are served at several stations; rank each one once.
-    const unique = [...new Map(tab.dishes.map((dish) => [dish.id, dish])).values()];
-    const ranked = unique.sort((a, b) => {
+    unique.sort((a, b) => {
       const x = nutritionFor(a, basis)[key];
       const y = nutritionFor(b, basis)[key];
       if (x === null || y === null) return (x === null ? 1 : 0) - (y === null ? 1 : 0);
       return (x - y) * sign;
     });
-    if (ranked.length) sections.push([null, ranked]);
+  }
+
+  // Mains first (in the current order), then the full menu: by station in
+  // menu order, or one ranked list otherwise.
+  const sections: Section[] = [];
+  const mains = unique.filter((dish) => dish.isMain);
+  if (mains.length) sections.push({ title: "Mains", dishes: mains, showStation: true, highlight: true });
+  if (sortKey === "menu") {
+    const stations = new Map<string, MenuDish[]>();
+    for (const dish of tab.dishes) {
+      stations.set(dish.station, [...(stations.get(dish.station) ?? []), dish]);
+    }
+    for (const [station, dishes] of stations) sections.push({ title: station, dishes, showStation: false });
+  } else if (unique.length) {
+    sections.push({ title: "Everything", dishes: unique, showStation: true });
   }
 
   function sortValue(dish: MenuDish) {
@@ -144,13 +157,15 @@ export function MenuPicker({ tabs }: { tabs: MenuTab[] }) {
         {sections.length === 0 && (
           <p className="text-gray-500">Nothing posted for {tab.label.toLowerCase()} today.</p>
         )}
-        {sections.map(([station, dishes]) => (
-          <section key={station ?? "ranked"}>
-            {station && (
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400">
-                {station}
-              </h2>
-            )}
+        {sections.map(({ title, dishes, showStation, highlight }) => (
+          <section key={highlight ? "mains" : `station:${title}`}>
+            <h2
+              className={`text-sm font-semibold uppercase tracking-wide ${
+                highlight ? "text-blue-600" : "text-gray-400"
+              }`}
+            >
+              {title}
+            </h2>
             <ul className="mt-2 divide-y divide-gray-100 rounded-2xl border border-gray-200">
               {dishes.map((dish) => (
                 <li key={`${dish.station}:${dish.id}`} className="flex items-center hover:bg-gray-50">
@@ -163,8 +178,8 @@ export function MenuPicker({ tabs }: { tabs: MenuTab[] }) {
                     />
                     <span className="flex-1">
                       <span className="block font-medium">{dish.name}</span>
-                      {/* Stations aren't headings in a ranked list, so show them per dish. */}
-                      {!station && <span className="block text-xs text-gray-400">{dish.station}</span>}
+                      {/* Mixed-station lists show where to find each dish. */}
+                      {showStation && <span className="block text-xs text-gray-400">{dish.station}</span>}
                     </span>
                     {sortValue(dish) && (
                       <span className="text-sm text-gray-400">{sortValue(dish)}</span>
