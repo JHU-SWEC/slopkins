@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { MenuDish, MenuTab, Nutrition } from "@/lib/menus";
-import { nutritionFor, type Basis } from "@/lib/nutrition";
+import { mealTotals, nutritionFor, type Basis } from "@/lib/nutrition";
 import { BasisToggle } from "./basis-toggle";
+import { MealCart, servingsOf, type CartItem } from "./meal-cart";
 import { NutritionFacts } from "./nutrition-facts";
 
 type SortKey = "menu" | "calories" | "protein" | "carbs" | "fat" | "sugar" | "fiber" | "sodium";
@@ -37,7 +38,9 @@ type Section = {
 export function MenuPicker({ tabs }: { tabs: MenuTab[] }) {
   const router = useRouter();
   const [tabIndex, setTabIndex] = useState(0);
-  const [selected, setSelected] = useState<Set<number>>(new Set());
+  // Selected dishes and how much of each, in the order they were picked.
+  const [cart, setCart] = useState<Map<number, CartItem>>(new Map());
+  const [cartOpen, setCartOpen] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("menu");
   const [direction, setDirection] = useState<SortDirection>("asc");
   const [basis, setBasis] = useState<Basis>("serving");
@@ -52,7 +55,7 @@ export function MenuPicker({ tabs }: { tabs: MenuTab[] }) {
 
   function switchTab(index: number) {
     setTabIndex(index);
-    if (!keepSelection) setSelected(new Set());
+    if (!keepSelection) setCart(new Map());
   }
 
   function changeSort(key: SortKey) {
@@ -60,14 +63,31 @@ export function MenuPicker({ tabs }: { tabs: MenuTab[] }) {
     setDirection(SORTS.find((s) => s.key === key)!.defaultDirection);
   }
 
-  function toggle(dishId: number) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(dishId)) next.delete(dishId);
-      else next.add(dishId);
+  function toggle(dish: MenuDish) {
+    setCart((prev) => {
+      const next = new Map(prev);
+      if (next.has(dish.id)) next.delete(dish.id);
+      else next.set(dish.id, { dish, amount: "1", unit: "serving" });
       return next;
     });
   }
+
+  function updateItem(item: CartItem) {
+    setCart((prev) => new Map(prev).set(item.dish.id, item));
+  }
+
+  function removeItem(dishId: number) {
+    setCart((prev) => {
+      const next = new Map(prev);
+      next.delete(dishId);
+      return next;
+    });
+  }
+
+  const cartItems = [...cart.values()];
+  const cartCalories = cartItems.length
+    ? mealTotals(cartItems.map((item) => ({ dish: item.dish, servings: servingsOf(item) }))).nutrition.calories
+    : null;
 
   // Search matches dish or station names, case-insensitively.
   const search = query.trim().toLowerCase();
@@ -207,8 +227,8 @@ export function MenuPicker({ tabs }: { tabs: MenuTab[] }) {
                   <label className="flex flex-1 cursor-pointer items-center gap-3 py-3 pl-4">
                     <input
                       type="checkbox"
-                      checked={selected.has(dish.id)}
-                      onChange={() => toggle(dish.id)}
+                      checked={cart.has(dish.id)}
+                      onChange={() => toggle(dish)}
                       className="h-5 w-5 accent-blue-600"
                     />
                     <span className="flex-1">
@@ -242,16 +262,39 @@ export function MenuPicker({ tabs }: { tabs: MenuTab[] }) {
         onClose={() => setDetailDish(null)}
       />
 
-      {/* Mockup: nothing is saved. Real version logs the meal. */}
+      <MealCart
+        items={cartItems}
+        open={cartOpen}
+        onClose={() => setCartOpen(false)}
+        onChange={updateItem}
+        onRemove={removeItem}
+        // Mockup: nothing is saved. Real version logs the meal.
+        onLog={() => router.push("/feed")}
+      />
+
       <div className="fixed inset-x-0 bottom-16 border-t border-gray-200 bg-white px-4 py-3">
-        <button
-          type="button"
-          disabled={selected.size === 0}
-          onClick={() => router.push("/feed")}
-          className="mx-auto block w-full max-w-2xl rounded-md bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600"
-        >
-          Log meal ({selected.size})
-        </button>
+        <div className="mx-auto flex max-w-2xl items-center gap-3">
+          <p className="flex-1 text-sm text-gray-500">
+            {cartItems.length === 0 ? (
+              "Check off what you ate"
+            ) : (
+              <>
+                <span className="font-semibold text-gray-900">
+                  {cartItems.length} {cartItems.length === 1 ? "item" : "items"}
+                </span>
+                {cartCalories !== null && ` · ${cartCalories} cal`}
+              </>
+            )}
+          </p>
+          <button
+            type="button"
+            disabled={cartItems.length === 0}
+            onClick={() => setCartOpen(true)}
+            className="rounded-md bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600"
+          >
+            Review meal
+          </button>
+        </div>
       </div>
     </>
   );
