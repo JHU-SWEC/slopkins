@@ -2,21 +2,54 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { MockDish, MockMenuTab } from "@/lib/mock-data";
+import type { MenuDish, MenuTab, Nutrition } from "@/lib/menus";
+import { nutritionFor, type Basis } from "@/lib/nutrition";
+import { BasisToggle } from "./basis-toggle";
+import { NutritionFacts } from "./nutrition-facts";
 
-export function MenuPicker({ tabs }: { tabs: MockMenuTab[] }) {
+type SortKey = "menu" | "calories" | "protein" | "carbs" | "fat" | "sugar" | "fiber" | "sodium";
+type SortDirection = "asc" | "desc";
+
+const SORTS: {
+  key: SortKey;
+  label: string;
+  unit: string;
+  // Direction picked when you choose this sort, e.g. most protein first.
+  defaultDirection: SortDirection;
+}[] = [
+  { key: "menu", label: "Menu order", unit: "", defaultDirection: "asc" },
+  { key: "calories", label: "Calories", unit: " cal", defaultDirection: "asc" },
+  { key: "protein", label: "Protein", unit: "g protein", defaultDirection: "desc" },
+  { key: "carbs", label: "Carbs", unit: "g carbs", defaultDirection: "asc" },
+  { key: "fat", label: "Fat", unit: "g fat", defaultDirection: "asc" },
+  { key: "sugar", label: "Sugar", unit: "g sugar", defaultDirection: "asc" },
+  { key: "fiber", label: "Fiber", unit: "g fiber", defaultDirection: "desc" },
+  { key: "sodium", label: "Sodium", unit: "mg sodium", defaultDirection: "asc" },
+];
+
+export function MenuPicker({ tabs }: { tabs: MenuTab[] }) {
   const router = useRouter();
   const [tabIndex, setTabIndex] = useState(0);
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [sortKey, setSortKey] = useState<SortKey>("menu");
+  const [direction, setDirection] = useState<SortDirection>("asc");
+  const [basis, setBasis] = useState<Basis>("serving");
+  const [detailDish, setDetailDish] = useState<MenuDish | null>(null);
 
   // A meal post has one meal, so switching meals clears the selection.
   // Levering kitchens have no meal, so selections carry across tabs.
   const keepSelection = tabs.every((tab) => tab.meal === null);
   const tab = tabs[tabIndex];
+  const sort = SORTS.find((s) => s.key === sortKey)!;
 
   function switchTab(index: number) {
     setTabIndex(index);
     if (!keepSelection) setSelected(new Set());
+  }
+
+  function changeSort(key: SortKey) {
+    setSortKey(key);
+    setDirection(SORTS.find((s) => s.key === key)!.defaultDirection);
   }
 
   function toggle(dishId: number) {
@@ -28,10 +61,34 @@ export function MenuPicker({ tabs }: { tabs: MockMenuTab[] }) {
     });
   }
 
-  // Group the tab's dishes by station, keeping menu order.
-  const stations = new Map<string, MockDish[]>();
-  for (const dish of tab.dishes) {
-    stations.set(dish.station, [...(stations.get(dish.station) ?? []), dish]);
+  // Menu order: group the tab's dishes by station.
+  // Any other sort: one ranked list across stations, dishes missing that value last.
+  const sections: [string | null, MenuDish[]][] = [];
+  if (sortKey === "menu") {
+    const stations = new Map<string, MenuDish[]>();
+    for (const dish of tab.dishes) {
+      stations.set(dish.station, [...(stations.get(dish.station) ?? []), dish]);
+    }
+    sections.push(...stations);
+  } else {
+    const key = sortKey as keyof Nutrition;
+    const sign = direction === "asc" ? 1 : -1;
+    // Some dishes are served at several stations; rank each one once.
+    const unique = [...new Map(tab.dishes.map((dish) => [dish.id, dish])).values()];
+    const ranked = unique.sort((a, b) => {
+      const x = nutritionFor(a, basis)[key];
+      const y = nutritionFor(b, basis)[key];
+      if (x === null || y === null) return (x === null ? 1 : 0) - (y === null ? 1 : 0);
+      return (x - y) * sign;
+    });
+    if (ranked.length) sections.push([null, ranked]);
+  }
+
+  function sortValue(dish: MenuDish) {
+    const nutrition = nutritionFor(dish, basis);
+    if (sortKey === "menu") return nutrition.calories !== null ? `${nutrition.calories} cal` : null;
+    const value = nutrition[sortKey as keyof Nutrition];
+    return value !== null ? `${value}${sort.unit}` : "—";
   }
 
   return (
@@ -53,33 +110,87 @@ export function MenuPicker({ tabs }: { tabs: MockMenuTab[] }) {
         ))}
       </div>
 
+      {tab.dishes.length > 0 && (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <label htmlFor="sort" className="text-sm text-gray-500">
+            Sort by
+          </label>
+          <select
+            id="sort"
+            value={sortKey}
+            onChange={(event) => changeSort(event.target.value as SortKey)}
+            className="rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm font-medium"
+          >
+            {SORTS.map((s) => (
+              <option key={s.key} value={s.key}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+          {sortKey !== "menu" && (
+            <button
+              type="button"
+              onClick={() => setDirection(direction === "asc" ? "desc" : "asc")}
+              className="rounded-md border border-gray-200 px-2.5 py-1.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50"
+            >
+              {direction === "asc" ? "↑ Low to high" : "↓ High to low"}
+            </button>
+          )}
+          <BasisToggle basis={basis} onChange={setBasis} />
+        </div>
+      )}
+
       <div className="mt-6 space-y-6 pb-20">
-        {[...stations].map(([station, dishes]) => (
-          <section key={station}>
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400">
-              {station}
-            </h2>
+        {sections.length === 0 && (
+          <p className="text-gray-500">Nothing posted for {tab.label.toLowerCase()} today.</p>
+        )}
+        {sections.map(([station, dishes]) => (
+          <section key={station ?? "ranked"}>
+            {station && (
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-400">
+                {station}
+              </h2>
+            )}
             <ul className="mt-2 divide-y divide-gray-100 rounded-2xl border border-gray-200">
               {dishes.map((dish) => (
-                <li key={dish.id}>
-                  <label className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-gray-50">
+                <li key={`${dish.station}:${dish.id}`} className="flex items-center hover:bg-gray-50">
+                  <label className="flex flex-1 cursor-pointer items-center gap-3 py-3 pl-4">
                     <input
                       type="checkbox"
                       checked={selected.has(dish.id)}
                       onChange={() => toggle(dish.id)}
                       className="h-5 w-5 accent-blue-600"
                     />
-                    <span className="flex-1 font-medium">{dish.name}</span>
-                    {dish.calories !== null && (
-                      <span className="text-sm text-gray-400">{dish.calories} cal</span>
+                    <span className="flex-1">
+                      <span className="block font-medium">{dish.name}</span>
+                      {/* Stations aren't headings in a ranked list, so show them per dish. */}
+                      {!station && <span className="block text-xs text-gray-400">{dish.station}</span>}
+                    </span>
+                    {sortValue(dish) && (
+                      <span className="text-sm text-gray-400">{sortValue(dish)}</span>
                     )}
                   </label>
+                  <button
+                    type="button"
+                    onClick={() => setDetailDish(dish)}
+                    aria-label={`Nutrition facts for ${dish.name}`}
+                    className="mx-2 rounded-full px-2.5 py-1 text-xs font-semibold text-blue-600 transition hover:bg-blue-50"
+                  >
+                    Nutrition
+                  </button>
                 </li>
               ))}
             </ul>
           </section>
         ))}
       </div>
+
+      <NutritionFacts
+        dish={detailDish}
+        basis={basis}
+        onBasisChange={setBasis}
+        onClose={() => setDetailDish(null)}
+      />
 
       {/* Mockup: nothing is saved. Real version logs the meal. */}
       <div className="fixed inset-x-0 bottom-16 border-t border-gray-200 bg-white px-4 py-3">
@@ -95,3 +206,4 @@ export function MenuPicker({ tabs }: { tabs: MockMenuTab[] }) {
     </>
   );
 }
+

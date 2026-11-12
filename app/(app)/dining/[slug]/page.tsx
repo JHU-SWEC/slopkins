@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { getHall, halls } from "@/lib/halls";
-import { mockMenus } from "@/lib/mock-data";
+import { getMenus } from "@/lib/menus";
 import { MenuPicker } from "./menu-picker";
 
 // Cache Components needs at least one param to prerender.
@@ -10,7 +11,7 @@ export function generateStaticParams() {
   return halls.map((hall) => ({ slug: hall.slug }));
 }
 
-// Menu skeleton with mock dishes. Real data: today's menu_items for this hall.
+// Today's menu for this hall, fetched live from Nutrislice.
 export default function HallMenuPage({ params }: PageProps<"/dining/[slug]">) {
   return (
     <>
@@ -30,12 +31,27 @@ async function HallMenu({ params }: { params: PageProps<"/dining/[slug]">["param
   const hall = getHall(slug);
   if (!hall) notFound();
 
+  // Fetch per request so the menu (and "today") is always current.
+  await connection();
+  let tabs;
+  try {
+    tabs = await getMenus(hall);
+  } catch (error) {
+    console.warn("[dining]", (error as Error).message);
+    return (
+      <>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight">{hall.name}</h1>
+        <p className="mt-6 text-gray-500">Couldn&apos;t load today&apos;s menu. Try again in a bit.</p>
+      </>
+    );
+  }
+
   return (
     <>
       <h1 className="mt-2 text-2xl font-bold tracking-tight">{hall.name}</h1>
       <p className="mt-1 text-gray-500">Select everything you ate.</p>
 
-      <MenuPicker tabs={mockMenus[hall.slug]} />
+      <MenuPicker tabs={tabs} />
     </>
   );
 }
