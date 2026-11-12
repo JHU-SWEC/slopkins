@@ -28,7 +28,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         {/* Saved choice, else the OS setting. Runs before first paint, so no flash. */}
+        {/* Extensions (ad blockers) inject <script>s into <head> before hydration. */}
         <script
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem("theme")}catch(e){}if(t!=="light"&&t!=="dark")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.dataset.theme=t})()`,
           }}
