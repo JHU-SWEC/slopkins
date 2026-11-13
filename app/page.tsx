@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { GoogleSignInButton } from "@/features/auth-social/google-sign-in-button";
 
-// Sign-in skeleton. Lucas and Amy own the real sign-in.
+// Sign-in screen. Lucas and Amy own the real sign-in.
 export default function SignIn() {
   return (
     <div className="flex min-h-screen items-center bg-white text-gray-900">
@@ -8,16 +9,11 @@ export default function SignIn() {
         <h1 className="text-4xl font-bold tracking-tight">Slopkins</h1>
         <p className="mt-2 text-gray-500">Rank the slop. Find the good stuff.</p>
 
-        <button
-          type="button"
-          disabled
-          className="mt-10 w-full rounded-md bg-blue-600 py-3 font-semibold text-white opacity-60"
-        >
-          Sign in with Google
-        </button>
-        <p className="mt-2 text-xs text-gray-400">Sign-in isn&apos;t built yet.</p>
+        <div className="mt-10">
+          <GoogleSignInButton />
+        </div>
 
-        {/* Mockup only. Remove when real sign-in ships. */}
+        {/* Mockup only. Remove when every screen uses real data. */}
         <Link
           href="/feed"
           className="mt-6 inline-block text-sm font-medium text-gray-500 underline-offset-4 hover:underline"
