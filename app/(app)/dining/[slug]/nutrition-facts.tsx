@@ -119,42 +119,17 @@ export function NutritionFacts({
           )}
 
           {hasNutrition && n ? (
-            <section
-              aria-label="Nutrition Facts"
-              className="mt-4 border-2 border-black px-2 pb-2 pt-1 text-sm text-black"
-            >
-              <h3 className="text-3xl font-black leading-none tracking-tight">Nutrition Facts</h3>
-              <div className="mt-1 flex justify-between border-b-8 border-black pb-1 font-bold">
-                <span>{shownBasis === "100g" ? "Amount" : "Serving size"}</span>
-                <span>
-                  {shownBasis === "100g"
-                    ? `100 g (serving is ${dish.servingSize})`
-                    : (dish.servingSize ?? "1 serving")}
-                </span>
-              </div>
-
-              <p className="mt-1 text-xs font-bold">
-                {shownBasis === "100g" ? "Amount per 100 g" : "Amount per serving"}
-              </p>
-              <div className="flex items-end justify-between border-b-4 border-black pb-1">
-                <span className="text-2xl font-black">Calories</span>
-                <span className="text-3xl font-black">{n.calories ?? "—"}</span>
-              </div>
-
-              <p className="border-b border-black py-0.5 text-right text-xs font-bold">% Daily Value*</p>
-              {MACRO_ROWS.map((row) => (
-                <FactRow key={row.key} row={row} value={n[row.key]} />
-              ))}
-              <div className="border-b-8 border-black" />
-              {MINERAL_ROWS.map((row) => (
-                <FactRow key={row.key} row={row} value={n[row.key]} />
-              ))}
-
-              <p className="mt-1 border-t-4 border-black pt-1 text-[11px] leading-snug">
-                * The % Daily Value tells you how much a nutrient in a serving of food contributes to a
-                daily diet. 2,000 calories a day is used for general nutrition advice.
-              </p>
-            </section>
+            <NutritionLabel
+              className="mt-4"
+              nutrition={n}
+              sizeLabel={shownBasis === "100g" ? "Amount" : "Serving size"}
+              size={
+                shownBasis === "100g"
+                  ? `100 g (serving is ${dish.servingSize})`
+                  : (dish.servingSize ?? "1 serving")
+              }
+              amountLabel={shownBasis === "100g" ? "Amount per 100 g" : "Amount per serving"}
+            />
           ) : (
             <p className="mt-4 rounded-xl bg-gray-50 p-4 text-sm text-gray-500">
               The dining hall hasn&apos;t posted nutrition info for this item.
@@ -173,7 +148,66 @@ export function NutritionFacts({
   );
 }
 
-function FactRow({ row, value }: { row: Row; value: number | null }) {
+// An FDA-style nutrition label. Also used for a whole meal's totals.
+export function NutritionLabel({
+  nutrition: n,
+  sizeLabel,
+  size,
+  amountLabel,
+  incomplete,
+  className = "",
+}: {
+  nutrition: Nutrition;
+  sizeLabel: string;
+  size: string;
+  amountLabel: string;
+  // Nutrients to mark with a † because some dish doesn't list them.
+  incomplete?: Set<keyof Nutrition>;
+  className?: string;
+}) {
+  return (
+    <section
+      aria-label="Nutrition Facts"
+      className={`border-2 border-black px-2 pb-2 pt-1 text-sm text-black ${className}`}
+    >
+      <h3 className="text-3xl font-black leading-none tracking-tight">Nutrition Facts</h3>
+      <div className="mt-1 flex justify-between gap-4 border-b-8 border-black pb-1 font-bold">
+        <span>{sizeLabel}</span>
+        <span className="text-right">{size}</span>
+      </div>
+
+      <p className="mt-1 text-xs font-bold">{amountLabel}</p>
+      <div className="flex items-end justify-between border-b-4 border-black pb-1">
+        <span className="text-2xl font-black">Calories</span>
+        <span className="text-3xl font-black">
+          {n.calories ?? "—"}
+          {incomplete?.has("calories") && "†"}
+        </span>
+      </div>
+
+      <p className="border-b border-black py-0.5 text-right text-xs font-bold">% Daily Value*</p>
+      {MACRO_ROWS.map((row) => (
+        <FactRow key={row.key} row={row} value={n[row.key]} incomplete={incomplete?.has(row.key)} />
+      ))}
+      <div className="border-b-8 border-black" />
+      {MINERAL_ROWS.map((row) => (
+        <FactRow key={row.key} row={row} value={n[row.key]} incomplete={incomplete?.has(row.key)} />
+      ))}
+
+      <p className="mt-1 border-t-4 border-black pt-1 text-[11px] leading-snug">
+        * The % Daily Value tells you how much a nutrient in a serving of food contributes to a daily
+        diet. 2,000 calories a day is used for general nutrition advice.
+        {incomplete && incomplete.size > 0 && (
+          <>
+            <br />† Some items don&apos;t list this, so the real total may be higher.
+          </>
+        )}
+      </p>
+    </section>
+  );
+}
+
+function FactRow({ row, value, incomplete }: { row: Row; value: number | null; incomplete?: boolean }) {
   const daily = DAILY_VALUES[row.key];
   const percent = value !== null && daily ? Math.round((value / daily) * 100) : null;
   return (
@@ -181,6 +215,7 @@ function FactRow({ row, value }: { row: Row; value: number | null }) {
       <span>
         <span className={row.bold ? "font-bold" : ""}>{row.label}</span>{" "}
         {value === null ? "—" : `${value}${row.unit}`}
+        {incomplete && "†"}
       </span>
       {percent !== null && <span className="font-bold">{percent}%</span>}
     </div>
