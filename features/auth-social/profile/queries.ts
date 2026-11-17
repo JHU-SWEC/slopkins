@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  PROFILE_COLUMNS,
+  BASIC_PROFILE_COLUMNS,
+  DETAIL_PROFILE_COLUMNS,
+  NO_DETAILS,
   type DiningHall,
   type Profile,
   type ProfileData,
@@ -13,41 +15,67 @@ function one<T>(value: unknown): T | null {
   return (value as T) ?? null;
 }
 
+type BasicProfile = Omit<Profile, "grade" | "major" | "bio">;
+
+/** The columns every profile has (username, display name, photo, join date). */
+export async function getBasicProfile(
+  supabase: SupabaseClient,
+  by: { username: string } | { id: string },
+): Promise<BasicProfile | null> {
+  const query = supabase.from("profiles").select(BASIC_PROFILE_COLUMNS);
+  const { data } = await ("username" in by
+    ? query.eq("username", by.username.toLowerCase())
+    : query.eq("id", by.id)
+  ).maybeSingle<BasicProfile>();
+  return data;
+}
+
+/**
+ * Grade, major, and bio. These columns only exist once the profile-page
+ * migration is applied; until then this returns ready: false instead of failing.
+ */
+export async function getProfileDetails(supabase: SupabaseClient, id: string) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select(DETAIL_PROFILE_COLUMNS)
+    .eq("id", id)
+    .maybeSingle<Pick<Profile, "grade" | "major" | "bio">>();
+  return { ready: !error, details: data ?? NO_DETAILS };
+}
+
 /** Everything the profile page shows. Returns null if the profile doesn't exist. */
 export async function getProfileData(
   supabase: SupabaseClient,
   by: { username: string } | { id: string },
 ): Promise<ProfileData | null> {
-  const query = supabase.from("profiles").select(PROFILE_COLUMNS);
-  const { data: profile } = await ("username" in by
-    ? query.eq("username", by.username.toLowerCase())
-    : query.eq("id", by.id)
-  ).maybeSingle<Profile>();
-
-  if (!profile) return null;
+  const basic = await getBasicProfile(supabase, by);
+  if (!basic) return null;
 
   // Everything else only needs the profile id, so ask for it all at once.
-  const [rankings, halls, followers, following, rank] = await Promise.all([
+  // Parts that need the migration (details, dining halls, rank) just come back
+  // empty until it's applied.
+  const [details, rankings, halls, followers, following, rank] = await Promise.all([
+    getProfileDetails(supabase, basic.id),
     supabase
       .from("rankings")
       .select("dish_id, score, comment, dish:dishes(name)")
-      .eq("user_id", profile.id)
+      .eq("user_id", basic.id)
       .order("score", { ascending: false }),
     supabase
       .from("user_dining_halls")
       .select("status, hall:dining_halls(id, slug, name)")
-      .eq("user_id", profile.id)
+      .eq("user_id", basic.id)
       .order("created_at", { ascending: false }),
     // follows: follower_id follows followee_id.
     supabase
       .from("follows")
       .select("*", { count: "exact", head: true })
-      .eq("followee_id", profile.id),
+      .eq("followee_id", basic.id),
     supabase
       .from("follows")
       .select("*", { count: "exact", head: true })
-      .eq("follower_id", profile.id),
-    supabase.rpc("profile_rank", { target: profile.id }).maybeSingle<{
+      .eq("follower_id", basic.id),
+    supabase.rpc("profile_rank", { target: basic.id }).maybeSingle<{
       dishes_ranked: number;
       rank: number;
       total_users: number;
@@ -69,7 +97,8 @@ export async function getProfileData(
   }
 
   return {
-    profile,
+    profile: { ...basic, ...details.details },
+    detailsReady: details.ready,
     rankedDishes,
     visited,
     wantToGo,

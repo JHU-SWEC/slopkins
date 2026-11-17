@@ -3,10 +3,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { getDiningHalls } from "@/features/auth-social/profile/queries";
+import {
+  getBasicProfile,
+  getDiningHalls,
+  getProfileDetails,
+} from "@/features/auth-social/profile/queries";
 import { EditProfileForm } from "@/features/auth-social/profile/edit-profile-form";
 import { ProfileMessage } from "@/features/auth-social/profile/profile-shell";
-import { PROFILE_COLUMNS, type Profile } from "@/features/auth-social/profile/shared";
+import { isPlaceholderUsername, suggestUsername } from "@/features/auth-social/profile/shared";
 
 export const metadata: Metadata = { title: "Edit profile · Slopkins" };
 
@@ -35,13 +39,14 @@ async function EditProfile() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: profile }, halls, { data: myHalls }] = await Promise.all([
-    supabase.from("profiles").select(PROFILE_COLUMNS).eq("id", user.id).maybeSingle<Profile>(),
+  const [basic, details, halls, { data: myHalls }] = await Promise.all([
+    getBasicProfile(supabase, { id: user.id }),
+    getProfileDetails(supabase, user.id),
     getDiningHalls(supabase),
     supabase.from("user_dining_halls").select("dining_hall_id, status").eq("user_id", user.id),
   ]);
 
-  if (!profile) {
+  if (!basic) {
     return (
       <ProfileMessage
         title="Your profile isn't ready yet"
@@ -55,9 +60,19 @@ async function EditProfile() {
   const idsWith = (status: string) =>
     (myHalls ?? []).filter((row) => row.status === status).map((row) => row.dining_hall_id as number);
 
+  // Starting values from the Google account, used only where the profile is still blank.
+  // Nothing is saved until the user presses Save.
+  const googleName = user.user_metadata?.full_name ?? user.user_metadata?.name;
+  const suggested = {
+    displayName: basic.display_name ? null : typeof googleName === "string" ? googleName : null,
+    username: isPlaceholderUsername(basic.username) ? suggestUsername(user.email) || null : null,
+  };
+
   return (
     <EditProfileForm
-      profile={profile}
+      profile={{ ...basic, ...details.details }}
+      detailsReady={details.ready}
+      suggested={suggested}
       halls={halls}
       visitedIds={idsWith("visited")}
       wantToGoIds={idsWith("want_to_go")}

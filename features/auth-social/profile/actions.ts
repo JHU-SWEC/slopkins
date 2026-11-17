@@ -52,16 +52,10 @@ export async function updateProfile(
     return { error: "That profile picture couldn't be used. Try uploading it again." };
   }
 
+  // The basics: photo, name, username. These columns always exist.
   const { error } = await supabase
     .from("profiles")
-    .update({
-      username,
-      display_name: displayName || null,
-      grade: grade || null,
-      major: major || null,
-      bio: bio || null,
-      avatar_url: avatarPath || null,
-    })
+    .update({ username, display_name: displayName || null, avatar_url: avatarPath || null })
     .eq("id", user.id);
 
   if (error) {
@@ -72,6 +66,15 @@ export async function updateProfile(
           : "Couldn't save your profile. Please try again.",
     };
   }
+
+  // The form only shows (and sends) the rest once the profile-page migration is applied.
+  if (formData.get("details_ready") !== "1") redirect("/profile");
+
+  const details = await supabase
+    .from("profiles")
+    .update({ grade: grade || null, major: major || null, bio: bio || null })
+    .eq("id", user.id);
+  if (details.error) return { error: "Saved your name and photo, but couldn't save the rest." };
 
   // Replace the user's "been to" / "want to go" lists with what's checked now.
   const rows = [

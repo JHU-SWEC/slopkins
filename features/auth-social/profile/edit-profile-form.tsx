@@ -10,6 +10,7 @@ import {
   DISPLAY_NAME_LIMIT,
   GRADES,
   MAJOR_LIMIT,
+  USERNAME_PATTERN,
   avatarSrc,
   type DiningHall,
   type Profile,
@@ -24,11 +25,17 @@ const labelClass = "block text-sm font-semibold";
 
 export function EditProfileForm({
   profile,
+  detailsReady,
+  suggested,
   halls,
   visitedIds,
   wantToGoIds,
 }: {
   profile: Profile;
+  /** False until the database has grade/major/bio and dining halls. */
+  detailsReady: boolean;
+  /** Starting values from Google, for fields the user hasn't set yet. */
+  suggested: { displayName: string | null; username: string | null };
   halls: DiningHall[];
   visitedIds: number[];
   wantToGoIds: number[];
@@ -40,10 +47,16 @@ export function EditProfileForm({
   const [avatarPath, setAvatarPath] = useState(profile.avatar_url ?? "");
   const [uploading, setUploading] = useState(false);
   const [photoError, setPhotoError] = useState("");
-  const [username, setUsername] = useState(profile.username);
-  const [displayName, setDisplayName] = useState(profile.display_name ?? "");
+  const [username, setUsername] = useState(suggested.username ?? profile.username);
+  const [displayName, setDisplayName] = useState(
+    profile.display_name ?? suggested.displayName ?? "",
+  );
   const [bio, setBio] = useState(profile.bio ?? "");
   const fileInput = useRef<HTMLInputElement>(null);
+
+  const usedSuggestions = Boolean(suggested.username || suggested.displayName);
+  const usernameOk = USERNAME_PATTERN.test(username);
+  const previewName = displayName.trim() || `@${username || "username"}`;
 
   // Upload the chosen photo straight to Supabase Storage and show a preview.
   // (Going through the server would hit Next.js's 1 MB form size limit.)
@@ -66,7 +79,11 @@ export function EditProfileForm({
     const { error } = await createClient().storage.from("avatars").upload(path, file);
     setUploading(false);
     if (error) {
-      setPhotoError("Upload failed. Please try again.");
+      setPhotoError(
+        /bucket not found/i.test(error.message)
+          ? "Photo uploads aren't set up yet. They'll work once the profile database update is applied."
+          : "Upload failed. Please try again.",
+      );
       return;
     }
     setAvatarPath(path);
@@ -80,33 +97,47 @@ export function EditProfileForm({
     startTransition(() => formAction(formData));
   }
 
-  const previewName = displayName.trim() || username || "?";
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6 text-heritage-blue">
-      {/* ---------- Photo ---------- */}
-      <Card title="Profile picture">
-        <div className="flex items-center gap-5">
-          <Avatar src={avatarSrc(avatarPath || null)} name={previewName} size={80} />
-          <div className="flex flex-col items-start gap-2">
+      {usedSuggestions && (
+        <p className="rounded-2xl bg-spirit-blue/20 px-4 py-3 text-sm">
+          We filled in some fields from your Google account. Change anything you like, then press{" "}
+          <strong>Save changes</strong>.
+        </p>
+      )}
+
+      {/* ---------- Photo, name, username ---------- */}
+      <Card title="Photo, name & username">
+        {/* Live preview of how the top of your profile will look. */}
+        <div className="flex items-center gap-4 rounded-2xl bg-linear-to-br from-heritage-blue to-[#1d5aa8] p-4 text-white">
+          <div className="rounded-full ring-4 ring-white/30">
+            <Avatar src={avatarSrc(avatarPath || null)} name={previewName} size={72} />
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-xl font-bold">{previewName}</p>
+            {displayName.trim() && <p className="truncate text-white/70">@{username}</p>}
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => fileInput.current?.click()}
+            disabled={uploading}
+            className="rounded-xl bg-heritage-blue px-4 py-2 text-sm font-semibold text-white transition hover:bg-heritage-blue/90 disabled:opacity-60"
+          >
+            {uploading ? "Uploading…" : avatarPath ? "Change photo" : "Upload photo"}
+          </button>
+          {avatarPath && (
             <button
               type="button"
-              onClick={() => fileInput.current?.click()}
-              disabled={uploading}
-              className="rounded-xl bg-heritage-blue px-4 py-2 text-sm font-semibold text-white transition hover:bg-heritage-blue/90 disabled:opacity-60"
+              onClick={() => setAvatarPath("")}
+              className="text-sm text-slate-500 underline"
             >
-              {uploading ? "Uploading…" : avatarPath ? "Change photo" : "Upload photo"}
+              Remove photo
             </button>
-            {avatarPath && (
-              <button
-                type="button"
-                onClick={() => setAvatarPath("")}
-                className="text-sm text-slate-500 underline"
-              >
-                Remove photo
-              </button>
-            )}
-          </div>
+          )}
+          <span className="text-xs text-slate-500">JPG, PNG, WebP, or GIF, up to 5 MB.</span>
         </div>
         <input
           ref={fileInput}
@@ -118,147 +149,159 @@ export function EditProfileForm({
         />
         <input type="hidden" name="avatar_path" value={avatarPath} />
         {photoError && <p className="mt-3 text-sm text-red-700">{photoError}</p>}
-      </Card>
 
-      {/* ---------- About you ---------- */}
-      <Card title="About you">
-        <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="display_name" className={labelClass}>
-                Name
-              </label>
-              <input
-                id="display_name"
-                name="display_name"
-                maxLength={DISPLAY_NAME_LIMIT}
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="e.g. Johns Hopkins"
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label htmlFor="username" className={labelClass}>
-                Username
-              </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute top-1/2 left-3 mt-0.5 -translate-y-1/2 text-slate-400">
-                  @
-                </span>
-                <input
-                  id="username"
-                  name="username"
-                  required
-                  minLength={3}
-                  maxLength={20}
-                  pattern="[a-z0-9_]{3,20}"
-                  title="3–20 characters: lowercase letters, numbers, and _"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, ""))}
-                  className={`${inputClass} pl-7`}
-                />
-              </div>
-              <p className="mt-1 text-xs text-slate-500">Lowercase letters, numbers, and _ only.</p>
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="grade" className={labelClass}>
-                Grade
-              </label>
-              <select id="grade" name="grade" defaultValue={profile.grade ?? ""} className={inputClass}>
-                <option value="">Prefer not to say</option>
-                {GRADES.map((g) => (
-                  <option key={g} value={g}>
-                    {g}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="major" className={labelClass}>
-                Major
-              </label>
-              <input
-                id="major"
-                name="major"
-                maxLength={MAJOR_LIMIT}
-                defaultValue={profile.major ?? ""}
-                placeholder="e.g. Computer Science"
-                className={inputClass}
-              />
-            </div>
-          </div>
-
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="bio" className={labelClass}>
-              Bio
+            <label htmlFor="display_name" className={labelClass}>
+              Display name
             </label>
-            <textarea
-              id="bio"
-              name="bio"
-              rows={4}
-              maxLength={BIO_LIMIT}
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="Favorite dining hall? Hottest food take?"
+            <input
+              id="display_name"
+              name="display_name"
+              maxLength={DISPLAY_NAME_LIMIT}
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="e.g. Johns Hopkins"
               className={inputClass}
             />
-            <p className="mt-1 text-right text-xs text-slate-500">
-              {bio.length}/{BIO_LIMIT}
+            <p className="mt-1 text-xs text-slate-500">Shown big on your profile. Optional.</p>
+          </div>
+          <div>
+            <label htmlFor="username" className={labelClass}>
+              Username
+            </label>
+            <div className="relative">
+              <span className="pointer-events-none absolute top-1/2 left-3 mt-0.5 -translate-y-1/2 text-slate-400">
+                @
+              </span>
+              <input
+                id="username"
+                name="username"
+                required
+                maxLength={20}
+                aria-invalid={!usernameOk}
+                aria-describedby="username-hint"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, ""))}
+                className={`${inputClass} pl-7`}
+              />
+            </div>
+            <p
+              id="username-hint"
+              className={`mt-1 text-xs ${usernameOk ? "text-slate-500" : "text-red-700"}`}
+            >
+              3–20 characters: lowercase letters, numbers, and _. Your link: /u/{username || "…"}
             </p>
           </div>
         </div>
       </Card>
 
-      {/* ---------- Dining halls ---------- */}
-      <Card title="Dining halls">
-        <p className="mb-3 text-sm text-slate-500">
-          Check where you&apos;ve been and where you want to go. These show on your profile.
+      {/* ---------- Everything that needs the database update ---------- */}
+      <input type="hidden" name="details_ready" value={detailsReady ? "1" : "0"} />
+      {detailsReady ? (
+        <>
+          <Card title="About you">
+            <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="grade" className={labelClass}>
+                    Grade
+                  </label>
+                  <select id="grade" name="grade" defaultValue={profile.grade ?? ""} className={inputClass}>
+                    <option value="">Prefer not to say</option>
+                    {GRADES.map((g) => (
+                      <option key={g} value={g}>
+                        {g}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="major" className={labelClass}>
+                    Major
+                  </label>
+                  <input
+                    id="major"
+                    name="major"
+                    maxLength={MAJOR_LIMIT}
+                    defaultValue={profile.major ?? ""}
+                    placeholder="e.g. Computer Science"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="bio" className={labelClass}>
+                  Bio
+                </label>
+                <textarea
+                  id="bio"
+                  name="bio"
+                  rows={4}
+                  maxLength={BIO_LIMIT}
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Favorite dining hall? Hottest food take?"
+                  className={inputClass}
+                />
+                <p className="mt-1 text-right text-xs text-slate-500">
+                  {bio.length}/{BIO_LIMIT}
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <Card title="Dining halls">
+            <p className="mb-3 text-sm text-slate-500">
+              Check where you&apos;ve been and where you want to go. These show on your profile.
+            </p>
+            {halls.length === 0 ? (
+              <p className="text-sm text-slate-500">No dining halls have been added to Slopkins yet.</p>
+            ) : (
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="text-slate-500">
+                    <th className="py-2 font-semibold">Hall</th>
+                    <th className="w-24 py-2 text-center font-semibold">Been to</th>
+                    <th className="w-24 py-2 text-center font-semibold">Want to go</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {halls.map((hall) => (
+                    <tr key={hall.id}>
+                      <td className="py-3 font-medium">{hall.name}</td>
+                      <td className="text-center">
+                        <input
+                          type="checkbox"
+                          name="visited"
+                          value={hall.id}
+                          defaultChecked={visitedIds.includes(hall.id)}
+                          aria-label={`Been to ${hall.name}`}
+                          className="size-5 accent-heritage-blue"
+                        />
+                      </td>
+                      <td className="text-center">
+                        <input
+                          type="checkbox"
+                          name="want_to_go"
+                          value={hall.id}
+                          defaultChecked={wantToGoIds.includes(hall.id)}
+                          aria-label={`Want to go to ${hall.name}`}
+                          className="size-5 accent-heritage-blue"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </Card>
+        </>
+      ) : (
+        <p className="rounded-2xl border-2 border-dashed border-slate-200 p-4 text-center text-sm text-slate-500">
+          Grade, major, bio, and dining halls are coming soon.
         </p>
-        {halls.length === 0 ? (
-          <p className="text-sm text-slate-500">No dining halls have been added to Slopkins yet.</p>
-        ) : (
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="text-slate-500">
-                <th className="py-2 font-semibold">Hall</th>
-                <th className="w-24 py-2 text-center font-semibold">Been to</th>
-                <th className="w-24 py-2 text-center font-semibold">Want to go</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {halls.map((hall) => (
-                <tr key={hall.id}>
-                  <td className="py-3 font-medium">{hall.name}</td>
-                  <td className="text-center">
-                    <input
-                      type="checkbox"
-                      name="visited"
-                      value={hall.id}
-                      defaultChecked={visitedIds.includes(hall.id)}
-                      aria-label={`Been to ${hall.name}`}
-                      className="size-5 accent-heritage-blue"
-                    />
-                  </td>
-                  <td className="text-center">
-                    <input
-                      type="checkbox"
-                      name="want_to_go"
-                      value={hall.id}
-                      defaultChecked={wantToGoIds.includes(hall.id)}
-                      aria-label={`Want to go to ${hall.name}`}
-                      className="size-5 accent-heritage-blue"
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Card>
+      )}
 
       {/* ---------- Save / cancel ---------- */}
       <div aria-live="polite">
@@ -275,7 +318,7 @@ export function EditProfileForm({
         </Link>
         <button
           type="submit"
-          disabled={saving || uploading}
+          disabled={saving || uploading || !usernameOk}
           className="rounded-xl bg-heritage-blue px-6 py-3 font-semibold text-white transition hover:bg-heritage-blue/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {saving ? "Saving…" : "Save changes"}

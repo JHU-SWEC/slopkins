@@ -4,7 +4,14 @@ import { SENTIMENT_STYLES } from "@/features/ranking/components/styles";
 import { logOut } from "../actions";
 import { Avatar } from "./avatar";
 import { ShareButton } from "./share-button";
-import { avatarSrc, shownName, type DiningHall, type ProfileData, type RankedDish } from "./shared";
+import {
+  avatarSrc,
+  isPlaceholderUsername,
+  shownName,
+  type DiningHall,
+  type ProfileData,
+  type RankedDish,
+} from "./shared";
 
 // The whole profile page. `isOwner` = you're looking at your own profile,
 // which adds Edit / My list / Log out and "add something" hints.
@@ -19,6 +26,24 @@ export function ProfileView({ data, isOwner }: { data: ProfileData; isOwner: boo
 
   return (
     <div className="text-heritage-blue">
+      {/* New accounts start with a placeholder username; nudge them to pick a real one. */}
+      {isOwner && isPlaceholderUsername(profile.username) && (
+        <Link
+          href="/profile/edit"
+          className="mb-4 flex items-center justify-between gap-4 rounded-2xl bg-spirit-blue/25 px-4 py-3 transition hover:bg-spirit-blue/35"
+        >
+          <span>
+            <span className="block font-semibold">Finish setting up your profile</span>
+            <span className="text-sm text-heritage-blue/80">
+              Add a photo and pick your name and username.
+            </span>
+          </span>
+          <span aria-hidden="true" className="text-xl">
+            ›
+          </span>
+        </Link>
+      )}
+
       {/* ---------- 1. Header: photo, name, details, bio, buttons ---------- */}
       <section className="overflow-hidden rounded-3xl bg-linear-to-br from-heritage-blue to-[#1d5aa8] p-6 text-white shadow-lg sm:p-8">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
@@ -42,7 +67,8 @@ export function ProfileView({ data, isOwner }: { data: ProfileData; isOwner: boo
         {profile.bio ? (
           <p className="mt-4 whitespace-pre-line text-white/90">{profile.bio}</p>
         ) : (
-          isOwner && (
+          isOwner &&
+          data.detailsReady && (
             <p className="mt-4 text-sm text-white/60">
               Add a bio, grade, and major from{" "}
               <Link href="/profile/edit" className="underline">
