@@ -24,7 +24,8 @@ export default function PageShell({
   return (
     <div className="min-h-screen bg-linear-to-b from-[#EAF3FC] via-white to-white font-sans text-slate-900">
       <header className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
+        {/* pr-14 clears the fixed theme toggle until the page is wide enough. */}
+        <div className="mx-auto flex max-w-2xl items-center justify-between py-3 pl-4 pr-14 md:pr-4">
           <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
             <span
               className={`grid h-8 w-8 place-items-center rounded-lg text-sm text-white ${BRAND_BG}`}
@@ -33,7 +34,7 @@ export default function PageShell({
             </span>
             Slopkins
           </Link>
-          <nav className="flex gap-1 rounded-full bg-slate-100 p-1 text-sm font-medium">
+          <nav className="flex gap-1 whitespace-nowrap rounded-full bg-slate-100 p-1 text-sm font-medium">
             {NAV.map((item) => (
               <Link
                 key={item.page}

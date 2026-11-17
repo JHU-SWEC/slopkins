@@ -62,7 +62,7 @@ lib/
 
 Skeleton only. Lucas designs and implements it.
 
-- App name, one-line pitch, a placeholder "Sign in with JHU" button that does nothing.
+- App name, one-line pitch, a placeholder "Sign in with Google" button that does nothing.
 - "Skip" link to `/feed`.
 
 ### `/feed`
