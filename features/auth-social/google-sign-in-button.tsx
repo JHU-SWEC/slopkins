@@ -19,7 +19,7 @@ export function GoogleSignInButton() {
       </button>
       <div aria-live="polite">
         {state.error && (
-          <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>
+          <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">{state.error}</p>
         )}
       </div>
     </form>
