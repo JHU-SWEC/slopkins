@@ -4,7 +4,7 @@
 // update, so moving to Supabase should only mean rewriting this file.
 
 import { getSentimentGroup, SENTIMENT_ORDER } from "./insertion";
-import { CURRENT_USER_ID, dishes, rankings as mockRankings } from "./mock-data";
+import { CURRENT_USER_ID, rankings as mockRankings, seedDishes } from "./mock-data";
 import { sentimentScore } from "./score";
 import type {
   Comparison,
@@ -24,6 +24,9 @@ const RANKINGS_KEY = "slopkins.rankings.v2";
 const COMPARISONS_KEY = "slopkins.comparisons.v2";
 const MEALS_KEY = "slopkins.meals.v2";
 const MEAL_DISHES_KEY = "slopkins.meal-dishes.v2";
+// Menus are fetched live, so keep a copy of every dish that gets logged.
+// Stands in for the dishes table until the ingest fills it.
+const DISHES_KEY = "slopkins.dishes.v2";
 
 function read<T>(key: string, fallback: T[]): T[] {
   try {
@@ -51,7 +54,13 @@ export function getCurrentUserId(): string {
 }
 
 export function getDish(id: number): Dish | undefined {
-  return dishes.find((dish) => dish.id === id);
+  return read<Dish>(DISHES_KEY, seedDishes).find((dish) => dish.id === id);
+}
+
+/** Adds or refreshes dishes in the local catalog. */
+function saveDishes(dishes: Dish[]): void {
+  const ids = new Set(dishes.map((dish) => dish.id));
+  write(DISHES_KEY, [...read<Dish>(DISHES_KEY, seedDishes).filter((d) => !ids.has(d.id)), ...dishes]);
 }
 
 // ------------------------------------------------------------
@@ -154,13 +163,15 @@ export type LogMealInput = {
   userId: string;
   hallSlug: HallSlug;
   meal: MealType | null;
-  dishIds: number[];
+  /** The dishes as shown on the menu, with rankable set from isMain. */
+  dishes: Dish[];
   /** false is "log without ranking": rankable dishes start skipped. */
   rank: boolean;
 };
 
 /** Mirrors log_meal(). Returns the new meal's id. */
 export function logMeal(input: LogMealInput): number {
+  saveDishes(input.dishes);
   const meals = read<Meal>(MEALS_KEY, []);
   const meal: Meal = {
     id: nextId(meals),
@@ -171,15 +182,13 @@ export function logMeal(input: LogMealInput): number {
   };
   write(MEALS_KEY, [...meals, meal]);
 
-  const rows: MealDish[] = input.dishIds.flatMap((dishId) => {
-    const dish = getDish(dishId);
-    if (!dish) return [];
+  const rows: MealDish[] = input.dishes.map((dish) => {
     const rank_status: RankStatus = !dish.rankable
       ? "unrankable"
       : input.rank
         ? "pending"
         : "skipped";
-    return [{ meal_id: meal.id, dish_id: dishId, rank_status }];
+    return { meal_id: meal.id, dish_id: dish.id, rank_status };
   });
   write(MEAL_DISHES_KEY, [...read<MealDish>(MEAL_DISHES_KEY, []), ...rows]);
 
@@ -227,7 +236,7 @@ export function getMealsWithPendingDishes(userId: string): MealWithDishes[] {
 /** Throws away saved changes and goes back to the mock data. */
 export function resetToMockData(): void {
   try {
-    for (const key of [RANKINGS_KEY, COMPARISONS_KEY, MEALS_KEY, MEAL_DISHES_KEY]) {
+    for (const key of [RANKINGS_KEY, COMPARISONS_KEY, MEALS_KEY, MEAL_DISHES_KEY, DISHES_KEY]) {
       localStorage.removeItem(key);
     }
   } catch {

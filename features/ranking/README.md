@@ -5,10 +5,10 @@ Log a meal, then rank the dishes worth ranking. Schema: [docs/database-schema.md
 
 ## Pipeline
 
-1. **Log** (`/dining/[slug]`). Pick everything you ate. Dishes with `rankable = false` (rice, steamed veg, build-your-own salad) show "Not ranked".
+1. **Log** (`/dining/[slug]`). Check off what you ate, then **Review meal**. Only mains are rankable: `rankable` comes from Kyle's `isMain` in `lib/menus.ts`, so sides, toppings, cereal, sauces and drinks are logged but never ranked.
    - **Log & rank** saves the meal and opens `/rank?meal=<id>`.
    - **Log only** saves the meal with every dish skipped and goes to the feed.
-   - If nothing selected is rankable, there's just **Log meal**.
+   - If no main is selected, there's just **Log meal**.
 2. **Rank** (`/rank?meal=<id>`). One rankable dish at a time:
    - Already on your list? **Keep it there** (one tap) or **Re-rank**.
    - Verdict: liked / fine / didn't like.
@@ -35,7 +35,7 @@ Beli-style: the verdict picks a band (liked 7–10, fine 4–7, disliked 0–4),
 | `components/PendingMeals.tsx` | "Dishes to rank" banner. |
 | `components/MyList.tsx` | `/my-list`. |
 
-Moving to Supabase: needs auth (for `auth.uid()`) and the ingest writing real `dishes` ids. Then `logMeal` → `rpc("log_meal")`, `rankDish` → `rpc("rank_dish")`, `setRankStatus` → `update meal_dishes`, reads → selects.
+Menus are fetched live from Nutrislice and nothing writes `dishes` yet, so the store keeps a copy of each logged dish (id = Nutrislice `food.id`). Moving to Supabase: needs auth (for `auth.uid()`) and `dishes` rows to exist, either from an ingest job or by upserting each dish on log. Then `logMeal` → `rpc("log_meal")`, `rankDish` → `rpc("rank_dish")`, `setRankStatus` → `update meal_dishes`, reads → selects.
 
 ## Ranking methods considered
 
