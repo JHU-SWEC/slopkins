@@ -51,7 +51,10 @@ Maps each Nutrislice menu (one school plus one menu type) to a hall. A hall can 
 | fat_g              | numeric     | nullable, `g_fat`                           |
 | serving_size       | text        | nullable, e.g. `1 oz`                       |
 | dietary_tags       | text[]      | not null default `'{}'`, from `food.icons`  |
+| rankable           | boolean     | not null default `true`, see below          |
 | created_at         | timestamptz |                                             |
+
+- `rankable = false` for sides, staples and build-your-own bars (rice, steamed vegetables, salad bar). They can be logged but never ranked. The ingest sets it; admins can flip it.
 
 ### `menu_items`
 
@@ -86,6 +89,34 @@ One row per dish served on a Nutrislice menu on a date.
 
 ## Add + Rank (owner: Jonny)
 
+Pipeline: log a meal (`log_meal`), then rank its rankable dishes one at a time (`rank_dish`). Any dish can be skipped, and "log without ranking" skips them all up front. Design notes: [features/ranking/README.md](../features/ranking/README.md).
+
+### `meals`
+
+One visit to one hall. The feed can read these.
+
+| column         | type             | notes                                        |
+| -------------- | ---------------- | -------------------------------------------- |
+| id             | bigint           | PK                                           |
+| user_id        | uuid             | FK `profiles`                                |
+| dining_hall_id | bigint           | FK `dining_halls`                            |
+| meal           | `meal_type` enum | nullable, null for Levering kitchens         |
+| eaten_on       | date             | not null, defaults to today in New York time |
+| created_at     | timestamptz      |                                              |
+
+- Index: `(user_id, created_at desc)`.
+
+### `meal_dishes`
+
+| column      | type               | notes                                              |
+| ----------- | ------------------ | -------------------------------------------------- |
+| meal_id     | bigint             | FK `meals` `on delete cascade`                     |
+| dish_id     | bigint             | FK `dishes`                                        |
+| rank_status | `rank_status` enum | `pending`, `ranked`, `skipped`, `unrankable`       |
+
+- PK: `(meal_id, dish_id)`.
+- `log_meal` sets `unrankable` from `dishes.rankable`, else `pending` (or `skipped` for "log without ranking"). The rank queue is the rows still `pending`.
+
 ### `comparisons`
 
 Raw log of every "X or Y" answer.
@@ -108,13 +139,16 @@ A user's ranked list. One row per dish the user has ranked.
 | ---------- | ----------- | --------------------------------------- |
 | user_id    | uuid        | FK `profiles`                           |
 | dish_id    | bigint      | FK `dishes`                             |
-| score      | numeric     | not null, the owner picks the algorithm |
+| sentiment  | `sentiment` enum | `liked`, `fine`, `disliked`   |
+| score      | numeric     | not null, kept in the sentiment's band  |
 | comment    | text        | nullable                                |
 | created_at | timestamptz |                                         |
 | updated_at | timestamptz |                                         |
 
 - PK: `(user_id, dish_id)`.
 - Check: `score` is finite (no `NaN` or `Infinity`).
+- Check: `score` sits in its sentiment's band: liked (7, 10], fine (4, 7], disliked (0, 4].
+- Within a band, scores are spread evenly by rank: `sentiment_score(sentiment, position, group_size)`. Ordering by `score desc` gives the list order.
 - Index: `(user_id, score desc)` for the "My list" page.
 
 ### `dish_scores`
@@ -127,8 +161,16 @@ Global score per dish, used to sort the landing page. Build it as a view or a ma
 | avg_score    | numeric |       |
 | num_rankings | int     |       |
 
+### RPCs
+
+Both are `security invoker`, so RLS still applies.
+
+- `log_meal(p_dining_hall_id, p_meal, p_dish_ids, p_rank default true) returns bigint`: inserts the meal and its dishes in one transaction, returns the meal id.
+- `rank_dish(p_dish_id, p_sentiment, p_position, p_comment, p_meal_id, p_comparisons)`: logs the comparisons, upserts the ranking at `p_position` (0-based, within the sentiment group, not counting this dish), re-spreads scores in the new group and the old one if the dish moved, and marks the meal row `ranked`. Rejects unrankable dishes.
+
 ### RLS
 
+- `meals`, `meal_dishes`: readable by everyone. A user can insert and delete only their own meals, and insert, update and delete dishes only on their own meals.
 - `comparisons`: a user can insert and select only their own rows.
 - `rankings`: readable by everyone (profiles and the feed show them). A user can insert, update and delete only their own rows.
 

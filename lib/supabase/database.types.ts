@@ -122,6 +122,7 @@ export type Database = {
           name: string
           nutrislice_food_id: number
           protein_g: number | null
+          rankable: boolean
           serving_size: string | null
         }
         Insert: {
@@ -134,6 +135,7 @@ export type Database = {
           name: string
           nutrislice_food_id: number
           protein_g?: number | null
+          rankable?: boolean
           serving_size?: string | null
         }
         Update: {
@@ -146,6 +148,7 @@ export type Database = {
           name?: string
           nutrislice_food_id?: number
           protein_g?: number | null
+          rankable?: boolean
           serving_size?: string | null
         }
         Relationships: []
@@ -177,6 +180,81 @@ export type Database = {
           {
             foreignKeyName: "follows_follower_id_fkey"
             columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meal_dishes: {
+        Row: {
+          dish_id: number
+          meal_id: number
+          rank_status: Database["public"]["Enums"]["rank_status"]
+        }
+        Insert: {
+          dish_id: number
+          meal_id: number
+          rank_status?: Database["public"]["Enums"]["rank_status"]
+        }
+        Update: {
+          dish_id?: number
+          meal_id?: number
+          rank_status?: Database["public"]["Enums"]["rank_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_dishes_dish_id_fkey"
+            columns: ["dish_id"]
+            isOneToOne: false
+            referencedRelation: "dishes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meal_dishes_meal_id_fkey"
+            columns: ["meal_id"]
+            isOneToOne: false
+            referencedRelation: "meals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meals: {
+        Row: {
+          created_at: string
+          dining_hall_id: number
+          eaten_on: string
+          id: number
+          meal: Database["public"]["Enums"]["meal_type"] | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dining_hall_id: number
+          eaten_on?: string
+          id?: never
+          meal?: Database["public"]["Enums"]["meal_type"] | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dining_hall_id?: number
+          eaten_on?: string
+          id?: never
+          meal?: Database["public"]["Enums"]["meal_type"] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meals_dining_hall_id_fkey"
+            columns: ["dining_hall_id"]
+            isOneToOne: false
+            referencedRelation: "dining_halls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meals_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -287,6 +365,7 @@ export type Database = {
           created_at: string
           dish_id: number
           score: number
+          sentiment: Database["public"]["Enums"]["sentiment"]
           updated_at: string
           user_id: string
         }
@@ -295,6 +374,7 @@ export type Database = {
           created_at?: string
           dish_id: number
           score: number
+          sentiment: Database["public"]["Enums"]["sentiment"]
           updated_at?: string
           user_id: string
         }
@@ -303,6 +383,7 @@ export type Database = {
           created_at?: string
           dish_id?: number
           score?: number
+          sentiment?: Database["public"]["Enums"]["sentiment"]
           updated_at?: string
           user_id?: string
         }
@@ -343,10 +424,39 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      log_meal: {
+        Args: {
+          p_dining_hall_id: number
+          p_dish_ids: number[]
+          p_meal: Database["public"]["Enums"]["meal_type"] | null
+          p_rank?: boolean
+        }
+        Returns: number
+      }
+      rank_dish: {
+        Args: {
+          p_comment?: string | null
+          p_comparisons?: Json
+          p_dish_id: number
+          p_meal_id?: number | null
+          p_position: number
+          p_sentiment: Database["public"]["Enums"]["sentiment"]
+        }
+        Returns: undefined
+      }
+      sentiment_score: {
+        Args: {
+          p_group_size: number
+          p_position: number
+          p_sentiment: Database["public"]["Enums"]["sentiment"]
+        }
+        Returns: number
+      }
     }
     Enums: {
       meal_type: "breakfast" | "lunch" | "dinner"
+      rank_status: "pending" | "ranked" | "skipped" | "unrankable"
+      sentiment: "liked" | "fine" | "disliked"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -475,6 +585,8 @@ export const Constants = {
   public: {
     Enums: {
       meal_type: ["breakfast", "lunch", "dinner"],
+      rank_status: ["pending", "ranked", "skipped", "unrankable"],
+      sentiment: ["liked", "fine", "disliked"],
     },
   },
 } as const

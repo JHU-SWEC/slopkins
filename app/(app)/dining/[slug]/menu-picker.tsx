@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getCurrentUserId, logMeal } from "@/features/ranking/store";
+import type { HallSlug } from "@/lib/halls";
 import type { MockDish, MockMenuTab } from "@/lib/mock-data";
 
-export function MenuPicker({ tabs }: { tabs: MockMenuTab[] }) {
+export function MenuPicker({ hallSlug, tabs }: { hallSlug: HallSlug; tabs: MockMenuTab[] }) {
   const router = useRouter();
   const [tabIndex, setTabIndex] = useState(0);
   const [selected, setSelected] = useState<Set<number>>(new Set());
@@ -26,6 +28,22 @@ export function MenuPicker({ tabs }: { tabs: MockMenuTab[] }) {
       else next.add(dishId);
       return next;
     });
+  }
+
+  // Log first, then rank. "Log only" skips the rank step entirely; dishes
+  // stay skippable one by one on the rank page either way.
+  const allDishes = tabs.flatMap((t) => t.dishes);
+  const rankableCount = allDishes.filter((d) => selected.has(d.id) && d.rankable).length;
+
+  function log(rank: boolean) {
+    const mealId = logMeal({
+      userId: getCurrentUserId(),
+      hallSlug,
+      meal: tab.meal,
+      dishIds: [...selected],
+      rank,
+    });
+    router.push(rank ? `/rank?meal=${mealId}` : "/feed");
   }
 
   // Group the tab's dishes by station, keeping menu order.
@@ -70,6 +88,9 @@ export function MenuPicker({ tabs }: { tabs: MockMenuTab[] }) {
                       className="h-5 w-5 accent-blue-600"
                     />
                     <span className="flex-1 font-medium">{dish.name}</span>
+                    {!dish.rankable && (
+                      <span className="text-xs text-gray-400">Not ranked</span>
+                    )}
                     {dish.calories !== null && (
                       <span className="text-sm text-gray-400">{dish.calories} cal</span>
                     )}
@@ -81,16 +102,27 @@ export function MenuPicker({ tabs }: { tabs: MockMenuTab[] }) {
         ))}
       </div>
 
-      {/* Mockup: nothing is saved. Real version logs the meal. */}
+      {/* Saved to localStorage until auth and log_meal() are wired up. */}
       <div className="fixed inset-x-0 bottom-16 border-t border-gray-200 bg-white px-4 py-3">
-        <button
-          type="button"
-          disabled={selected.size === 0}
-          onClick={() => router.push("/feed")}
-          className="mx-auto block w-full max-w-2xl rounded-md bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600"
-        >
-          Log meal ({selected.size})
-        </button>
+        <div className="mx-auto flex max-w-2xl gap-2">
+          {rankableCount > 0 && (
+            <button
+              type="button"
+              onClick={() => log(false)}
+              className="shrink-0 rounded-md border border-gray-200 px-4 py-3 font-semibold text-gray-700 transition hover:bg-gray-50"
+            >
+              Log only
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={selected.size === 0}
+            onClick={() => log(rankableCount > 0)}
+            className="flex-1 rounded-md bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600"
+          >
+            {rankableCount > 0 ? `Log & rank (${selected.size})` : `Log meal (${selected.size})`}
+          </button>
+        </div>
       </div>
     </>
   );

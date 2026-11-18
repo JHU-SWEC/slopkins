@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import PendingMeals from "@/features/ranking/components/PendingMeals";
 import { halls } from "@/lib/halls";
 
 export default function Dining() {
@@ -6,6 +8,11 @@ export default function Dining() {
     <>
       <h1 className="text-2xl font-bold tracking-tight">Dining halls</h1>
       <p className="mt-1 text-gray-500">Where did you just eat?</p>
+
+      {/* Logged meals with dishes still waiting to be ranked. */}
+      <Suspense>
+        <PendingMeals />
+      </Suspense>
 
       <ul className="mt-6 divide-y divide-gray-100 rounded-2xl border border-gray-200">
         {halls.map((hall) => (

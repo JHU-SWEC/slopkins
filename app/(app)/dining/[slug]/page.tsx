@@ -35,7 +35,7 @@ async function HallMenu({ params }: { params: PageProps<"/dining/[slug]">["param
       <h1 className="mt-2 text-2xl font-bold tracking-tight">{hall.name}</h1>
       <p className="mt-1 text-gray-500">Select everything you ate.</p>
 
-      <MenuPicker tabs={mockMenus[hall.slug]} />
+      <MenuPicker hallSlug={hall.slug} tabs={mockMenus[hall.slug]} />
     </>
   );
 }
