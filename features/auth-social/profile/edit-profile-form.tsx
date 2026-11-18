@@ -20,7 +20,7 @@ const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5 MB, same limit as the storage buck
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 const inputClass =
-  "mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-heritage-blue placeholder:text-slate-400 focus:border-heritage-blue focus:outline-none focus:ring-2 focus:ring-spirit-blue/40";
+  "mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-heritage-blue dark:text-white placeholder:text-slate-400 focus:border-heritage-blue focus:outline-none focus:ring-2 focus:ring-spirit-blue/40";
 const labelClass = "block text-sm font-semibold";
 
 export function EditProfileForm({
@@ -98,7 +98,7 @@ export function EditProfileForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 text-heritage-blue">
+    <form onSubmit={handleSubmit} className="space-y-6 text-heritage-blue dark:text-white">
       {usedSuggestions && (
         <p className="rounded-2xl bg-spirit-blue/20 px-4 py-3 text-sm">
           We filled in some fields from your Google account. Change anything you like, then press{" "}
@@ -148,7 +148,7 @@ export function EditProfileForm({
           aria-label="Choose a profile picture"
         />
         <input type="hidden" name="avatar_path" value={avatarPath} />
-        {photoError && <p className="mt-3 text-sm text-red-700">{photoError}</p>}
+        {photoError && <p className="mt-3 text-sm text-red-700 dark:text-red-300">{photoError}</p>}
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <div>
@@ -188,7 +188,7 @@ export function EditProfileForm({
             </div>
             <p
               id="username-hint"
-              className={`mt-1 text-xs ${usernameOk ? "text-slate-500" : "text-red-700"}`}
+              className={`mt-1 text-xs ${usernameOk ? "text-slate-500" : "text-red-700 dark:text-red-300"}`}
             >
               3–20 characters: lowercase letters, numbers, and _. Your link: /u/{username || "…"}
             </p>
@@ -306,13 +306,13 @@ export function EditProfileForm({
       {/* ---------- Save / cancel ---------- */}
       <div aria-live="polite">
         {state.error && (
-          <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>
+          <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">{state.error}</p>
         )}
       </div>
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <Link
           href="/profile"
-          className="rounded-xl px-5 py-3 text-center font-semibold text-heritage-blue transition hover:bg-slate-100"
+          className="rounded-xl px-5 py-3 text-center font-semibold text-heritage-blue transition hover:bg-slate-100 dark:text-white"
         >
           Cancel
         </Link>
