@@ -82,6 +82,10 @@
   :where([data-theme="dark"]) .bg-white {
     background-color: var(--background);
   }
+  /* Buttons sit a step above the page instead of matching it. */
+  :where([data-theme="dark"]) :is(button, a).bg-white {
+    background-color: var(--color-gray-100);
+  }
   :where([data-theme="dark"]) .bg-white\/80 {
     background-color: color-mix(in oklab, var(--background) 80%, transparent);
   }
