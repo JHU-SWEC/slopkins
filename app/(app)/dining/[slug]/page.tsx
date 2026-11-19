@@ -72,7 +72,7 @@ async function HallMenu({
       <DayPicker slug={hall.slug} date={date} today={today} />
 
       {/* Keyed by date so picking another day starts a fresh meal. */}
-      <MenuPicker key={date} tabs={tabs} canLog={isToday} />
+      <MenuPicker key={date} hallSlug={hall.slug} tabs={tabs} canLog={isToday} />
     </>
   );
 }

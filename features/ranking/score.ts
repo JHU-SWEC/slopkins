@@ -1,9 +1,9 @@
-import { getSentimentGroup } from "./insertion";
-import type { RankedDish, Sentiment } from "./types";
+import type { Sentiment } from "./types";
 
 /**
  * Each sentiment gets its own band, so a disliked dish can never outscore
- * a liked one. These numbers are a starting point; tune them freely.
+ * a liked one. The lower bound is exclusive. Mirrored in the SQL function
+ * public.sentiment_score; change both together.
  */
 export const SCORE_RANGES: Record<Sentiment, { min: number; max: number }> = {
   liked: { min: 7, max: 10 },
@@ -12,18 +12,14 @@ export const SCORE_RANGES: Record<Sentiment, { min: number; max: number }> = {
 };
 
 /**
- * Spreads a group evenly across its band. The top dish gets the band's max;
- * the bottom dish stays above the band's min, so bands never overlap.
+ * Spreads a group evenly across its band. The top dish (position 0) gets the
+ * band's max; the bottom dish stays above the band's min.
  */
-export function getScore(sentiment: Sentiment, position: number, groupSize: number): number {
+export function sentimentScore(sentiment: Sentiment, position: number, groupSize: number): number {
   const { min, max } = SCORE_RANGES[sentiment];
-  const score = max - ((max - min) * position) / groupSize;
-  return Math.round(score * 10) / 10;
+  return max - ((max - min) * position) / groupSize;
 }
 
-/** The score for one dish on a user's list. */
-export function getDishScore(dishes: RankedDish[], item: RankedDish): number {
-  const group = getSentimentGroup(dishes, item.sentiment);
-  const position = group.findIndex((d) => d.dish_id === item.dish_id);
-  return getScore(item.sentiment, position, group.length);
+export function formatScore(score: number): string {
+  return (Math.round(score * 10) / 10).toFixed(1);
 }
