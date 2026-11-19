@@ -46,14 +46,18 @@ export function MealCart({
   onRemove,
   onLog,
   canLog,
+  canRank,
 }: {
   items: CartItem[];
   open: boolean;
   onClose: () => void;
   onChange: (item: CartItem) => void;
   onRemove: (dishId: number) => void;
-  onLog: () => void;
+  /** rank = false is "Log only". */
+  onLog: (rank: boolean) => void;
   canLog: boolean;
+  /** At least one item is a main, so there's something to rank. */
+  canRank: boolean;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -62,6 +66,12 @@ export function MealCart({
     if (!dialog) return;
     if (open && !dialog.open) dialog.showModal();
     if (!open && dialog.open) dialog.close();
+    // Next keeps a page alive but hidden after you navigate away. An open modal
+    // would stay on top of the next page and block every click, so close it
+    // whenever this effect is torn down (including when the page is hidden).
+    return () => {
+      if (dialog.open) dialog.close();
+    };
   }, [open]);
 
   const totals =
@@ -144,16 +154,28 @@ export function MealCart({
             )}
           </div>
 
-          {/* Mockup: nothing is saved. Real version logs the meal. */}
+          {/* Saved to localStorage until auth and log_meal() are wired up. */}
           <div className="border-t border-gray-100 px-5 py-4">
-            <button
-              type="button"
-              disabled={items.length === 0 || !canLog}
-              onClick={onLog}
-              className="block w-full rounded-md bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600"
-            >
-              Log meal
-            </button>
+            <div className="flex gap-2">
+              {canRank && (
+                <button
+                  type="button"
+                  disabled={items.length === 0 || !canLog}
+                  onClick={() => onLog(false)}
+                  className="shrink-0 rounded-md border border-gray-200 px-4 py-3 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-40"
+                >
+                  Log only
+                </button>
+              )}
+              <button
+                type="button"
+                disabled={items.length === 0 || !canLog}
+                onClick={() => onLog(canRank)}
+                className="flex-1 rounded-md bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600"
+              >
+                {canRank ? "Log & rank" : "Log meal"}
+              </button>
+            </div>
             {!canLog && (
               <p className="mt-2 text-center text-xs text-gray-500">
                 This menu is for a future day. You can log meals on the day you eat them.

@@ -219,8 +219,8 @@ function RankList({ dishes, empty, isOwner }: { dishes: RankedDish[]; empty: str
       <Empty>
         {empty}{" "}
         {isOwner && (
-          <Link href="/rank" className="font-semibold text-heritage-blue underline dark:text-spirit-blue">
-            Rank a dish
+          <Link href="/dining" className="font-semibold text-heritage-blue underline dark:text-spirit-blue">
+            Log a meal
           </Link>
         )}
       </Empty>

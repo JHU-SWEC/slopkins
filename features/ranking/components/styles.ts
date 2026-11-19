@@ -1,60 +1,24 @@
-import type { DiningHallId, Sentiment } from "../types";
+// Same building blocks as the dining and feed pages.
+import type { Sentiment } from "../types";
 
-export const SENTIMENT_STYLES: Record<
-  Sentiment,
-  {
-    heading: string;
-    prompt: string;
-    description: string;
-    emoji: string;
-    badge: string;
-    score: string;
-    choice: string;
-  }
-> = {
-  liked: {
-    heading: "Liked",
-    prompt: "I liked it",
-    description: "Would get it again",
-    emoji: "😋",
-    badge: "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20",
-    score: "bg-emerald-500 text-white",
-    choice: "hover:border-emerald-400 hover:bg-emerald-50/70",
-  },
-  fine: {
-    heading: "Fine",
-    prompt: "It was fine",
-    description: "Edible, not memorable",
-    emoji: "😐",
-    badge: "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20",
-    score: "bg-amber-400 text-white",
-    choice: "hover:border-amber-400 hover:bg-amber-50/70",
-  },
-  disliked: {
-    heading: "Didn't like",
-    prompt: "I didn't like it",
-    description: "Never again",
-    emoji: "🤢",
-    badge: "bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20",
-    score: "bg-rose-500 text-white",
-    choice: "hover:border-rose-400 hover:bg-rose-50/70",
-  },
+export const SENTIMENT_LABELS: Record<Sentiment, { heading: string; prompt: string }> = {
+  liked: { heading: "Liked", prompt: "Liked it" },
+  fine: { heading: "Fine", prompt: "It was fine" },
+  disliked: { heading: "Didn't like", prompt: "Didn't like it" },
 };
 
-export const HALL_STYLES: Record<DiningHallId, string> = {
-  ffc: "bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-600/20",
-  nolans: "bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-600/20",
-  levering: "bg-orange-50 text-orange-700 ring-1 ring-inset ring-orange-600/20",
+/** Score badge colors, used by the profile page's ranked list. */
+export const SENTIMENT_STYLES: Record<Sentiment, { score: string }> = {
+  liked: { score: "bg-emerald-500 text-white" },
+  fine: { score: "bg-amber-400 text-white" },
+  disliked: { score: "bg-rose-500 text-white" },
 };
-
-/** Johns Hopkins Heritage Blue. */
-export const BRAND_BG = "bg-[#002D72]";
-export const BRAND_TEXT = "text-[#002D72]";
 
 export const primaryButton =
-  "inline-flex items-center justify-center rounded-xl bg-[#002D72] px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-[#001f52] active:scale-[0.98]";
+  "block w-full rounded-md bg-blue-600 py-3 text-center font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40";
 export const secondaryButton =
-  "inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-[0.98]";
+  "block w-full rounded-md border border-gray-200 py-3 text-center font-semibold transition hover:bg-gray-50";
 
-/** Fades a card in when it first appears. */
-export const enter = "transition duration-300 ease-out starting:translate-y-2 starting:opacity-0";
+/** A bordered list, like the menu and hall lists. */
+export const listBox = "divide-y divide-gray-100 rounded-2xl border border-gray-200";
+export const sectionHeading = "text-sm font-semibold uppercase tracking-wide text-gray-400";
