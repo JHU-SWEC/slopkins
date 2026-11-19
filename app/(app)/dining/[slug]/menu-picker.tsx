@@ -228,7 +228,7 @@ export function MenuPicker({
             <button
               type="button"
               onClick={() => setDirection(direction === "asc" ? "desc" : "asc")}
-              className="rounded-md border border-gray-200 px-2.5 py-1.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50"
+              className="rounded-md border border-gray-200 px-2.5 py-1.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:bg-gray-100"
             >
               {direction === "asc" ? "↑ Low to high" : "↓ High to low"}
             </button>
