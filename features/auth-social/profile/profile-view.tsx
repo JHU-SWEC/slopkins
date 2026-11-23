@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SCORE_RANGES } from "@/features/ranking/score";
 import { SENTIMENT_STYLES } from "@/features/ranking/components/styles";
 import { logOut } from "../actions";
+import { FollowButton } from "../social/follow-button";
 import { Avatar } from "./avatar";
 import { ShareButton } from "./share-button";
 import {
@@ -13,9 +14,21 @@ import {
   type RankedDish,
 } from "./shared";
 
+/** How the person looking at the page relates to this profile. */
+export type Viewer = { signedIn: boolean; iFollow: boolean; followsMe: boolean };
+
 // The whole profile page. `isOwner` = you're looking at your own profile,
-// which adds Edit / My list / Log out and "add something" hints.
-export function ProfileView({ data, isOwner }: { data: ProfileData; isOwner: boolean }) {
+// which adds Edit / My list / Log out and "add something" hints. Anyone else
+// sees a Follow button instead.
+export function ProfileView({
+  data,
+  isOwner,
+  viewer = { signedIn: false, iFollow: false, followsMe: false },
+}: {
+  data: ProfileData;
+  isOwner: boolean;
+  viewer?: Viewer;
+}) {
   const { profile, rankedDishes, visited, wantToGo } = data;
   const name = shownName(profile);
   const memberSince = new Intl.DateTimeFormat("en-US", {
@@ -52,7 +65,14 @@ export function ProfileView({ data, isOwner }: { data: ProfileData; isOwner: boo
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">{name}</h1>
-            {profile.display_name && <p className="text-white/70">@{profile.username}</p>}
+            <p className="flex flex-wrap items-center gap-2 text-white/70">
+              {profile.display_name && <span>@{profile.username}</span>}
+              {!isOwner && viewer.followsMe && (
+                <span className="rounded-md bg-white/15 px-1.5 py-0.5 text-xs font-medium text-white">
+                  Follows you
+                </span>
+              )}
+            </p>
             <p className="mt-1 text-sm text-white/60">Member since {memberSince}</p>
           </div>
         </div>
@@ -79,7 +99,17 @@ export function ProfileView({ data, isOwner }: { data: ProfileData; isOwner: boo
           )
         )}
 
-        <div className="mt-6 flex flex-wrap gap-2">
+        <div className="mt-6 flex flex-wrap items-start gap-2">
+          {!isOwner && (
+            <FollowButton
+              targetId={profile.id}
+              username={profile.username}
+              following={viewer.iFollow}
+              followsMe={viewer.followsMe}
+              signedIn={viewer.signedIn}
+              tone="dark"
+            />
+          )}
           {isOwner && (
             <Link
               href="/profile/edit"
@@ -110,8 +140,12 @@ export function ProfileView({ data, isOwner }: { data: ProfileData; isOwner: boo
           value={data.rank ? `#${data.rank.position}` : "–"}
           label={data.rank ? `Rank of ${data.rank.totalUsers} on Slopkins` : "Rank on Slopkins"}
         />
-        <Stat value={data.followers} label={data.followers === 1 ? "Follower" : "Followers"} />
-        <Stat value={data.following} label="Following" />
+        <Stat
+          value={data.followers}
+          label={data.followers === 1 ? "Follower" : "Followers"}
+          href={`/u/${profile.username}/followers`}
+        />
+        <Stat value={data.following} label="Following" href={`/u/${profile.username}/following`} />
       </section>
 
       {/* ---------- 3. Section menu: sticks to the top while scrolling ---------- */}
@@ -165,12 +199,22 @@ export function ProfileView({ data, isOwner }: { data: ProfileData; isOwner: boo
 
 // ---------- Small building blocks used above ----------
 
-function Stat({ value, label }: { value: number | string; label: string }) {
-  return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 text-center shadow-sm">
-      <p className="text-2xl font-bold">{value}</p>
-      <p className="mt-1 text-xs font-medium text-slate-500">{label}</p>
-    </div>
+// A number tile. With `href`, the whole tile is a link (like tapping
+// "Followers" on Instagram).
+function Stat({ value, label, href }: { value: number | string; label: string; href?: string }) {
+  const tile = "block rounded-2xl border border-slate-200/80 bg-white p-4 text-center shadow-sm";
+  const inner = (
+    <>
+      <span className="block text-2xl font-bold">{value}</span>
+      <span className="mt-1 block text-xs font-medium text-slate-500">{label}</span>
+    </>
+  );
+  return href ? (
+    <Link href={href} className={`${tile} transition hover:border-spirit-blue hover:bg-spirit-blue/10`}>
+      {inner}
+    </Link>
+  ) : (
+    <div className={tile}>{inner}</div>
   );
 }
 

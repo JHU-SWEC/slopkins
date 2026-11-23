@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfileData } from "@/features/auth-social/profile/queries";
 import { ProfileView } from "@/features/auth-social/profile/profile-view";
 import { ProfileMessage, ProfileSkeleton } from "@/features/auth-social/profile/profile-shell";
+import { connection } from "next/server";
 
 export const metadata: Metadata = { title: "Your profile · Slopkins" };
 
@@ -18,6 +19,9 @@ export default function MyProfilePage() {
 }
 
 async function MyProfile() {
+  // Wait for the real request: the sign-in check reads the clock, which Next.js
+  // doesn't allow while it's preparing pages ahead of time.
+  await connection();
   const supabase = await createClient();
   const {
     data: { user },

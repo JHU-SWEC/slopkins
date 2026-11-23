@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileData } from "@/features/auth-social/profile/queries";
+import { getRelationships } from "@/features/auth-social/social/queries";
 import { ProfileView } from "@/features/auth-social/profile/profile-view";
 import { ProfileMessage, ProfileSkeleton } from "@/features/auth-social/profile/profile-shell";
+import { connection } from "next/server";
 
 export const metadata: Metadata = { title: "Profile · Slopkins" };
 
@@ -19,6 +21,9 @@ export default function UserProfilePage({ params }: PageProps<"/u/[username]">) 
 }
 
 async function UserProfile({ username }: { username: string }) {
+  // Wait for the real request: the sign-in check reads the clock, which Next.js
+  // doesn't allow while it's preparing pages ahead of time.
+  await connection();
   const supabase = await createClient();
   const [
     {
@@ -38,5 +43,20 @@ async function UserProfile({ username }: { username: string }) {
     );
   }
 
-  return <ProfileView data={data} isOwner={data.profile.id === user?.id} />;
+  const viewerId = user?.id ?? null;
+  const isOwner = data.profile.id === viewerId;
+  // Do you follow them, and do they follow you? (For the Follow button.)
+  const { iFollow, followsMe } = await getRelationships(supabase, viewerId, [data.profile.id]);
+
+  return (
+    <ProfileView
+      data={data}
+      isOwner={isOwner}
+      viewer={{
+        signedIn: viewerId !== null,
+        iFollow: iFollow.has(data.profile.id),
+        followsMe: followsMe.has(data.profile.id),
+      }}
+    />
+  );
 }
