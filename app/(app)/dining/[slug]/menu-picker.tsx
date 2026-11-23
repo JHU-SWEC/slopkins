@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getCurrentUserId, logMeal } from "@/features/ranking/store";
+import type { HallSlug } from "@/lib/halls";
 import type { MenuDish, MenuTab, Nutrition } from "@/lib/menus";
 import { mealTotals, nutritionFor, type Basis } from "@/lib/nutrition";
 import { BasisToggle } from "./basis-toggle";
@@ -36,7 +38,15 @@ type Section = {
 };
 
 // canLog is false for future days: you can plan a meal but not log it yet.
-export function MenuPicker({ tabs, canLog }: { tabs: MenuTab[]; canLog: boolean }) {
+export function MenuPicker({
+  hallSlug,
+  tabs,
+  canLog,
+}: {
+  hallSlug: HallSlug;
+  tabs: MenuTab[];
+  canLog: boolean;
+}) {
   const router = useRouter();
   const [tabIndex, setTabIndex] = useState(0);
   // Selected dishes and how much of each, in the order they were picked.
@@ -89,6 +99,27 @@ export function MenuPicker({ tabs, canLog }: { tabs: MenuTab[]; canLog: boolean 
   const cartCalories = cartItems.length
     ? mealTotals(cartItems.map((item) => ({ dish: item.dish, servings: servingsOf(item) }))).nutrition.calories
     : null;
+
+  // Log first, then rank the mains. "Log only" skips the rank step; dishes
+  // stay skippable one by one on the rank page either way.
+  function log(rank: boolean) {
+    const mealId = logMeal({
+      userId: getCurrentUserId(),
+      hallSlug,
+      meal: tab.meal,
+      dishes: cartItems.map(({ dish }) => ({
+        id: dish.id,
+        name: dish.name,
+        station: dish.station,
+        calories: dish.calories,
+        rankable: dish.isMain,
+        hall_slug: hallSlug,
+      })),
+      rank,
+    });
+    setCartOpen(false);
+    router.push(rank ? `/rank?meal=${mealId}` : "/feed");
+  }
 
   // Search matches dish or station names, case-insensitively.
   const search = query.trim().toLowerCase();
@@ -197,7 +228,7 @@ export function MenuPicker({ tabs, canLog }: { tabs: MenuTab[]; canLog: boolean 
             <button
               type="button"
               onClick={() => setDirection(direction === "asc" ? "desc" : "asc")}
-              className="rounded-md border border-gray-200 px-2.5 py-1.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50"
+              className="rounded-md border border-gray-200 px-2.5 py-1.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:bg-gray-100"
             >
               {direction === "asc" ? "↑ Low to high" : "↓ High to low"}
             </button>
@@ -270,8 +301,8 @@ export function MenuPicker({ tabs, canLog }: { tabs: MenuTab[]; canLog: boolean 
         onChange={updateItem}
         onRemove={removeItem}
         canLog={canLog}
-        // Mockup: nothing is saved. Real version logs the meal.
-        onLog={() => router.push("/feed")}
+        canRank={cartItems.some((item) => item.dish.isMain)}
+        onLog={log}
       />
 
       <div className="fixed inset-x-0 bottom-16 border-t border-gray-200 bg-white px-4 py-3">

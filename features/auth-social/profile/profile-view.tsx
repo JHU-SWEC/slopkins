@@ -38,7 +38,7 @@ export function ProfileView({
   }).format(new Date(profile.created_at));
 
   return (
-    <div className="text-heritage-blue">
+    <div className="text-heritage-blue dark:text-white">
       {/* New accounts start with a placeholder username; nudge them to pick a real one. */}
       {isOwner && isPlaceholderUsername(profile.username) && (
         <Link
@@ -47,7 +47,7 @@ export function ProfileView({
         >
           <span>
             <span className="block font-semibold">Finish setting up your profile</span>
-            <span className="text-sm text-heritage-blue/80">
+            <span className="text-sm text-heritage-blue/80 dark:text-white/70">
               Add a photo and pick your name and username.
             </span>
           </span>
@@ -113,7 +113,7 @@ export function ProfileView({
           {isOwner && (
             <Link
               href="/profile/edit"
-              className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-heritage-blue transition hover:bg-white/90"
+              className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-heritage-blue transition hover:bg-white/90 dark:text-white dark:hover:bg-background/80"
             >
               Edit profile
             </Link>
@@ -151,7 +151,7 @@ export function ProfileView({
       {/* ---------- 3. Section menu: sticks to the top while scrolling ---------- */}
       <nav
         aria-label="Profile sections"
-        className="sticky top-0 z-10 -mx-4 mt-6 border-b border-slate-200 bg-white/90 px-4 py-2 backdrop-blur"
+        className="sticky top-0 z-10 -mx-4 mt-6 border-b border-slate-200 bg-white/90 px-4 py-2 backdrop-blur dark:bg-background/90"
       >
         <ul className="flex gap-1 overflow-x-auto text-sm font-semibold">
           <SectionLink href="#ranked" label="Ranked dishes" count={rankedDishes.length} />
@@ -263,8 +263,8 @@ function RankList({ dishes, empty, isOwner }: { dishes: RankedDish[]; empty: str
       <Empty>
         {empty}{" "}
         {isOwner && (
-          <Link href="/rank" className="font-semibold text-heritage-blue underline">
-            Rank a dish
+          <Link href="/dining" className="font-semibold text-heritage-blue underline dark:text-spirit-blue">
+            Log a meal
           </Link>
         )}
       </Empty>

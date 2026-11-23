@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   // Keeps the dev indicator off the bottom nav and the theme toggle.
   devIndicators: { position: "top-left" },
+  experimental: {
+    agentUpgrade: "security",
+  },
   images: {
     // Allow profile pictures stored in Supabase Storage's public "avatars" bucket.
     remotePatterns: [

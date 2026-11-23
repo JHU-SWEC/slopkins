@@ -29,7 +29,7 @@ export function ProfileMessage({
 }) {
   return (
     <div className="py-16 text-center">
-      <h1 className="text-2xl font-bold tracking-tight text-heritage-blue">{title}</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-heritage-blue dark:text-white">{title}</h1>
       <p className="mt-2 text-slate-500">{body}</p>
       <Link
         href={linkHref}
