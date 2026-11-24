@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { Tour } from "@/features/tour/Tour";
+import { TourButton } from "@/features/tour/TourButton";
 import { BottomNav, NavLinks } from "./bottom-nav";
 
 // Shared shell for the signed-in screens. No auth check yet: everything is a
@@ -10,6 +12,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* usePathname suspends on routes with unknown params. */}
       <Suspense fallback={<NavLinks />}>
         <BottomNav />
+      </Suspense>
+      <TourButton />
+      {/* First-visit guided tour; reads the pathname, so it suspends on its own. */}
+      <Suspense>
+        <Tour />
       </Suspense>
     </div>
   );

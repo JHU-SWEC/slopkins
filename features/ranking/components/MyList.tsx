@@ -43,7 +43,12 @@ export default function MyList() {
               </h2>
               <ol className={`mt-2 ${listBox}`}>
                 {group.map((item) => (
-                  <li key={item.dish_id} className="flex items-start gap-3 px-4 py-3">
+                  <li
+                    key={item.dish_id}
+                    // The guided tour points at your #1 dish.
+                    data-tour={item.rank === 1 ? "my-list" : undefined}
+                    className="flex items-start gap-3 px-4 py-3"
+                  >
                     <span className="w-6 shrink-0 text-gray-400 tabular-nums">{item.rank}</span>
                     <div className="min-w-0 flex-1">
                       <p className="font-medium">{item.dish.name}</p>
