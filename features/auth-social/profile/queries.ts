@@ -104,7 +104,11 @@ export async function getProfileData(
     wantToGo,
     followers: followers.count ?? 0,
     following: following.count ?? 0,
-    rank: rank.data ? { position: rank.data.rank, totalUsers: rank.data.total_users } : null,
+    // No rank until you've ranked a dish (otherwise everyone ties for #1 at 0).
+    rank:
+      rank.data && rank.data.dishes_ranked > 0
+        ? { position: rank.data.rank, totalUsers: rank.data.total_users }
+        : null,
   };
 }
 

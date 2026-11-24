@@ -11,6 +11,7 @@ import {
 import { EditProfileForm } from "@/features/auth-social/profile/edit-profile-form";
 import { ProfileMessage } from "@/features/auth-social/profile/profile-shell";
 import { isPlaceholderUsername, suggestUsername } from "@/features/auth-social/profile/shared";
+import { connection } from "next/server";
 
 export const metadata: Metadata = { title: "Edit profile · Slopkins" };
 
@@ -33,6 +34,9 @@ export default function EditProfilePage() {
 }
 
 async function EditProfile() {
+  // Wait for the real request: the sign-in check reads the clock, which Next.js
+  // doesn't allow while it's preparing pages ahead of time.
+  await connection();
   const supabase = await createClient();
   const {
     data: { user },

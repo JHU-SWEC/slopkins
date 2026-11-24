@@ -5,11 +5,14 @@ export function Avatar({
   src,
   name,
   size,
+  eager = false,
 }: {
   /** Full image URL (see avatarSrc in shared.ts), or null for no photo. */
   src: string | null;
   name: string;
   size: number;
+  /** Load right away (for the big photo at the top of a page). */
+  eager?: boolean;
 }) {
   if (src) {
     return (
@@ -18,6 +21,7 @@ export function Avatar({
         alt={`${name}'s profile picture`}
         width={size}
         height={size}
+        loading={eager ? "eager" : undefined}
         className="rounded-full bg-white object-cover"
         style={{ width: size, height: size }}
       />
