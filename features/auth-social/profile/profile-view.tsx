@@ -99,7 +99,7 @@ export function ProfileView({
           )
         )}
 
-        <div className="mt-6 flex flex-wrap items-start gap-2">
+        <div data-tour="profile-actions" className="mt-6 flex flex-wrap items-start gap-2">
           {!isOwner && (
             <FollowButton
               targetId={profile.id}
@@ -134,7 +134,7 @@ export function ProfileView({
       </section>
 
       {/* ---------- 2. Stats: four numbers at a glance ---------- */}
-      <section aria-label="Stats" className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <section data-tour="profile-stats" aria-label="Stats" className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat value={rankedDishes.length} label="Dishes ranked" />
         <Stat
           value={data.rank ? `#${data.rank.position}` : "–"}

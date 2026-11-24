@@ -244,7 +244,7 @@ export function MenuPicker({
         {tab.dishes.length > 0 && sections.length === 0 && (
           <p className="text-gray-500">No dishes match &ldquo;{query.trim()}&rdquo;.</p>
         )}
-        {sections.map(({ title, dishes, showStation, highlight }) => (
+        {sections.map(({ title, dishes, showStation, highlight }, sectionIndex) => (
           <section key={highlight ? "mains" : `station:${title}`}>
             <h2
               className={`text-sm font-semibold uppercase tracking-wide ${
@@ -254,8 +254,13 @@ export function MenuPicker({
               {title}
             </h2>
             <ul className="mt-2 divide-y divide-gray-100 rounded-2xl border border-gray-200">
-              {dishes.map((dish) => (
-                <li key={`${dish.station}:${dish.id}`} className="flex items-center hover:bg-gray-50">
+              {dishes.map((dish, dishIndex) => (
+                <li
+                  key={`${dish.station}:${dish.id}`}
+                  // The guided tour points at the first dish on the menu.
+                  data-tour={sectionIndex === 0 && dishIndex === 0 ? "menu-list" : undefined}
+                  className="flex items-center hover:bg-gray-50"
+                >
                   <label className="flex flex-1 cursor-pointer items-center gap-3 py-3 pl-4">
                     <input
                       type="checkbox"
@@ -305,7 +310,7 @@ export function MenuPicker({
         onLog={log}
       />
 
-      <div className="fixed inset-x-0 bottom-16 border-t border-gray-200 bg-white px-4 py-3">
+      <div data-tour="review-meal" className="fixed inset-x-0 bottom-16 border-t border-gray-200 bg-white px-4 py-3">
         <div className="mx-auto flex max-w-2xl items-center gap-3">
           <p className="flex-1 text-sm text-gray-500">
             {cartItems.length === 0 ? (
