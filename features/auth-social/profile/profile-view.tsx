@@ -61,7 +61,7 @@ export function ProfileView({
       <section className="overflow-hidden rounded-3xl bg-linear-to-br from-heritage-blue to-[#1d5aa8] p-6 text-white shadow-lg sm:p-8">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
           <div className="w-fit rounded-full ring-4 ring-white/30">
-            <Avatar src={avatarSrc(profile.avatar_url)} name={name} size={96} />
+            <Avatar src={avatarSrc(profile.avatar_url)} name={name} size={96} eager />
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">{name}</h1>

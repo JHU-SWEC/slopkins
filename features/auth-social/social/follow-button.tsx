@@ -31,11 +31,13 @@ export function FollowButton({
   const [error, setError] = useState("");
 
   const filled =
-    tone === "dark" ? "bg-white text-heritage-blue hover:bg-white/90" : "bg-heritage-blue text-white hover:bg-heritage-blue/90";
+    tone === "dark"
+      ? "bg-white text-heritage-blue hover:bg-white/90"
+      : "bg-heritage-blue text-white hover:bg-heritage-blue/90 dark:bg-spirit-blue dark:text-heritage-blue dark:hover:bg-spirit-blue/90";
   const outlined =
     tone === "dark"
       ? "border border-white/40 text-white hover:bg-white/10"
-      : "border border-slate-300 bg-white text-heritage-blue hover:bg-slate-50";
+      : "border border-slate-300 bg-white text-heritage-blue hover:bg-slate-50 dark:border-white/30 dark:bg-transparent dark:text-white dark:hover:bg-white/10";
   const base = `rounded-xl px-4 py-2 text-sm font-semibold transition ${className}`;
 
   // Signed-out visitors get sent to log in first.
