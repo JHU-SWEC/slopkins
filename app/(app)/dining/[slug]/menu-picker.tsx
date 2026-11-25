@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { logMealAction } from "@/features/ranking/actions";
+import { WantToTryToggle } from "@/features/ranking/components/want-to-try-buttons";
 import type { HallSlug } from "@/lib/halls";
 import type { MenuDish, MenuTab, Nutrition } from "@/lib/menus";
 import { mealTotals, nutritionFor, type Basis } from "@/lib/nutrition";
@@ -42,10 +43,16 @@ export function MenuPicker({
   hallSlug,
   tabs,
   canLog,
+  date,
+  savedFoodIds,
 }: {
   hallSlug: HallSlug;
   tabs: MenuTab[];
   canLog: boolean;
+  /** The menu's day, YYYY-MM-DD. */
+  date: string;
+  /** Dishes on your Want to try list; null when signed out (no bookmarks). */
+  savedFoodIds: number[] | null;
 }) {
   const [logging, startLogging] = useTransition();
   const [logError, setLogError] = useState<string | null>(null);
@@ -58,6 +65,16 @@ export function MenuPicker({
   const [basis, setBasis] = useState<Basis>("serving");
   const [detailDish, setDetailDish] = useState<MenuDish | null>(null);
   const [query, setQuery] = useState("");
+  // Want to try bookmarks, by Nutrislice food id. Null when signed out.
+  const [saved, setSaved] = useState(() => (savedFoodIds ? new Set(savedFoodIds) : null));
+  function setDishSaved(foodId: number, isSaved: boolean) {
+    setSaved((prev) => {
+      const next = new Set(prev);
+      if (isSaved) next.add(foodId);
+      else next.delete(foodId);
+      return next;
+    });
+  }
   const showMacros = useShowMacros();
   // With macros hidden, nutrient sorts don't apply; the saved pick returns when they're back.
   const activeSort: SortKey = showMacros ? sortKey : "menu";
@@ -277,6 +294,17 @@ export function MenuPicker({
                       <span className="text-sm text-gray-400">{sortValue(dish)}</span>
                     )}
                   </label>
+                  {saved && (
+                    <WantToTryToggle
+                      hallSlug={hallSlug}
+                      menuTypeSlug={tab.menuTypeSlug}
+                      date={date}
+                      foodId={dish.id}
+                      name={dish.name}
+                      saved={saved.has(dish.id)}
+                      onChange={(isSaved) => setDishSaved(dish.id, isSaved)}
+                    />
+                  )}
                   {showMacros && (
                     <button
                       type="button"

@@ -2,7 +2,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getHall, type HallSlug } from "@/lib/halls";
 import { SENTIMENT_ORDER } from "./insertion";
-import type { Dish, MealDish, MealType, MealWithDishes, RankedDish, Ranking } from "./types";
+import type {
+  Dish,
+  MealDish,
+  MealType,
+  MealWithDishes,
+  RankedDish,
+  Ranking,
+  WantToTryItem,
+} from "./types";
 
 const DISH_COLUMNS = "id, name, calories, rankable";
 const MEAL_COLUMNS = `id, user_id, meal, created_at, hall:dining_halls(slug), meal_dishes(dish_id, rank_status, dish:dishes(${DISH_COLUMNS}))`;
@@ -144,4 +152,37 @@ export async function getMealsWithPendingDishes(
     row.meal_dishes.some((md) => md.rank_status === "pending"),
   );
   return toMeals(supabase, pending);
+}
+
+/**
+ * Dishes a user saved to Want to try, newest first. dish_alerts RLS returns
+ * rows only to their owner, so anyone else gets an empty list.
+ */
+export async function getWantToTry(supabase: SupabaseClient, userId: string): Promise<WantToTryItem[]> {
+  const { data } = await supabase
+    .from("dish_alerts")
+    .select(`created_at, dish:dishes(${DISH_COLUMNS})`)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  const rows = (data ?? []) as { created_at: string; dish: unknown }[];
+  const dishes = await withPlaces(
+    supabase,
+    rows.flatMap((row) => one<DishRow>(row.dish) ?? []),
+  );
+  return rows.flatMap((row) => {
+    const dish = dishes.get(one<DishRow>(row.dish)?.id ?? 0);
+    return dish ? [{ dish, saved_at: row.created_at }] : [];
+  });
+}
+
+/** Nutrislice food ids of the user's Want to try dishes, for the bookmarks on a menu. */
+export async function getWantToTryFoodIds(supabase: SupabaseClient, userId: string): Promise<number[]> {
+  const { data } = await supabase
+    .from("dish_alerts")
+    .select("dish:dishes(nutrislice_food_id)")
+    .eq("user_id", userId);
+  return ((data ?? []) as { dish: unknown }[]).flatMap((row) => {
+    const id = one<{ nutrislice_food_id: number }>(row.dish)?.nutrislice_food_id;
+    return typeof id === "number" ? [id] : [];
+  });
 }

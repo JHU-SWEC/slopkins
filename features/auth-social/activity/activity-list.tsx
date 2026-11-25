@@ -125,7 +125,7 @@ function Sentence({ item }: { item: ActivityItem }) {
 }
 
 // Same colors as the profile's ranked list: green = liked, amber = fine, red = didn't like.
-function ScoreBadge({ score, sentiment }: { score: number; sentiment: Sentiment | null }) {
+export function ScoreBadge({ score, sentiment }: { score: number; sentiment: Sentiment | null }) {
   const band: Sentiment =
     sentiment ?? (score >= SCORE_RANGES.liked.min ? "liked" : score >= SCORE_RANGES.fine.min ? "fine" : "disliked");
   return (

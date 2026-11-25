@@ -13,10 +13,6 @@ import { nameProblem } from "./name-rules";
 
 export type EditProfileState = { error?: string };
 
-function hallIds(values: FormDataEntryValue[]) {
-  return [...new Set(values.map(Number).filter((n) => Number.isInteger(n) && n > 0))];
-}
-
 export async function updateProfile(
   _prevState: EditProfileState,
   formData: FormData,
@@ -79,26 +75,6 @@ export async function updateProfile(
     .update({ grade: grade || null, major: major || null, bio: bio || null })
     .eq("id", user.id);
   if (details.error) return { error: "Saved your name and photo, but couldn't save the rest." };
-
-  // Replace the user's "been to" / "want to go" lists with what's checked now.
-  const rows = [
-    ...hallIds(formData.getAll("visited")).map((dining_hall_id) => ({
-      user_id: user.id,
-      dining_hall_id,
-      status: "visited",
-    })),
-    ...hallIds(formData.getAll("want_to_go")).map((dining_hall_id) => ({
-      user_id: user.id,
-      dining_hall_id,
-      status: "want_to_go",
-    })),
-  ];
-  const cleared = await supabase.from("user_dining_halls").delete().eq("user_id", user.id);
-  if (cleared.error) return { error: "Saved your profile, but couldn't update your dining halls." };
-  if (rows.length > 0) {
-    const inserted = await supabase.from("user_dining_halls").insert(rows);
-    if (inserted.error) return { error: "Saved your profile, but couldn't update your dining halls." };
-  }
 
   redirect("/profile");
 }

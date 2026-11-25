@@ -1,5 +1,5 @@
 // Used by both server code and browser code, so nothing server-only here.
-import type { RankedDish } from "@/features/ranking/types";
+import type { RankedDish, WantToTryItem } from "@/features/ranking/types";
 import type { Tables } from "@/lib/supabase/database.types";
 
 export type Profile = Pick<
@@ -7,15 +7,15 @@ export type Profile = Pick<
   "id" | "username" | "display_name" | "avatar_url" | "grade" | "major" | "bio" | "created_at"
 >;
 
-export type DiningHall = Pick<Tables<"dining_halls">, "id" | "slug" | "name">;
-
 export type ProfileData = {
   profile: Profile;
-  /** False until the profile-page migration adds grade/major/bio + dining halls. */
+  /** False until the profile-page migration adds grade/major/bio. */
   detailsReady: boolean;
   rankedDishes: RankedDish[];
-  visited: DiningHall[];
-  wantToGo: DiningHall[];
+  /** Only filled for the profile's owner (dish_alerts is private). */
+  wantToTry: WantToTryItem[];
+  /** When this was loaded (ms), so "2h" times are measured from one moment. */
+  loadedAt: number;
   followers: number;
   following: number;
   rank: { position: number; totalUsers: number } | null;

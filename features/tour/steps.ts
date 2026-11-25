@@ -34,15 +34,15 @@ const RANK_BODY =
 const SIGNED_IN_STEPS: TourStep[] = [
   {
     route: "/profile",
-    target: "my-list",
+    target: "profile-tabs",
     title: "Rank your dishes",
-    body: `${RANK_BODY} Your ranked list lives here on your profile.`,
+    body: `${RANK_BODY} Activity shows your latest rankings, Ranked Dishes is your full list, and Want to Try holds dishes you've bookmarked on menus.`,
   },
   {
     route: "/profile",
     target: "profile-actions",
     title: "Make it yours",
-    body: "Edit profile adds a photo, bio, and the halls you've been to. Tap ? in the corner to see this tour again.",
+    body: "Edit profile adds a photo, name, and bio. Tap ? in the corner to see this tour again.",
   },
 ];
 

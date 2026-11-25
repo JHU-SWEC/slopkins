@@ -74,3 +74,6 @@ export type RankDishInput = {
   mealId: number | null;
   comparisons: { winner_dish_id: number; loser_dish_id: number }[];
 };
+
+/** A dish on your Want to try list (a dish_alerts row). */
+export type WantToTryItem = { dish: Dish; saved_at: string };

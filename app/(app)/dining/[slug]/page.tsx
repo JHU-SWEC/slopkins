@@ -5,6 +5,8 @@ import { Suspense } from "react";
 import { getHall, halls } from "@/lib/halls";
 import { formatDay, menuDays, pickMenuDate, todayISO } from "@/lib/dates";
 import { getMenus } from "@/lib/menus";
+import { createClient } from "@/lib/supabase/server";
+import { getWantToTryFoodIds } from "@/features/ranking/queries";
 import { MenuPicker } from "./menu-picker";
 
 // Cache Components needs at least one param to prerender.
@@ -45,6 +47,13 @@ async function HallMenu({
   const date = pickMenuDate((await searchParams).date, today);
   const isToday = date === today;
 
+  // Signed-in people get bookmarks for Want to try, already filled for saved dishes.
+  const supabase = await createClient();
+  const savedFoodIds = supabase.auth
+    .getUser()
+    .then(({ data: { user } }) => (user ? getWantToTryFoodIds(supabase, user.id) : null))
+    .catch(() => null);
+
   let tabs;
   try {
     tabs = await getMenus(hall, date);
@@ -72,7 +81,14 @@ async function HallMenu({
       <DayPicker slug={hall.slug} date={date} today={today} />
 
       {/* Keyed by date so picking another day starts a fresh meal. */}
-      <MenuPicker key={date} hallSlug={hall.slug} tabs={tabs} canLog={isToday} />
+      <MenuPicker
+        key={date}
+        hallSlug={hall.slug}
+        tabs={tabs}
+        canLog={isToday}
+        date={date}
+        savedFoodIds={await savedFoodIds}
+      />
     </>
   );
 }
