@@ -16,7 +16,8 @@ export const metadata: Metadata = { title: "Feed · Slopkins" };
 export default function FeedPage() {
   return (
     <>
-      <h1 className="text-2xl font-bold tracking-tight">Feed</h1>
+      {/* The home screen shows the app name, like Instagram and Beli. */}
+      <h1 className="text-3xl font-extrabold tracking-tight text-heritage-blue dark:text-white">Slopkins</h1>
       <Suspense fallback={<FeedSkeleton />}>
         <Feed />
       </Suspense>

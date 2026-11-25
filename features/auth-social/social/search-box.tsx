@@ -59,12 +59,12 @@ export function SearchBox({ initialQuery }: { initialQuery: string }) {
         value={value}
         onChange={(e) => handleChange(e.target.value)}
         placeholder="Search by name or @username"
-        className="block w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pr-10 pl-10 text-heritage-blue placeholder:text-slate-400 focus:border-heritage-blue focus:bg-white focus:outline-none focus:ring-2 focus:ring-spirit-blue/40"
+        className="block w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pr-10 pl-10 text-heritage-blue placeholder:text-slate-400 focus:border-heritage-blue focus:bg-white focus:outline-none focus:ring-2 focus:ring-spirit-blue/40 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-white/40 dark:focus:border-spirit-blue dark:focus:bg-white/10"
       />
       {searching && (
         <span
           aria-label="Searching"
-          className="absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin rounded-full border-2 border-slate-300 border-t-heritage-blue"
+          className="absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin rounded-full border-2 border-slate-300 border-t-heritage-blue dark:border-white/20 dark:border-t-spirit-blue"
         />
       )}
     </form>

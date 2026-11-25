@@ -12,14 +12,14 @@ export const metadata: Metadata = { title: "Search · Slopkins" };
 export default function SearchPage({ searchParams }: PageProps<"/search">) {
   const query = searchParams.then(({ q }) => (typeof q === "string" ? q : ""));
   return (
-    <div className="text-heritage-blue">
+    <div className="text-heritage-blue dark:text-white">
       <h1 className="mb-4 text-2xl font-bold tracking-tight">Search</h1>
       <Suspense fallback={<SearchBox initialQuery="" />}>
         {query.then((q) => (
           <SearchBox initialQuery={q} />
         ))}
       </Suspense>
-      <Suspense fallback={<div className="mt-6 h-64 animate-pulse rounded-2xl bg-slate-100" />}>
+      <Suspense fallback={<div className="mt-6 h-64 animate-pulse rounded-2xl bg-slate-100 dark:bg-white/10" />}>
         {query.then((q) => (
           <Results query={q} />
         ))}
