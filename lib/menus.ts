@@ -40,6 +40,7 @@ export type MenuDish = {
 export type MenuTab = {
   label: string;
   meal: HallMenu["meal"];
+  menuTypeSlug: string;
   dishes: MenuDish[];
 };
 
@@ -73,6 +74,7 @@ export async function getMenus(hall: Hall, date: string): Promise<MenuTab[]> {
     hall.menus.map(async (menu) => ({
       label: menu.label,
       meal: menu.meal,
+      menuTypeSlug: menu.menuTypeSlug,
       dishes: await getDishes(hall.schoolSlug, menu.menuTypeSlug, date),
     })),
   );

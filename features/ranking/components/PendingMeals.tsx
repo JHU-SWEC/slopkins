@@ -1,16 +1,21 @@
-"use client";
-
 import Link from "next/link";
-import { use } from "react";
-import { browser } from "react-dom";
-import { getCurrentUserId, getMealsWithPendingDishes } from "../store";
-import { mealTitle } from "./RankMeal";
+import { connection } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { mealTitle } from "../format";
+import { getMealsWithPendingDishes } from "../queries";
 import { listBox } from "./styles";
 
-/** Reminds the user about logged dishes they haven't ranked or skipped yet. */
-export default function PendingMeals() {
-  use(browser("Meals are saved in this browser's localStorage."));
-  const meals = getMealsWithPendingDishes(getCurrentUserId());
+/** Reminds the user about logged dishes they haven't ranked or skipped yet. Render in Suspense. */
+export default async function PendingMeals() {
+  // The sign-in check reads the clock, which needs a real request.
+  await connection();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const meals = await getMealsWithPendingDishes(supabase, user.id);
   if (meals.length === 0) return null;
 
   return (

@@ -48,6 +48,8 @@ export function MealCart({
   canLog,
   canRank,
   showMacros,
+  logging = false,
+  logError = null,
 }: {
   items: CartItem[];
   open: boolean;
@@ -61,6 +63,9 @@ export function MealCart({
   canRank: boolean;
   /** Off: a plain list of what you picked, no portions or nutrition. */
   showMacros: boolean;
+  /** The meal is being saved. */
+  logging?: boolean;
+  logError?: string | null;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -158,13 +163,18 @@ export function MealCart({
             )}
           </div>
 
-          {/* Saved to localStorage until auth and log_meal() are wired up. */}
+          {/* Saved to Supabase by logMealAction; signed-out people are sent to log in. */}
           <div className="border-t border-gray-100 px-5 py-4">
+            {logError && (
+              <p role="alert" className="mb-3 text-center text-sm text-rose-600">
+                {logError}
+              </p>
+            )}
             <div className="flex gap-2">
               {canRank && (
                 <button
                   type="button"
-                  disabled={items.length === 0 || !canLog}
+                  disabled={items.length === 0 || !canLog || logging}
                   onClick={() => onLog(false)}
                   className="shrink-0 rounded-md border border-gray-200 px-4 py-3 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-40"
                 >
@@ -173,11 +183,11 @@ export function MealCart({
               )}
               <button
                 type="button"
-                disabled={items.length === 0 || !canLog}
+                disabled={items.length === 0 || !canLog || logging}
                 onClick={() => onLog(canRank)}
                 className="flex-1 rounded-md bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600"
               >
-                {canRank ? "Log & rank" : "Log meal"}
+                {logging ? "Saving…" : canRank ? "Log & rank" : "Log meal"}
               </button>
             </div>
             {!canLog && (

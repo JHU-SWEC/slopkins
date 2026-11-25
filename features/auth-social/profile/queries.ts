@@ -6,8 +6,8 @@ import {
   type DiningHall,
   type Profile,
   type ProfileData,
-  type RankedDish,
 } from "./shared";
+import { getRankedDishes } from "@/features/ranking/queries";
 
 // Supabase can return a joined row as an object or a one-item list. Normalize it.
 function one<T>(value: unknown): T | null {
@@ -54,13 +54,9 @@ export async function getProfileData(
   // Everything else only needs the profile id, so ask for it all at once.
   // Parts that need the migration (details, dining halls, rank) just come back
   // empty until it's applied.
-  const [details, rankings, halls, followers, following, rank] = await Promise.all([
+  const [details, rankedDishes, halls, followers, following, rank] = await Promise.all([
     getProfileDetails(supabase, basic.id),
-    supabase
-      .from("rankings")
-      .select("dish_id, score, comment, dish:dishes(name)")
-      .eq("user_id", basic.id)
-      .order("score", { ascending: false }),
+    getRankedDishes(supabase, basic.id),
     supabase
       .from("user_dining_halls")
       .select("status, hall:dining_halls(id, slug, name)")
@@ -81,13 +77,6 @@ export async function getProfileData(
       total_users: number;
     }>(),
   ]);
-
-  const rankedDishes: RankedDish[] = (rankings.data ?? []).flatMap((row) => {
-    const dish = one<{ name: string }>(row.dish);
-    return dish
-      ? [{ dishId: row.dish_id, name: dish.name, score: Number(row.score), comment: row.comment }]
-      : [];
-  });
 
   const visited: DiningHall[] = [];
   const wantToGo: DiningHall[] = [];
