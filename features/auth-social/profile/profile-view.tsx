@@ -1,8 +1,5 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import MyList from "@/features/ranking/components/MyList";
-import { SCORE_RANGES } from "@/features/ranking/score";
-import { SENTIMENT_STYLES } from "@/features/ranking/components/styles";
 import { logOut } from "../actions";
 import { FollowButton } from "../social/follow-button";
 import { Avatar } from "./avatar";
@@ -13,7 +10,6 @@ import {
   shownName,
   type DiningHall,
   type ProfileData,
-  type RankedDish,
 } from "./shared";
 
 /** How the person looking at the page relates to this profile. */
@@ -155,17 +151,8 @@ export function ProfileView({
       </nav>
 
       {/* ---------- 4. Ranked dishes, best first ---------- */}
-      {/* Your own list still lives in this browser's localStorage (see
-          features/ranking/store.ts), so it renders client-side. Other people's
-          lists come from Supabase. */}
       <Section id="ranked" title="Ranked dishes">
-        {isOwner ? (
-          <Suspense fallback={<div className="h-40 animate-pulse rounded-3xl bg-slate-100" />}>
-            <MyList />
-          </Suspense>
-        ) : (
-          <RankList dishes={rankedDishes} empty="No dishes ranked yet." />
-        )}
+        <MyList list={rankedDishes} isOwner={isOwner} />
       </Section>
 
       {/* ---------- 5. Dining halls ---------- */}
@@ -246,44 +233,6 @@ function Empty({ children }: { children: React.ReactNode }) {
     <p className="rounded-2xl border-2 border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
       {children}
     </p>
-  );
-}
-
-// Same colors as the ranking team's "My list": green = liked, amber = fine, red = didn't like.
-function scoreStyle(score: number) {
-  if (score >= SCORE_RANGES.liked.min) return SENTIMENT_STYLES.liked.score;
-  if (score >= SCORE_RANGES.fine.min) return SENTIMENT_STYLES.fine.score;
-  return SENTIMENT_STYLES.disliked.score;
-}
-
-// Someone else's ranked list, from Supabase. Your own uses MyList.
-function RankList({ dishes, empty }: { dishes: RankedDish[]; empty: string }) {
-  if (dishes.length === 0) return <Empty>{empty}</Empty>;
-  return (
-    <ol className="space-y-2">
-      {dishes.map((dish, index) => (
-        <li
-          key={dish.dishId}
-          className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm"
-        >
-          <span className="w-7 shrink-0 text-center text-lg font-bold text-slate-300">{index + 1}</span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold">{dish.name}</p>
-            {dish.comment && (
-              <p className="mt-1 border-l-2 border-slate-200 pl-3 text-sm italic text-slate-600">
-                {dish.comment}
-              </p>
-            )}
-          </div>
-          <span
-            className={`grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-bold shadow-sm ${scoreStyle(dish.score)}`}
-            aria-label={`Score ${dish.score.toFixed(1)} out of 10`}
-          >
-            {dish.score.toFixed(1)}
-          </span>
-        </li>
-      ))}
-    </ol>
   );
 }
 

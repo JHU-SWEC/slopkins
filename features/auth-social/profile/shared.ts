@@ -1,4 +1,5 @@
 // Used by both server code and browser code, so nothing server-only here.
+import type { RankedDish } from "@/features/ranking/types";
 import type { Tables } from "@/lib/supabase/database.types";
 
 export type Profile = Pick<
@@ -7,13 +8,6 @@ export type Profile = Pick<
 >;
 
 export type DiningHall = Pick<Tables<"dining_halls">, "id" | "slug" | "name">;
-
-export type RankedDish = {
-  dishId: number;
-  name: string;
-  score: number;
-  comment: string | null;
-};
 
 export type ProfileData = {
   profile: Profile;

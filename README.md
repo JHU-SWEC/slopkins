@@ -22,9 +22,9 @@ Built by JHU-SWEC (HopBuilds). Deadline: **Dec 11, 2026**. Full plan: [docs/proj
 | ----------------------- | ------------------------- | ------------------------------------------------------------- |
 | Auth + Profile + Social | Lucas Kohlmeyer, Amy Yang | skeleton: sign-in placeholder, mock feed, profile placeholder |
 | Dining hall pages       | Kyle Li                   | skeleton: real hall list, mock menus, meal multi-select       |
-| Add + Rank flow         | Jonny                     | `/rank` and `/my-list`, saved in localStorage with mock data  |
+| Add + Rank flow         | Jonny                     | log a meal, `/rank`, ranked list on the profile; in Supabase  |
 
-Nothing reads from Supabase yet. The schema is live, and each owner swaps their mock data for real queries.
+Auth, profiles, follows, Activity, meals and rankings use Supabase. The feed (`lib/mock-data.ts`) is still mock data.
 
 ## Stack
 
@@ -45,9 +45,10 @@ Nothing reads from Supabase yet. The schema is live, and each owner swaps their 
    ```bash
    NEXT_PUBLIC_SUPABASE_URL=...
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
+   SUPABASE_SECRET_KEY=...
    ```
 
-   Server-only secrets, like the Supabase secret key for the menu ingest, must never use the `NEXT_PUBLIC_` prefix. That prefix ships the value to the browser.
+   `SUPABASE_SECRET_KEY` lets the server record dishes from Nutrislice when someone logs a meal (`lib/supabase/admin.ts`). Without it, logging a meal shows an error. Server-only secrets like this must never use the `NEXT_PUBLIC_` prefix. That prefix ships the value to the browser.
 
 3. Run the dev server and open http://localhost:3000:
 
@@ -63,9 +64,9 @@ The sign-in page has a **Skip** link, so every screen is reachable without an ac
 app/
   page.tsx              sign-in (placeholder)
   (app)/                screens with the bottom nav: feed, dining, profile
-  rank/  my-list/       Add + Rank flow
+  rank/                 Add + Rank flow (my-list/ redirects to the profile)
 features/
-  ranking/              ranking logic, components, localStorage store
+  ranking/              ranking logic, components, Supabase queries and actions
   dining/  auth-social/ feature notes
 lib/
   supabase/             browser, server and proxy clients, generated DB types

@@ -11,14 +11,13 @@ import {
   getSentimentGroup,
 } from "../insertion";
 import { sentimentScore } from "../score";
-import type { RankDishInput } from "../store";
-import type { Dish, RankedDish, Sentiment } from "../types";
+import type { Dish, RankDishInput, RankedDish, Sentiment } from "../types";
 import { SENTIMENT_LABELS, listBox, primaryButton, secondaryButton } from "./styles";
 import { DishMeta, Score, TextButton } from "./ui";
 
 type Answer = { opponent: RankedDish; newDishWon: boolean };
 
-export type RankResult = Omit<RankDishInput, "userId" | "mealId">;
+export type RankResult = Omit<RankDishInput, "mealId">;
 
 /**
  * Ranks one dish: verdict, then "which is better?" until its spot is found,

@@ -10,14 +10,17 @@ export type Sentiment = Enums["sentiment"];
 export type RankStatus = Enums["rank_status"];
 export type MealType = Enums["meal_type"];
 
-/** A dish plus where it's served. `rankable` mirrors dishes.rankable. */
+/**
+ * A row of `dishes` (id is dishes.id, not the Nutrislice food id) plus where it
+ * was last served, from the dish_places view. Place is null if never recorded.
+ */
 export type Dish = {
   id: number;
   name: string;
-  station: string;
+  station: string | null;
   calories: number | null;
   rankable: boolean;
-  hall_slug: HallSlug;
+  hall_slug: HallSlug | null;
 };
 
 /** One dish on one user's list. Higher score is better; bands never overlap. */
@@ -60,3 +63,14 @@ export type MealDish = {
 };
 
 export type MealWithDishes = Meal & { dishes: (MealDish & { dish: Dish })[] };
+
+/** What rank_dish() needs. comparisons use dishes.id on both sides. */
+export type RankDishInput = {
+  dishId: number;
+  sentiment: Sentiment;
+  /** 0-based index in the sentiment group, not counting this dish. */
+  position: number;
+  comment: string | null;
+  mealId: number | null;
+  comparisons: { winner_dish_id: number; loser_dish_id: number }[];
+};

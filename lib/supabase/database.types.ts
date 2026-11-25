@@ -451,6 +451,23 @@ export type Database = {
       }
     }
     Views: {
+      dish_places: {
+        Row: {
+          dish_id: number | null
+          hall_slug: string | null
+          served_on: string | null
+          station: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_items_dish_id_fkey"
+            columns: ["dish_id"]
+            isOneToOne: false
+            referencedRelation: "dishes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dish_scores: {
         Row: {
           avg_score: number | null

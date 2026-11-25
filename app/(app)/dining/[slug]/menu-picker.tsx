@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { getCurrentUserId, logMeal } from "@/features/ranking/store";
+import { useState, useTransition } from "react";
+import { logMealAction } from "@/features/ranking/actions";
 import type { HallSlug } from "@/lib/halls";
 import type { MenuDish, MenuTab, Nutrition } from "@/lib/menus";
 import { mealTotals, nutritionFor, type Basis } from "@/lib/nutrition";
@@ -48,7 +47,8 @@ export function MenuPicker({
   tabs: MenuTab[];
   canLog: boolean;
 }) {
-  const router = useRouter();
+  const [logging, startLogging] = useTransition();
+  const [logError, setLogError] = useState<string | null>(null);
   const [tabIndex, setTabIndex] = useState(0);
   // Selected dishes and how much of each, in the order they were picked.
   const [cart, setCart] = useState<Map<number, CartItem>>(new Map());
@@ -106,23 +106,18 @@ export function MenuPicker({
 
   // Log first, then rank the mains. "Log only" skips the rank step; dishes
   // stay skippable one by one on the rank page either way.
+  // The action redirects to /rank or /feed when it works (or /login when signed out).
   function log(rank: boolean) {
-    const mealId = logMeal({
-      userId: getCurrentUserId(),
-      hallSlug,
-      meal: tab.meal,
-      dishes: cartItems.map(({ dish }) => ({
-        id: dish.id,
-        name: dish.name,
-        station: dish.station,
-        calories: dish.calories,
-        rankable: dish.isMain,
-        hall_slug: hallSlug,
-      })),
-      rank,
+    setLogError(null);
+    startLogging(async () => {
+      const result = await logMealAction({
+        hallSlug,
+        menuTypeSlug: tab.menuTypeSlug,
+        foodIds: cartItems.map(({ dish }) => dish.id),
+        rank,
+      });
+      if (result?.error) setLogError(result.error);
     });
-    setCartOpen(false);
-    router.push(rank ? `/rank?meal=${mealId}` : "/feed");
   }
 
   // Search matches dish or station names, case-insensitively.
@@ -316,6 +311,8 @@ export function MenuPicker({
         canRank={cartItems.some((item) => item.dish.isMain)}
         showMacros={showMacros}
         onLog={log}
+        logging={logging}
+        logError={logError}
       />
 
       <div data-tour="review-meal" className="fixed inset-x-0 bottom-16 border-t border-gray-200 bg-white px-4 py-3">

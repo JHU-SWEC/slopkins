@@ -2,13 +2,11 @@ import { getHall } from "@/lib/halls";
 import { formatScore } from "../score";
 import type { Dish } from "../types";
 
-/** "FFC · Global" */
+/** "FFC · Global", or whichever part is known. */
 export function DishMeta({ dish }: { dish: Dish }) {
-  return (
-    <span className="text-sm text-gray-500">
-      {getHall(dish.hall_slug)?.name} · {dish.station}
-    </span>
-  );
+  const parts = [dish.hall_slug && getHall(dish.hall_slug)?.name, dish.station].filter(Boolean);
+  if (parts.length === 0) return null;
+  return <span className="text-sm text-gray-500">{parts.join(" · ")}</span>;
 }
 
 export function Score({ score }: { score: number }) {

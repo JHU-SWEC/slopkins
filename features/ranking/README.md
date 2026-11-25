@@ -27,15 +27,17 @@ Beli-style: the verdict picks a band (liked 7–10, fine 4–7, disliked 0–4),
 
 | file | what |
 | ---- | ---- |
-| `store.ts` | The only data access. localStorage today; each write mirrors `log_meal` / `rank_dish` / a `meal_dishes` update, so swapping to Supabase only rewrites this file. |
+| `queries.ts` | Server reads: a user's ranked list, one meal, meals with dishes left to rank. |
+| `actions.ts` | Server actions: `logMealAction`, `rankDishAction` (`rank_dish`), `setRankStatusAction` / `skipRestAction` (`meal_dishes` updates). |
+| `format.ts` | `mealTitle`, e.g. "FFC · Lunch". |
 | `insertion.ts` | Binary search over a sentiment group. |
 | `score.ts` | Band scores. |
 | `components/RankMeal.tsx` | Queue + summary for one meal. |
 | `components/RankDish.tsx` | Keep / verdict / compare / comment for one dish. |
 | `components/PendingMeals.tsx` | "Dishes to rank" banner. |
-| `components/MyList.tsx` | Your list, shown under "Ranked dishes" on your own profile (`/my-list` redirects there). |
+| `components/MyList.tsx` | A ranked list, shown under "Ranked dishes" on every profile (`/my-list` redirects to yours). |
 
-Menus are fetched live from Nutrislice and nothing writes `dishes` yet, so the store keeps a copy of each logged dish (id = Nutrislice `food.id`). Moving to Supabase: needs auth (for `auth.uid()`) and `dishes` rows to exist, either from an ingest job or by upserting each dish on log. Then `logMeal` → `rpc("log_meal")`, `rankDish` → `rpc("rank_dish")`, `setRankStatus` → `update meal_dishes`, reads → selects.
+Everything is in Supabase; you need to be signed in to log or rank. The browser sends only Nutrislice food ids. `logMealAction` re-fetches today's menu on the server, adds any new `dishes` (`rankable` from `isMain`, only on insert so admin fixes stick) and `menu_items` with the secret-key client (`lib/supabase/admin.ts`), then calls `log_meal` as the user. Dish ids everywhere else are `dishes.id`. Hall and station labels come from the `dish_places` view (latest `menu_items` row).
 
 ## Ranking methods considered
 
