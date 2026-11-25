@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import MyList from "@/features/ranking/components/MyList";
 import { SCORE_RANGES } from "@/features/ranking/score";
 import { SENTIMENT_STYLES } from "@/features/ranking/components/styles";
 import { logOut } from "../actions";
@@ -18,7 +20,7 @@ import {
 export type Viewer = { signedIn: boolean; iFollow: boolean; followsMe: boolean };
 
 // The whole profile page. `isOwner` = you're looking at your own profile,
-// which adds Edit / My list / Log out and "add something" hints. Anyone else
+// which adds Edit / Log out, your own ranked list, and "add something" hints. Anyone else
 // sees a Follow button instead.
 export function ProfileView({
   data,
@@ -122,14 +124,6 @@ export function ProfileView({
             username={profile.username}
             className="rounded-xl border border-white/40 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
           />
-          {isOwner && (
-            <Link
-              href="/my-list"
-              className="rounded-xl border border-white/40 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
-            >
-              My list
-            </Link>
-          )}
         </div>
       </section>
 
@@ -161,12 +155,17 @@ export function ProfileView({
       </nav>
 
       {/* ---------- 4. Ranked dishes, best first ---------- */}
+      {/* Your own list still lives in this browser's localStorage (see
+          features/ranking/store.ts), so it renders client-side. Other people's
+          lists come from Supabase. */}
       <Section id="ranked" title="Ranked dishes">
-        <RankList
-          dishes={rankedDishes}
-          empty={isOwner ? "You haven't ranked any dishes yet." : "No dishes ranked yet."}
-          isOwner={isOwner}
-        />
+        {isOwner ? (
+          <Suspense fallback={<div className="h-40 animate-pulse rounded-3xl bg-slate-100" />}>
+            <MyList />
+          </Suspense>
+        ) : (
+          <RankList dishes={rankedDishes} empty="No dishes ranked yet." />
+        )}
       </Section>
 
       {/* ---------- 5. Dining halls ---------- */}
@@ -257,19 +256,9 @@ function scoreStyle(score: number) {
   return SENTIMENT_STYLES.disliked.score;
 }
 
-function RankList({ dishes, empty, isOwner }: { dishes: RankedDish[]; empty: string; isOwner: boolean }) {
-  if (dishes.length === 0) {
-    return (
-      <Empty>
-        {empty}{" "}
-        {isOwner && (
-          <Link href="/dining" className="font-semibold text-heritage-blue underline dark:text-spirit-blue">
-            Log a meal
-          </Link>
-        )}
-      </Empty>
-    );
-  }
+// Someone else's ranked list, from Supabase. Your own uses MyList.
+function RankList({ dishes, empty }: { dishes: RankedDish[]; empty: string }) {
+  if (dishes.length === 0) return <Empty>{empty}</Empty>;
   return (
     <ol className="space-y-2">
       {dishes.map((dish, index) => (

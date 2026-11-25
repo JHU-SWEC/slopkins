@@ -4,20 +4,14 @@ import Link from "next/link";
 import { use, useState } from "react";
 import { browser } from "react-dom";
 import { SENTIMENT_ORDER, getSentimentGroup } from "../insertion";
-import { getCurrentUserId, getRankedDishes, resetToMockData } from "../store";
+import { getCurrentUserId, getRankedDishes } from "../store";
 import { SENTIMENT_LABELS, listBox, primaryButton, sectionHeading } from "./styles";
-import { DishMeta, Score, TextButton } from "./ui";
+import { DishMeta, Score } from "./ui";
 
 export default function MyList() {
   use(browser("Meals and rankings are saved in this browser's localStorage."));
 
-  const userId = getCurrentUserId();
-  const [list, setList] = useState(() => getRankedDishes(userId));
-
-  function handleReset() {
-    resetToMockData();
-    setList(getRankedDishes(userId));
-  }
+  const [list] = useState(() => getRankedDishes(getCurrentUserId()));
 
   if (list.length === 0) {
     return (
@@ -64,13 +58,6 @@ export default function MyList() {
             </section>
           );
         })}
-      </div>
-
-      <div className="mt-8 space-y-4 text-center">
-        <Link href="/dining" className={primaryButton}>
-          Log a meal
-        </Link>
-        <TextButton onClick={handleReset}>Reset to mock data</TextButton>
       </div>
     </>
   );

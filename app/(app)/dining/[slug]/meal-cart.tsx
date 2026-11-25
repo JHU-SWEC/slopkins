@@ -47,6 +47,7 @@ export function MealCart({
   onLog,
   canLog,
   canRank,
+  showMacros,
 }: {
   items: CartItem[];
   open: boolean;
@@ -58,6 +59,8 @@ export function MealCart({
   canLog: boolean;
   /** At least one item is a main, so there's something to rank. */
   canRank: boolean;
+  /** Off: a plain list of what you picked, no portions or nutrition. */
+  showMacros: boolean;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -75,7 +78,7 @@ export function MealCart({
   }, [open]);
 
   const totals =
-    items.length > 0 ? mealTotals(items.map((item) => ({ dish: item.dish, servings: servingsOf(item) }))) : null;
+    showMacros && items.length > 0 ? mealTotals(items.map((item) => ({ dish: item.dish, servings: servingsOf(item) }))) : null;
 
   function step(item: CartItem, direction: 1 | -1) {
     const current = Number(item.amount) || 0;
@@ -113,6 +116,7 @@ export function MealCart({
                   <CartRow
                     key={item.dish.id}
                     item={item}
+                    showMacros={showMacros}
                     onChange={onChange}
                     onStep={(direction) => step(item, direction)}
                     onRemove={() => onRemove(item.dish.id)}
@@ -190,11 +194,13 @@ export function MealCart({
 
 function CartRow({
   item,
+  showMacros,
   onChange,
   onStep,
   onRemove,
 }: {
   item: CartItem;
+  showMacros: boolean;
   onChange: (item: CartItem) => void;
   onStep: (direction: 1 | -1) => void;
   onRemove: () => void;
@@ -202,6 +208,24 @@ function CartRow({
   const { dish } = item;
   const calories = nutritionForServings(dish, servingsOf(item)).calories;
   const canUseGrams = Boolean(dish.servingGrams);
+
+  if (!showMacros) {
+    return (
+      <li className="flex items-center justify-between gap-3 px-4 py-3">
+        <div className="min-w-0">
+          <p className="font-medium leading-snug">{dish.name}</p>
+          <p className="text-xs text-gray-400">{dish.station}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+        >
+          Remove
+        </button>
+      </li>
+    );
+  }
 
   return (
     <li className="px-4 py-3">

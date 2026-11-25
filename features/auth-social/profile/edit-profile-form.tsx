@@ -5,6 +5,7 @@ import { startTransition, useActionState, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { updateProfile, type EditProfileState } from "./actions";
 import { Avatar } from "./avatar";
+import { nameProblem } from "./name-rules";
 import {
   BIO_LIMIT,
   DISPLAY_NAME_LIMIT,
@@ -55,7 +56,10 @@ export function EditProfileForm({
   const fileInput = useRef<HTMLInputElement>(null);
 
   const usedSuggestions = Boolean(suggested.username || suggested.displayName);
-  const usernameOk = USERNAME_PATTERN.test(username);
+  // Checked as you type, so you find out before pressing Save.
+  const usernameProblem = nameProblem(username, "username");
+  const displayNameProblem = nameProblem(displayName, "display name");
+  const usernameOk = USERNAME_PATTERN.test(username) && !usernameProblem;
   const previewName = displayName.trim() || `@${username || "username"}`;
 
   // Upload the chosen photo straight to Supabase Storage and show a preview.
@@ -162,9 +166,16 @@ export function EditProfileForm({
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="e.g. Johns Hopkins"
+              aria-invalid={Boolean(displayNameProblem)}
+              aria-describedby="display-name-hint"
               className={inputClass}
             />
-            <p className="mt-1 text-xs text-slate-500">Shown big on your profile. Optional.</p>
+            <p
+              id="display-name-hint"
+              className={`mt-1 text-xs ${displayNameProblem ? "text-red-700 dark:text-red-300" : "text-slate-500"}`}
+            >
+              {displayNameProblem ?? "Shown big on your profile. Optional."}
+            </p>
           </div>
           <div>
             <label htmlFor="username" className={labelClass}>
@@ -190,7 +201,8 @@ export function EditProfileForm({
               id="username-hint"
               className={`mt-1 text-xs ${usernameOk ? "text-slate-500" : "text-red-700 dark:text-red-300"}`}
             >
-              3–20 characters: lowercase letters, numbers, and _. Your link: /u/{username || "…"}
+              {usernameProblem ??
+                `3–20 characters: lowercase letters, numbers, and _. Your link: /u/${username || "…"}`}
             </p>
           </div>
         </div>
@@ -318,7 +330,7 @@ export function EditProfileForm({
         </Link>
         <button
           type="submit"
-          disabled={saving || uploading || !usernameOk}
+          disabled={saving || uploading || !usernameOk || Boolean(displayNameProblem)}
           className="rounded-xl bg-heritage-blue px-6 py-3 font-semibold text-white transition hover:bg-heritage-blue/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {saving ? "Saving…" : "Save changes"}

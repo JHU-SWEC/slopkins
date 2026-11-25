@@ -9,6 +9,7 @@ import { mealTotals, nutritionFor, type Basis } from "@/lib/nutrition";
 import { BasisToggle } from "./basis-toggle";
 import { MealCart, servingsOf, type CartItem } from "./meal-cart";
 import { NutritionFacts } from "./nutrition-facts";
+import { useShowMacros } from "../use-macros";
 
 type SortKey = "menu" | "calories" | "protein" | "carbs" | "fat" | "sugar" | "fiber" | "sodium";
 type SortDirection = "asc" | "desc";
@@ -57,12 +58,15 @@ export function MenuPicker({
   const [basis, setBasis] = useState<Basis>("serving");
   const [detailDish, setDetailDish] = useState<MenuDish | null>(null);
   const [query, setQuery] = useState("");
+  const showMacros = useShowMacros();
+  // With macros hidden, nutrient sorts don't apply; the saved pick returns when they're back.
+  const activeSort: SortKey = showMacros ? sortKey : "menu";
 
   // A meal post has one meal, so switching meals clears the selection.
   // Levering kitchens have no meal, so selections carry across tabs.
   const keepSelection = tabs.every((tab) => tab.meal === null);
   const tab = tabs[tabIndex];
-  const sort = SORTS.find((s) => s.key === sortKey)!;
+  const sort = SORTS.find((s) => s.key === activeSort)!;
 
   function switchTab(index: number) {
     setTabIndex(index);
@@ -96,7 +100,7 @@ export function MenuPicker({
   }
 
   const cartItems = [...cart.values()];
-  const cartCalories = cartItems.length
+  const cartCalories = showMacros && cartItems.length
     ? mealTotals(cartItems.map((item) => ({ dish: item.dish, servings: servingsOf(item) }))).nutrition.calories
     : null;
 
@@ -131,9 +135,9 @@ export function MenuPicker({
 
   // Some dishes are served at several stations; list each one once outside stations.
   const unique = [...new Map(matching.map((dish) => [dish.id, dish])).values()];
-  if (sortKey !== "menu") {
+  if (activeSort !== "menu") {
     // Ranked by the chosen nutrient, dishes missing that value last.
-    const key = sortKey as keyof Nutrition;
+    const key = activeSort as keyof Nutrition;
     const sign = direction === "asc" ? 1 : -1;
     unique.sort((a, b) => {
       const x = nutritionFor(a, basis)[key];
@@ -148,7 +152,7 @@ export function MenuPicker({
   const sections: Section[] = [];
   const mains = unique.filter((dish) => dish.isMain);
   if (mains.length) sections.push({ title: "Mains", dishes: mains, showStation: true, highlight: true });
-  if (sortKey === "menu") {
+  if (activeSort === "menu") {
     const stations = new Map<string, MenuDish[]>();
     for (const dish of matching) {
       stations.set(dish.station, [...(stations.get(dish.station) ?? []), dish]);
@@ -159,9 +163,10 @@ export function MenuPicker({
   }
 
   function sortValue(dish: MenuDish) {
+    if (!showMacros) return null;
     const nutrition = nutritionFor(dish, basis);
-    if (sortKey === "menu") return nutrition.calories !== null ? `${nutrition.calories} cal` : null;
-    const value = nutrition[sortKey as keyof Nutrition];
+    if (activeSort === "menu") return nutrition.calories !== null ? `${nutrition.calories} cal` : null;
+    const value = nutrition[activeSort as keyof Nutrition];
     return value !== null ? `${value}${sort.unit}` : "—";
   }
 
@@ -207,7 +212,7 @@ export function MenuPicker({
         </div>
       )}
 
-      {tab.dishes.length > 0 && (
+      {showMacros && tab.dishes.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <label htmlFor="sort" className="text-sm text-gray-500">
             Sort by
@@ -277,14 +282,16 @@ export function MenuPicker({
                       <span className="text-sm text-gray-400">{sortValue(dish)}</span>
                     )}
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => setDetailDish(dish)}
-                    aria-label={`Nutrition facts for ${dish.name}`}
-                    className="mx-2 rounded-full px-2.5 py-1 text-xs font-semibold text-blue-600 transition hover:bg-blue-50"
-                  >
-                    Nutrition
-                  </button>
+                  {showMacros && (
+                    <button
+                      type="button"
+                      onClick={() => setDetailDish(dish)}
+                      aria-label={`Nutrition facts for ${dish.name}`}
+                      className="mx-2 rounded-full px-2.5 py-1 text-xs font-semibold text-blue-600 transition hover:bg-blue-50"
+                    >
+                      Nutrition
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
@@ -307,6 +314,7 @@ export function MenuPicker({
         onRemove={removeItem}
         canLog={canLog}
         canRank={cartItems.some((item) => item.dish.isMain)}
+        showMacros={showMacros}
         onLog={log}
       />
 

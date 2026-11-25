@@ -33,7 +33,7 @@ Beli-style: the verdict picks a band (liked 7–10, fine 4–7, disliked 0–4),
 | `components/RankMeal.tsx` | Queue + summary for one meal. |
 | `components/RankDish.tsx` | Keep / verdict / compare / comment for one dish. |
 | `components/PendingMeals.tsx` | "Dishes to rank" banner. |
-| `components/MyList.tsx` | `/my-list`. |
+| `components/MyList.tsx` | Your list, shown under "Ranked dishes" on your own profile (`/my-list` redirects there). |
 
 Menus are fetched live from Nutrislice and nothing writes `dishes` yet, so the store keeps a copy of each logged dish (id = Nutrislice `food.id`). Moving to Supabase: needs auth (for `auth.uid()`) and `dishes` rows to exist, either from an ingest job or by upserting each dish on log. Then `logMeal` → `rpc("log_meal")`, `rankDish` → `rpc("rank_dish")`, `setRankStatus` → `update meal_dishes`, reads → selects.
 
