@@ -13,7 +13,6 @@ import {
   MAJOR_LIMIT,
   USERNAME_PATTERN,
   avatarSrc,
-  type DiningHall,
   type Profile,
 } from "./shared";
 
@@ -28,18 +27,12 @@ export function EditProfileForm({
   profile,
   detailsReady,
   suggested,
-  halls,
-  visitedIds,
-  wantToGoIds,
 }: {
   profile: Profile;
-  /** False until the database has grade/major/bio and dining halls. */
+  /** False until the database has grade/major/bio. */
   detailsReady: boolean;
   /** Starting values from Google, for fields the user hasn't set yet. */
   suggested: { displayName: string | null; username: string | null };
-  halls: DiningHall[];
-  visitedIds: number[];
-  wantToGoIds: number[];
 }) {
   const [state, formAction, saving] = useActionState<EditProfileState, FormData>(
     updateProfile,
@@ -262,56 +255,10 @@ export function EditProfileForm({
               </div>
             </div>
           </Card>
-
-          <Card title="Dining halls">
-            <p className="mb-3 text-sm text-slate-500">
-              Check where you&apos;ve been and where you want to go. These show on your profile.
-            </p>
-            {halls.length === 0 ? (
-              <p className="text-sm text-slate-500">No dining halls have been added to Slopkins yet.</p>
-            ) : (
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="text-slate-500">
-                    <th className="py-2 font-semibold">Hall</th>
-                    <th className="w-24 py-2 text-center font-semibold">Been to</th>
-                    <th className="w-24 py-2 text-center font-semibold">Want to go</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {halls.map((hall) => (
-                    <tr key={hall.id}>
-                      <td className="py-3 font-medium">{hall.name}</td>
-                      <td className="text-center">
-                        <input
-                          type="checkbox"
-                          name="visited"
-                          value={hall.id}
-                          defaultChecked={visitedIds.includes(hall.id)}
-                          aria-label={`Been to ${hall.name}`}
-                          className="size-5 accent-heritage-blue"
-                        />
-                      </td>
-                      <td className="text-center">
-                        <input
-                          type="checkbox"
-                          name="want_to_go"
-                          value={hall.id}
-                          defaultChecked={wantToGoIds.includes(hall.id)}
-                          aria-label={`Want to go to ${hall.name}`}
-                          className="size-5 accent-heritage-blue"
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </Card>
         </>
       ) : (
         <p className="rounded-2xl border-2 border-dashed border-slate-200 p-4 text-center text-sm text-slate-500">
-          Grade, major, bio, and dining halls are coming soon.
+          Grade, major, and bio are coming soon.
         </p>
       )}
 

@@ -1,5 +1,8 @@
 import Link from "next/link";
 import MyList from "@/features/ranking/components/MyList";
+import WantToTry from "@/features/ranking/components/WantToTry";
+import { ProfileTabs } from "./profile-tabs";
+import { RecentRankings } from "./recent-rankings";
 import { logOut } from "../actions";
 import { FollowButton } from "../social/follow-button";
 import { Avatar } from "./avatar";
@@ -8,7 +11,6 @@ import {
   avatarSrc,
   isPlaceholderUsername,
   shownName,
-  type DiningHall,
   type ProfileData,
 } from "./shared";
 
@@ -27,7 +29,7 @@ export function ProfileView({
   isOwner: boolean;
   viewer?: Viewer;
 }) {
-  const { profile, rankedDishes, visited, wantToGo } = data;
+  const { profile, rankedDishes, wantToTry } = data;
   const name = shownName(profile);
   const memberSince = new Intl.DateTimeFormat("en-US", {
     month: "long",
@@ -138,36 +140,31 @@ export function ProfileView({
         <Stat value={data.following} label="Following" href={`/u/${profile.username}/following`} />
       </section>
 
-      {/* ---------- 3. Section menu: sticks to the top while scrolling ---------- */}
-      <nav
-        aria-label="Profile sections"
-        className="sticky top-0 z-10 -mx-4 mt-6 border-b border-slate-200 bg-white/90 px-4 py-2 backdrop-blur dark:bg-background/90"
-      >
-        <ul className="flex gap-1 overflow-x-auto text-sm font-semibold">
-          <SectionLink href="#ranked" label="Ranked dishes" count={rankedDishes.length} />
-          <SectionLink href="#been-to" label="Been to" count={visited.length} />
-          <SectionLink href="#want-to-go" label="Want to go" count={wantToGo.length} />
-        </ul>
-      </nav>
-
-      {/* ---------- 4. Ranked dishes, best first ---------- */}
-      <Section id="ranked" title="Ranked dishes">
-        <MyList list={rankedDishes} isOwner={isOwner} />
-      </Section>
-
-      {/* ---------- 5. Dining halls ---------- */}
-      <Section id="been-to" title="Been to">
-        <HallList
-          halls={visited}
-          empty={isOwner ? "Check off halls you've been to in Edit profile." : "Nothing here yet."}
-        />
-      </Section>
-      <Section id="want-to-go" title="Want to go">
-        <HallList
-          halls={wantToGo}
-          empty={isOwner ? "Save halls you want to try in Edit profile." : "Nothing here yet."}
-        />
-      </Section>
+      {/* ---------- 3. Tabs: Activity (default), Ranked Dishes, Want to Try ---------- */}
+      <ProfileTabs
+        tabs={[
+          {
+            id: "activity",
+            label: "Activity",
+            panel: <RecentRankings dishes={rankedDishes} now={data.loadedAt} isOwner={isOwner} />,
+          },
+          {
+            id: "ranked",
+            label: "Ranked Dishes",
+            panel: <MyList list={rankedDishes} isOwner={isOwner} />,
+          },
+          // Saved dishes are private, so only you see this tab.
+          ...(isOwner
+            ? [
+                {
+                  id: "want-to-try",
+                  label: "Want to Try",
+                  panel: <WantToTry items={wantToTry} />,
+                },
+              ]
+            : []),
+        ]}
+      />
 
       {isOwner && (
         <form action={logOut} className="mt-10 text-center">
@@ -201,56 +198,5 @@ function Stat({ value, label, href }: { value: number | string; label: string; h
     </Link>
   ) : (
     <div className={tile}>{inner}</div>
-  );
-}
-
-function SectionLink({ href, label, count }: { href: string; label: string; count: number }) {
-  return (
-    <li>
-      <a
-        href={href}
-        className="flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 transition hover:bg-spirit-blue/20"
-      >
-        {label}
-        <span className="rounded-full bg-spirit-blue/25 px-2 text-xs">{count}</span>
-      </a>
-    </li>
-  );
-}
-
-function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
-  // scroll-mt keeps the heading from hiding under the sticky menu after a jump.
-  return (
-    <section id={id} className="mt-6 scroll-mt-16">
-      <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">{title}</h2>
-      <div className="mt-3">{children}</div>
-    </section>
-  );
-}
-
-function Empty({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="rounded-2xl border-2 border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
-      {children}
-    </p>
-  );
-}
-
-function HallList({ halls, empty }: { halls: DiningHall[]; empty: string }) {
-  if (halls.length === 0) return <Empty>{empty}</Empty>;
-  return (
-    <ul className="grid gap-2 sm:grid-cols-2">
-      {halls.map((hall) => (
-        <li key={hall.id}>
-          <Link
-            href={`/dining/${hall.slug}`}
-            className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white px-4 py-3 font-semibold shadow-sm transition hover:bg-slate-50"
-          >
-            {hall.name}
-            <span className="text-slate-300">›</span>
-          </Link>
-        </li>
-      ))}
-    </ul>
   );
 }

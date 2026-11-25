@@ -3,17 +3,10 @@ import {
   BASIC_PROFILE_COLUMNS,
   DETAIL_PROFILE_COLUMNS,
   NO_DETAILS,
-  type DiningHall,
   type Profile,
   type ProfileData,
 } from "./shared";
-import { getRankedDishes } from "@/features/ranking/queries";
-
-// Supabase can return a joined row as an object or a one-item list. Normalize it.
-function one<T>(value: unknown): T | null {
-  if (Array.isArray(value)) return (value[0] as T) ?? null;
-  return (value as T) ?? null;
-}
+import { getRankedDishes, getWantToTry } from "@/features/ranking/queries";
 
 type BasicProfile = Omit<Profile, "grade" | "major" | "bio">;
 
@@ -52,16 +45,12 @@ export async function getProfileData(
   if (!basic) return null;
 
   // Everything else only needs the profile id, so ask for it all at once.
-  // Parts that need the migration (details, dining halls, rank) just come back
+  // Parts that need the migration (details, rank) just come back
   // empty until it's applied.
-  const [details, rankedDishes, halls, followers, following, rank] = await Promise.all([
+  const [details, rankedDishes, wantToTry, followers, following, rank] = await Promise.all([
     getProfileDetails(supabase, basic.id),
     getRankedDishes(supabase, basic.id),
-    supabase
-      .from("user_dining_halls")
-      .select("status, hall:dining_halls(id, slug, name)")
-      .eq("user_id", basic.id)
-      .order("created_at", { ascending: false }),
+    getWantToTry(supabase, basic.id),
     // follows: follower_id follows followee_id.
     supabase
       .from("follows")
@@ -78,19 +67,12 @@ export async function getProfileData(
     }>(),
   ]);
 
-  const visited: DiningHall[] = [];
-  const wantToGo: DiningHall[] = [];
-  for (const row of halls.data ?? []) {
-    const hall = one<DiningHall>(row.hall);
-    if (hall) (row.status === "visited" ? visited : wantToGo).push(hall);
-  }
-
   return {
     profile: { ...basic, ...details.details },
     detailsReady: details.ready,
     rankedDishes,
-    visited,
-    wantToGo,
+    wantToTry,
+    loadedAt: Date.now(),
     followers: followers.count ?? 0,
     following: following.count ?? 0,
     // No rank until you've ranked a dish (otherwise everyone ties for #1 at 0).
@@ -99,10 +81,4 @@ export async function getProfileData(
         ? { position: rank.data.rank, totalUsers: rank.data.total_users }
         : null,
   };
-}
-
-/** All dining halls, for the edit page's checklist. */
-export async function getDiningHalls(supabase: SupabaseClient): Promise<DiningHall[]> {
-  const { data } = await supabase.from("dining_halls").select("id, slug, name").order("name");
-  return data ?? [];
 }

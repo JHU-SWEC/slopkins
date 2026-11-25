@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import {
   getBasicProfile,
-  getDiningHalls,
   getProfileDetails,
 } from "@/features/auth-social/profile/queries";
 import { EditProfileForm } from "@/features/auth-social/profile/edit-profile-form";
@@ -15,7 +14,7 @@ import { connection } from "next/server";
 
 export const metadata: Metadata = { title: "Edit profile · Slopkins" };
 
-// /profile/edit — change your photo, name, username, grade, major, bio, and dining halls.
+// /profile/edit — change your photo, name, username, grade, major, and bio.
 export default function EditProfilePage() {
   return (
     <>
@@ -43,11 +42,9 @@ async function EditProfile() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [basic, details, halls, { data: myHalls }] = await Promise.all([
+  const [basic, details] = await Promise.all([
     getBasicProfile(supabase, { id: user.id }),
     getProfileDetails(supabase, user.id),
-    getDiningHalls(supabase),
-    supabase.from("user_dining_halls").select("dining_hall_id, status").eq("user_id", user.id),
   ]);
 
   if (!basic) {
@@ -60,9 +57,6 @@ async function EditProfile() {
       />
     );
   }
-
-  const idsWith = (status: string) =>
-    (myHalls ?? []).filter((row) => row.status === status).map((row) => row.dining_hall_id as number);
 
   // Starting values from the Google account, used only where the profile is still blank.
   // Nothing is saved until the user presses Save.
@@ -77,9 +71,6 @@ async function EditProfile() {
       profile={{ ...basic, ...details.details }}
       detailsReady={details.ready}
       suggested={suggested}
-      halls={halls}
-      visitedIds={idsWith("visited")}
-      wantToGoIds={idsWith("want_to_go")}
     />
   );
 }
