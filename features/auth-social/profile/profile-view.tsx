@@ -31,11 +31,6 @@ export function ProfileView({
 }) {
   const { profile, rankedDishes, wantToTry } = data;
   const name = shownName(profile);
-  const memberSince = new Intl.DateTimeFormat("en-US", {
-    month: "long",
-    year: "numeric",
-    timeZone: "America/New_York",
-  }).format(new Date(profile.created_at));
 
   return (
     <div className="text-heritage-blue dark:text-white">
@@ -57,50 +52,69 @@ export function ProfileView({
         </Link>
       )}
 
-      {/* ---------- 1. Header: photo, name, details, bio, buttons ---------- */}
-      <section className="overflow-hidden rounded-3xl bg-linear-to-br from-heritage-blue to-[#1d5aa8] p-6 text-white shadow-lg sm:p-8">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-          <div className="w-fit rounded-full ring-4 ring-white/30">
-            <Avatar src={avatarSrc(profile.avatar_url)} name={name} size={96} eager />
+      {/* ---------- 1. Header: photo | name, username, stats; then tags, bio, Follow ---------- */}
+      <section className="relative rounded-3xl bg-linear-to-br from-heritage-blue to-[#1d5aa8] p-6 text-white shadow-lg sm:p-8">
+        {/* Top right: edit (your own profile only) and share. */}
+        <div data-tour="profile-actions" className="absolute right-4 top-4 flex gap-2 sm:right-6 sm:top-6">
+          {isOwner && (
+            <Link href="/profile/edit" aria-label="Edit profile" title="Edit profile" className="grid h-10 w-10 cursor-pointer place-items-center text-white/90 transition hover:text-white">
+              {/* Pencil */}
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                <path d="m15 5 4 4" />
+              </svg>
+            </Link>
+          )}
+          <ShareButton username={profile.username} className="grid h-10 w-10 cursor-pointer place-items-center text-white/90 transition hover:text-white" />
+        </div>
+
+        {/* Photo on the left; name, username, and stats on the right. */}
+        <div className="flex items-center gap-4 sm:gap-6">
+          <div className="shrink-0 rounded-full ring-4 ring-white/30">
+            <Avatar src={avatarSrc(profile.avatar_url)} name={name} size={80} eager />
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">{name}</h1>
-            <p className="flex flex-wrap items-center gap-2 text-white/70">
-              {profile.display_name && <span>@{profile.username}</span>}
-              {!isOwner && viewer.followsMe && (
-                <span className="rounded-md bg-white/15 px-1.5 py-0.5 text-xs font-medium text-white">
-                  Follows you
-                </span>
-              )}
-            </p>
-            <p className="mt-1 text-sm text-white/60">Member since {memberSince}</p>
+            {/* pr keeps a long name from running under the edit/share icons. */}
+            <div className="pr-20">
+              <h1 className="truncate text-xl font-bold tracking-tight">{name}</h1>
+              <p className="flex flex-wrap items-center gap-2 text-sm text-white/70">
+                {profile.display_name && <span className="truncate">@{profile.username}</span>}
+                {!isOwner && viewer.followsMe && (
+                  <span className="rounded-md bg-white/15 px-1.5 py-0.5 text-xs font-medium text-white">
+                    Follows you
+                  </span>
+                )}
+              </p>
+            </div>
+
+            {/* Stats, like the counts on an Instagram profile. */}
+            <div aria-label="Stats" className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+              <Stat
+                value={data.followers}
+                label={data.followers === 1 ? "follower" : "followers"}
+                href={`/u/${profile.username}/followers`}
+              />
+              <Stat value={data.following} label="following" href={`/u/${profile.username}/following`} />
+              <Stat
+                value={data.rank ? `#${data.rank.position}` : "–"}
+                label={data.rank ? `of ${data.rank.totalUsers}` : "rank"}
+              />
+            </div>
           </div>
         </div>
 
         {(profile.grade || profile.major) && (
-          <div className="mt-5 flex flex-wrap gap-2 text-sm">
+          <div className="mt-4 flex flex-wrap gap-2 text-sm">
             {profile.grade && <span className="rounded-full bg-white/15 px-3 py-1">{profile.grade}</span>}
             {profile.major && <span className="rounded-full bg-white/15 px-3 py-1">{profile.major}</span>}
           </div>
         )}
 
-        {profile.bio ? (
-          <p className="mt-4 whitespace-pre-line text-white/90">{profile.bio}</p>
-        ) : (
-          isOwner &&
-          data.detailsReady && (
-            <p className="mt-4 text-sm text-white/60">
-              Add a bio, grade, and major from{" "}
-              <Link href="/profile/edit" className="underline">
-                Edit profile
-              </Link>
-              .
-            </p>
-          )
-        )}
+        {/* Only if they've written one. */}
+        {profile.bio && <p className="mt-4 whitespace-pre-line text-sm text-white/90">{profile.bio}</p>}
 
-        <div data-tour="profile-actions" className="mt-6 flex flex-wrap items-start gap-2">
-          {!isOwner && (
+        {!isOwner && (
+          <div className="mt-5">
             <FollowButton
               targetId={profile.id}
               username={profile.username}
@@ -109,38 +123,11 @@ export function ProfileView({
               signedIn={viewer.signedIn}
               tone="dark"
             />
-          )}
-          {isOwner && (
-            <Link
-              href="/profile/edit"
-              className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-heritage-blue transition hover:bg-white/90 dark:text-white dark:hover:bg-background/80"
-            >
-              Edit profile
-            </Link>
-          )}
-          <ShareButton
-            username={profile.username}
-            className="rounded-xl border border-white/40 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
-          />
-        </div>
+          </div>
+        )}
       </section>
 
-      {/* ---------- 2. Stats: four numbers at a glance ---------- */}
-      <section aria-label="Stats" className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat value={rankedDishes.length} label="Dishes ranked" />
-        <Stat
-          value={data.rank ? `#${data.rank.position}` : "–"}
-          label={data.rank ? `Rank of ${data.rank.totalUsers} on Slopkins` : "Rank on Slopkins"}
-        />
-        <Stat
-          value={data.followers}
-          label={data.followers === 1 ? "Follower" : "Followers"}
-          href={`/u/${profile.username}/followers`}
-        />
-        <Stat value={data.following} label="Following" href={`/u/${profile.username}/following`} />
-      </section>
-
-      {/* ---------- 3. Tabs: Activity (default), Ranked Dishes, Want to Try ---------- */}
+      {/* ---------- 2. Tabs: Activity (default), Ranked Dishes, Want to Try ---------- */}
       <ProfileTabs
         tabs={[
           {
@@ -182,21 +169,19 @@ export function ProfileView({
 
 // ---------- Small building blocks used above ----------
 
-// A number tile. With `href`, the whole tile is a link (like tapping
+// One number in the header's stat row. With `href`, it's a link (like tapping
 // "Followers" on Instagram).
 function Stat({ value, label, href }: { value: number | string; label: string; href?: string }) {
-  const tile = "block rounded-2xl border border-slate-200/80 bg-white p-4 text-center shadow-sm";
   const inner = (
     <>
-      <span className="block text-2xl font-bold">{value}</span>
-      <span className="mt-1 block text-xs font-medium text-slate-500">{label}</span>
+      <span className="font-bold">{value}</span> <span className="text-white/70">{label}</span>
     </>
   );
   return href ? (
-    <Link href={href} className={`${tile} transition hover:border-spirit-blue hover:bg-spirit-blue/10`}>
+    <Link href={href} className="whitespace-nowrap transition hover:opacity-80">
       {inner}
     </Link>
   ) : (
-    <div className={tile}>{inner}</div>
+    <span className="whitespace-nowrap">{inner}</span>
   );
 }

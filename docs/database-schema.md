@@ -187,7 +187,7 @@ Both are `security invoker`, so RLS still applies.
 | grade        | text        | nullable, `Freshman`, `Sophomore`, `Junior`, `Senior`, `Graduate`, `Other` |
 | major        | text        | nullable, ≤ 80 chars                                                 |
 | bio          | text        | nullable, ≤ 300 chars                                                |
-| created_at   | timestamptz | shown as "Member since"                                              |
+| created_at   | timestamptz |                                                                      |
 
 - Create the row with a trigger on `auth.users` insert.
 - Sign-in is Google OAuth through Supabase Auth. The trigger runs on a user's first sign-in.

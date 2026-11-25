@@ -1,4 +1,6 @@
+import Link from "next/link";
 import type { RankedDish } from "@/features/ranking/types";
+import { primaryButton } from "@/features/ranking/components/styles";
 import { DishMeta } from "@/features/ranking/components/ui";
 import { ScoreBadge } from "../activity/activity-list";
 import { timeAgo } from "../activity/shared";
@@ -22,9 +24,16 @@ export function RecentRankings({
   const posts = [...dishes].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, LIMIT);
 
   if (posts.length === 0) {
-    return (
+    return isOwner ? (
+      <div className="mt-6 text-center">
+        <p className="text-gray-500">Nothing here yet. Rank a plate to start!</p>
+        <Link href="/dining" className={`mt-4 ${primaryButton}`}>
+          Rank a plate
+        </Link>
+      </div>
+    ) : (
       <p className="rounded-2xl border-2 border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
-        {isOwner ? "Dishes you rank show up here, newest first." : "Nothing yet."}
+        Nothing yet.
       </p>
     );
   }

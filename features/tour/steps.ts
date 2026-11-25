@@ -42,7 +42,7 @@ const SIGNED_IN_STEPS: TourStep[] = [
     route: "/profile",
     target: "profile-actions",
     title: "Make it yours",
-    body: "Edit profile adds a photo, name, and bio. Tap ? in the corner to see this tour again.",
+    body: "The pencil edits your photo, name, and bio. The share icon sends a link to your profile. Tap ? in the corner to see this tour again.",
   },
 ];
 
