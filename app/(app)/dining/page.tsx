@@ -14,7 +14,7 @@ export default function Dining() {
         <PendingMeals />
       </Suspense>
 
-      <ul data-tour="hall-list" className="mt-6 divide-y divide-gray-100 rounded-2xl border border-gray-200">
+      <ul className="mt-6 divide-y divide-gray-100 rounded-2xl border border-gray-200">
         {halls.map((hall) => (
           <li key={hall.slug}>
             <Link
