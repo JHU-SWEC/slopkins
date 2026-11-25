@@ -128,7 +128,7 @@ export function ProfileView({
       </section>
 
       {/* ---------- 2. Stats: four numbers at a glance ---------- */}
-      <section data-tour="profile-stats" aria-label="Stats" className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <section aria-label="Stats" className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat value={rankedDishes.length} label="Dishes ranked" />
         <Stat
           value={data.rank ? `#${data.rank.position}` : "–"}

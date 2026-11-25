@@ -13,7 +13,7 @@ export default function Feed() {
           Follow friends to see what they ate.
         </p>
       ) : (
-        <ul data-tour="feed-list" className="mt-6 space-y-4">
+        <ul className="mt-6 space-y-4">
           {mockFeedPosts.map((post) => (
             <li key={post.id} className="rounded-2xl border border-gray-200 p-4">
               <div className="flex items-center gap-3">
