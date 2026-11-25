@@ -9,6 +9,7 @@ import {
   MAJOR_LIMIT,
   USERNAME_PATTERN,
 } from "./shared";
+import { nameProblem } from "./name-rules";
 
 export type EditProfileState = { error?: string };
 
@@ -37,6 +38,9 @@ export async function updateProfile(
   if (!USERNAME_PATTERN.test(username)) {
     return { error: "Usernames are 3–20 characters: lowercase letters, numbers, and _ only." };
   }
+  // No slurs, derogatory terms, or official-sounding names (see name-rules.ts).
+  const problem = nameProblem(username, "username") ?? nameProblem(displayName, "display name");
+  if (problem) return { error: problem };
   if (displayName.length > DISPLAY_NAME_LIMIT) {
     return { error: `Name must be ${DISPLAY_NAME_LIMIT} characters or fewer.` };
   }
