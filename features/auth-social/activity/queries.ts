@@ -79,14 +79,17 @@ export async function getActivity(
     followingIds.length === 0
       ? [{ data: [] }, { data: [] }]
       : await Promise.all([
+          // created_at = when the dish went on their list. updated_at also moves
+          // whenever another ranking re-spreads scores in the same group, so
+          // one new ranking would show up as several.
           supabase
             .from("rankings")
             .select(
-              `user_id, score, sentiment, comment, updated_at, dish:dishes(id, name), person:profiles!rankings_user_id_fkey(${PERSON})`,
+              `user_id, score, sentiment, comment, created_at, dish:dishes(id, name), person:profiles!rankings_user_id_fkey(${PERSON})`,
             )
             .in("user_id", followingIds)
-            .gte("updated_at", since)
-            .order("updated_at", { ascending: false })
+            .gte("created_at", since)
+            .order("created_at", { ascending: false })
             .limit(MAX_ITEMS),
           supabase
             .from("meals")
@@ -121,7 +124,7 @@ export async function getActivity(
     items.push({
       kind: "ranking",
       key: `ranking-${person.id}-${dish.id}`,
-      at: row.updated_at as string,
+      at: row.created_at as string,
       person,
       dish,
       score: Number(row.score),
