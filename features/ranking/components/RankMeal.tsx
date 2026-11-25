@@ -131,8 +131,8 @@ function Summary({
       </ul>
 
       <div className="mt-6 space-y-2">
-        <Link href="/my-list" className={primaryButton}>
-          View my list
+        <Link href="/profile#ranked" className={primaryButton}>
+          View my ranked dishes
         </Link>
         <Link href="/feed" className={secondaryButton}>
           Done

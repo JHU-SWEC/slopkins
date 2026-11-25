@@ -46,22 +46,25 @@ const COMMON_STEPS: TourStep[] = [
     title: "Log your meal",
     body: "Review meal shows your totals. Log & rank saves it and starts ranking; Log only just saves it. Only mains get ranked.",
   },
-  {
-    route: "/my-list",
-    target: "my-list",
-    title: "Rank your dishes",
-    body: "For each dish, say if you liked it, it was fine, or you didn't like it, then answer a few “which was better?” questions. Add a comment if you like, or skip. Your ranked list and scores live here.",
-  },
 ];
+
+const RANK_BODY =
+  "For each dish, say if you liked it, it was fine, or you didn't like it, then answer a few “which was better?” questions. Add a comment if you like, or skip.";
 
 // /profile sends signed-out people to /login, outside the app, so they get a
 // pointer to the Profile tab instead of a visit.
 const SIGNED_IN_STEPS: TourStep[] = [
   {
     route: "/profile",
+    target: "my-list",
+    title: "Rank your dishes",
+    body: `${RANK_BODY} Your ranked list and scores live under Ranked dishes on your profile.`,
+  },
+  {
+    route: "/profile",
     target: "profile-actions",
     title: "Your profile",
-    body: "Edit profile adds a photo, name, username, grade, major, bio, and the halls you've been to or want to try. Share profile copies a link to your page. My list opens your ranked dishes.",
+    body: "Edit profile adds a photo, name, username, grade, major, bio, and the halls you've been to or want to try. Share profile copies a link to your page.",
   },
   {
     route: "/profile",
@@ -72,6 +75,10 @@ const SIGNED_IN_STEPS: TourStep[] = [
 ];
 
 const SIGNED_OUT_STEPS: TourStep[] = [
+  {
+    title: "Rank your dishes",
+    body: `${RANK_BODY} Once you log in, your ranked list lives on your profile.`,
+  },
   {
     target: "tab-profile",
     title: "Set up your profile",
