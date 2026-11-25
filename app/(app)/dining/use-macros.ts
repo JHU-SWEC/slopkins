@@ -1,15 +1,15 @@
 import { useSyncExternalStore } from "react";
 
 // Whether the dining pages show calories and macros. Off is for people who
-// just want to log what they ate. Saved per browser; on by default.
+// just want to log what they ate. Saved per browser; off by default.
 const KEY = "showMacros";
 const EVENT = "showmacroschange";
 
 function read() {
   try {
-    return localStorage.getItem(KEY) !== "false";
+    return localStorage.getItem(KEY) === "true";
   } catch {
-    return true;
+    return false;
   }
 }
 
@@ -29,7 +29,7 @@ export function setShowMacros(show: boolean) {
   window.dispatchEvent(new Event(EVENT));
 }
 
-/** The server render assumes macros are on; the saved choice applies on hydration. */
+/** The server render assumes macros are off; the saved choice applies on hydration. */
 export function useShowMacros() {
-  return useSyncExternalStore(subscribe, read, () => true);
+  return useSyncExternalStore(subscribe, read, () => false);
 }
