@@ -137,8 +137,7 @@ function MenuFallback() {
     <div className="mt-2 animate-pulse">
       <div className="h-8 w-32 rounded bg-gray-200" />
       <div className="mt-6 h-9 w-full rounded-full bg-gray-100" />
-      {/* The guided tour highlights this while the menu loads, then moves to the first dish. */}
-      <div data-tour="menu-list" className="mt-6 h-40 w-full rounded-2xl bg-gray-100" />
+      <div className="mt-6 h-40 w-full rounded-2xl bg-gray-100" />
     </div>
   );
 }
