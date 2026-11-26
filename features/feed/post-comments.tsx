@@ -32,7 +32,7 @@ export function PostComments({
   now: number;
   /** The like button, shown first in the row. */
   like: React.ReactNode;
-  /** The save button on other people's posts, after the comment icon. */
+  /** After the comment icon: the save button on other people's posts, the save count on yours. */
   save?: React.ReactNode;
 }) {
   const [list, addPending] = useOptimistic<Shown[], Shown>(comments, (current, added) => [...current, added]);

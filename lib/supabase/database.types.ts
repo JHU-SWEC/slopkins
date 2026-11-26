@@ -636,6 +636,13 @@ export type Database = {
         Args: { p_meal_id: number }
         Returns: undefined
       }
+      meal_save_counts: {
+        Args: { p_meal_ids: number[] }
+        Returns: {
+          meal_id: number
+          saves: number
+        }[]
+      }
       profile_rank: {
         Args: { target: string }
         Returns: {

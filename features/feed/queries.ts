@@ -31,6 +31,8 @@ export type FeedPost = {
   dishes: FeedDish[];
   likes: number;
   likedByMe: boolean;
+  /** How many people saved this plate to Want to Try (not who). */
+  saves: number;
   /** Oldest first. */
   comments: FeedComment[];
   /** You've saved this plate to your Want to Try list. */
@@ -119,9 +121,9 @@ async function getPosts(
   // Your likes and saves on these posts, and their comments.
   const postIds = rows.map((row) => row.id as number);
   const none = Promise.resolve({ data: [] as Record<string, unknown>[] });
-  const [{ data: myLikes }, { data: mySaves }, { data: commentRows }] =
+  const [{ data: myLikes }, { data: mySaves }, { data: commentRows }, { data: saveCounts }] =
     postIds.length === 0
-      ? [{ data: [] }, { data: [] }, { data: [] }]
+      ? [{ data: [] }, { data: [] }, { data: [] }, { data: [] }]
       : await Promise.all([
           viewerId
             ? supabase.from("meal_likes").select("meal_id").eq("user_id", viewerId).in("meal_id", postIds)
@@ -134,7 +136,13 @@ async function getPosts(
             .select(`id, meal_id, body, created_at, person:profiles!meal_comments_user_id_fkey(${PERSON})`)
             .in("meal_id", postIds)
             .order("created_at", { ascending: true }),
+          // Counts only; who saved a plate stays private. Until the migration
+          // that adds this function is applied, this errors and counts are 0.
+          supabase.rpc("meal_save_counts", { p_meal_ids: postIds }),
         ]);
+  const saveCount = new Map(
+    ((saveCounts ?? []) as { meal_id: number; saves: number }[]).map((row) => [row.meal_id, Number(row.saves)]),
+  );
   const liked = new Set((myLikes ?? []).map((row) => row.meal_id as number));
   const saved = new Set((mySaves ?? []).map((row) => row.meal_id as number));
   const comments = new Map<number, FeedComment[]>();
@@ -176,6 +184,7 @@ async function getPosts(
       dishes,
       likes: one<{ count: number }>(row.meal_likes)?.count ?? 0,
       likedByMe: liked.has(row.id as number),
+      saves: saveCount.get(row.id as number) ?? 0,
       comments: comments.get(row.id as number) ?? [],
       savedByMe: saved.has(row.id as number),
     });

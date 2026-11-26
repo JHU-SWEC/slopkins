@@ -10,7 +10,7 @@ import { LikeButton } from "./like-button";
 import { PostComments } from "./post-comments";
 import { PostMenu } from "./post-menu";
 import type { FeedComment, FeedPost } from "./queries";
-import { SavePlateButton } from "./save-plate-button";
+import { OwnSaveCount, SavePlateButton } from "./save-plate-button";
 
 /**
  * One logged meal as a card: who, where, photo, dishes with scores, then
@@ -115,12 +115,22 @@ export function Post({
           postOwnerId={post.person.id}
           now={now}
           like={<LikeButton mealId={post.id} liked={post.likedByMe} likes={post.likes} />}
-          save={mine ? undefined : <SavePlateButton mealId={post.id} saved={post.savedByMe} />}
+          save={
+            mine ? (
+              <OwnSaveCount saves={post.saves} />
+            ) : (
+              <SavePlateButton mealId={post.id} saved={post.savedByMe} saves={post.saves} />
+            )
+          }
         />
       ) : (
         <div className="mt-2 flex items-center gap-1">
           <LikeButton mealId={post.id} liked={post.likedByMe} likes={post.likes} />
-          {!mine && <SavePlateButton mealId={post.id} saved={post.savedByMe} />}
+          {mine ? (
+            <OwnSaveCount saves={post.saves} />
+          ) : (
+            <SavePlateButton mealId={post.id} saved={post.savedByMe} saves={post.saves} />
+          )}
         </div>
       )}
     </li>
