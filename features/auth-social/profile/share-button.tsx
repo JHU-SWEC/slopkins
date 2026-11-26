@@ -36,7 +36,7 @@ export function ShareButton({ username, className }: { username: string; classNa
       </button>
       <span
         aria-live="polite"
-        className={`pointer-events-none absolute right-0 top-full mt-2 whitespace-nowrap rounded-lg bg-white px-2 py-1 text-xs font-semibold text-heritage-blue shadow transition ${
+        className={`pointer-events-none absolute right-0 top-full mt-2 whitespace-nowrap rounded-lg bg-slate-900 px-2 py-1 text-xs font-semibold text-white shadow transition dark:text-slate-50 ${
           status === "idle" ? "opacity-0" : "opacity-100"
         }`}
       >

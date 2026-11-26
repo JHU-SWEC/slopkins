@@ -10,7 +10,7 @@ export default function WantToTry({ items }: { items: WantToTryItem[] }) {
     return (
       <div className="mt-6 text-center">
         <p className="text-gray-500">
-          Tap the bookmark next to any dish on a menu to save it here. Ranking it takes it off the list.
+          Tap the bookmark next to any dish to save it here.
         </p>
         <Link href="/dining" className={`mt-4 ${primaryButton}`}>
           Browse menus

@@ -26,9 +26,9 @@ export function RecentRankings({
   if (posts.length === 0) {
     return isOwner ? (
       <div className="mt-6 text-center">
-        <p className="text-gray-500">Nothing here yet. Rank a plate to start!</p>
+        <p className="text-gray-500">Rank a plate to start!</p>
         <Link href="/dining" className={`mt-4 ${primaryButton}`}>
-          Rank a plate
+          Browse menus
         </Link>
       </div>
     ) : (

@@ -41,8 +41,8 @@ export function ProfileTabs({ tabs }: { tabs: ProfileTab[] }) {
 
   return (
     <>
-      <div data-tour="profile-tabs" className="sticky top-0 z-10 -mx-4 mt-6 border-b border-slate-200 bg-white/90 px-4 py-2 backdrop-blur dark:bg-background/90">
-        <div role="tablist" aria-label="Profile" className="flex justify-center gap-1 overflow-x-auto text-sm font-semibold">
+      <div data-tour="profile-tabs" className="sticky top-0 z-10 -mx-4 mt-6 border-b border-slate-200 bg-white/90 px-4 backdrop-blur dark:bg-background/90">
+        <div role="tablist" aria-label="Profile" className="flex text-sm font-semibold">
           {tabs.map((tab) => {
             const selected = tab.id === active.id;
             return (
@@ -54,10 +54,11 @@ export function ProfileTabs({ tabs }: { tabs: ProfileTab[] }) {
                 aria-selected={selected}
                 aria-controls={`panel-${tab.id}`}
                 onClick={() => open(tab.id)}
-                className={`whitespace-nowrap rounded-full px-3 py-2 transition ${
+                // Underline tabs that share the width, like most social apps.
+                className={`-mb-px flex-1 cursor-pointer whitespace-nowrap border-b-2 px-2 py-3 transition ${
                   selected
-                    ? "bg-heritage-blue text-white dark:bg-spirit-blue dark:text-heritage-blue"
-                    : "hover:bg-spirit-blue/20"
+                    ? "border-slate-900 text-slate-900"
+                    : "border-transparent text-slate-400 hover:text-slate-600"
                 }`}
               >
                 {tab.label}

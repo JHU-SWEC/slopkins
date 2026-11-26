@@ -14,7 +14,7 @@ export default function MyList({ list, isOwner }: { list: RankedDish[]; isOwner:
       <div className="mt-6 text-center">
         <p className="text-gray-500">Log a meal to start ranking dishes.</p>
         <Link href="/dining" className={`mt-4 ${primaryButton}`}>
-          Log a meal
+          Browse menus
         </Link>
       </div>
     ) : (
