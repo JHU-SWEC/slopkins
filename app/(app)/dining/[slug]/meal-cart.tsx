@@ -52,6 +52,8 @@ export function MealCart({
   logging = false,
   logError = null,
   photo,
+  caption,
+  onCaptionChange,
 }: {
   items: CartItem[];
   open: boolean;
@@ -70,6 +72,9 @@ export function MealCart({
   logError?: string | null;
   /** Optional meal photo, shown above the Log buttons. */
   photo: MealPhoto;
+  /** Optional caption for the post, under the photo. */
+  caption: string;
+  onCaptionChange: (caption: string) => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -169,7 +174,24 @@ export function MealCart({
 
           {/* Saved to Supabase by logMealAction; signed-out people are sent to log in. */}
           <div className="border-t border-gray-100 px-5 py-4">
-            {canLog && items.length > 0 && <MealPhotoPicker photo={photo} disabled={logging} />}
+            {canLog && items.length > 0 && (
+              <>
+                <MealPhotoPicker photo={photo} disabled={logging} />
+                <label htmlFor="meal-caption" className="sr-only">
+                  Comments
+                </label>
+                <textarea
+                  id="meal-caption"
+                  value={caption}
+                  onChange={(event) => onCaptionChange(event.target.value)}
+                  disabled={logging}
+                  rows={2}
+                  maxLength={500}
+                  placeholder="Comments (optional)"
+                  className="mb-3 w-full resize-none rounded-md border border-gray-200 p-3 text-sm placeholder:text-gray-400 focus:border-blue-600 focus:outline-none"
+                />
+              </>
+            )}
             {logError && (
               <p role="alert" className="mb-3 text-center text-sm text-rose-600">
                 {logError}

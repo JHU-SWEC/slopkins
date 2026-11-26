@@ -36,6 +36,8 @@ export type FeedPost = {
   meal: string | null;
   /** Path in the meal-photos bucket, or null if no photo. */
   photoPath: string | null;
+  /** What the poster wrote when logging it, if anything. */
+  caption: string | null;
   dishes: FeedDish[];
   /** Null until the poster ranks the plate. */
   ranking: PlateRanking | null;
@@ -105,7 +107,7 @@ async function getPosts(
   const { data: meals } = await supabase
     .from("meals")
     .select(
-      `id, user_id, meal, photo_path, photo_deleted_at, created_at, hall:dining_halls(slug, name), person:profiles!meals_user_id_fkey(${PERSON}), meal_dishes(dish:dishes(id, name)), meal_likes(count)`,
+      `id, user_id, meal, photo_path, photo_deleted_at, caption, created_at, hall:dining_halls(slug, name), person:profiles!meals_user_id_fkey(${PERSON}), meal_dishes(dish:dishes(id, name)), meal_likes(count)`,
     )
     .in("user_id", authorIds)
     .order("created_at", { ascending: false })
@@ -187,6 +189,7 @@ async function getPosts(
       meal: (row.meal as string | null) ?? null,
       // A removed photo stays in storage but isn't shown.
       photoPath: row.photo_deleted_at ? null : ((row.photo_path as string | null) ?? null),
+      caption: (row.caption as string | null) ?? null,
       dishes,
       ranking: plates.get(row.id as number) ?? null,
       likes: one<{ count: number }>(row.meal_likes)?.count ?? 0,

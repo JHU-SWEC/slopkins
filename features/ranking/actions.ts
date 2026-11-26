@@ -15,6 +15,7 @@ import type { RankPlateInput } from "./types";
 export type ActionResult = { error?: string };
 
 const MAX_DISHES = 50;
+const MAX_CAPTION = 500;
 
 function isId(value: unknown): value is number {
   return Number.isInteger(value) && (value as number) > 0;
@@ -139,6 +140,8 @@ export async function logMealAction(input: {
   rank: boolean;
   /** Optional photo, already uploaded to the meal-photos bucket by the browser. */
   photoPath?: string | null;
+  /** Optional caption for the post. */
+  caption?: string | null;
 }): Promise<ActionResult> {
   const { supabase, user } = await signedIn();
   if (!user) redirect("/login");
@@ -168,6 +171,7 @@ export async function logMealAction(input: {
     p_dish_ids: foodIds.map((id) => dishIds.get(id)!),
     p_rank: input.rank,
     p_photo_path: photoPath ?? undefined,
+    p_caption: input.caption?.trim().slice(0, MAX_CAPTION) || undefined,
   });
   if (error || typeof mealId !== "number") {
     console.error("[ranking] log_meal failed", error);

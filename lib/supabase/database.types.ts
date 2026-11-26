@@ -296,6 +296,7 @@ export type Database = {
       }
       meals: {
         Row: {
+          caption: string | null
           created_at: string
           dining_hall_id: number
           eaten_on: string
@@ -307,6 +308,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          caption?: string | null
           created_at?: string
           dining_hall_id: number
           eaten_on?: string
@@ -318,6 +320,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          caption?: string | null
           created_at?: string
           dining_hall_id?: number
           eaten_on?: string
@@ -669,6 +672,7 @@ export type Database = {
     Functions: {
       log_meal: {
         Args: {
+          p_caption?: string
           p_dining_hall_id: number
           p_dish_ids: number[]
           p_meal: Database["public"]["Enums"]["meal_type"] | null

@@ -65,6 +65,7 @@ export function MenuPicker({
   const [logging, startLogging] = useTransition();
   const [logError, setLogError] = useState<string | null>(null);
   const photo = useMealPhoto();
+  const [caption, setCaption] = useState("");
   const [tabIndex, setTabIndex] = useState(0);
   // Selected dishes and how much of each, in the order they were picked.
   const [cart, setCart] = useState<Map<number, CartItem>>(new Map());
@@ -142,6 +143,7 @@ export function MenuPicker({
         foodIds: cartItems.map(({ dish }) => dish.id),
         rank,
         photoPath: photo.path,
+        caption,
       });
       if (result?.error) setLogError(result.error);
     });
@@ -356,6 +358,8 @@ export function MenuPicker({
         onClose={() => setCartOpen(false)}
         onChange={updateItem}
         onRemove={removeItem}
+        caption={caption}
+        onCaptionChange={setCaption}
         canLog={canLog}
         canRank
         showMacros={showMacros}

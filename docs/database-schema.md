@@ -102,6 +102,7 @@ One visit to one hall. The feed can read these.
 | dining_hall_id | bigint           | FK `dining_halls`                            |
 | meal           | `meal_type` enum | nullable, null for Levering kitchens         |
 | eaten_on       | date             | not null, defaults to today in New York time |
+| caption        | text             | nullable, at most 500 characters; set by `log_meal` |
 | created_at     | timestamptz      |                                              |
 
 - Index: `(user_id, created_at desc)`.

@@ -61,6 +61,8 @@ export function Post({
         {mine && <PostMenu mealId={post.id} hasPhoto={post.photoPath !== null} />}
       </div>
 
+      {post.caption && <p className="mt-3 whitespace-pre-line text-sm text-gray-800">{post.caption}</p>}
+
       {post.photoPath && (
         // Every photo shows as the same 200×200 square, cropped to fit.
         <div className="relative mt-3 size-[200px] overflow-hidden rounded-xl bg-gray-100">
