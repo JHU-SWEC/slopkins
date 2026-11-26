@@ -85,7 +85,7 @@ One row per dish served on a Nutrislice menu on a date.
 ### RLS
 
 - `dining_halls`, `nutrislice_menus`, `dishes`, `menu_items`: readable by everyone. Only the ingest job writes to them, using the service role key on the server, never the client.
-- `dish_alerts`: a user can select, insert and delete only their own rows.
+- `dish_alerts`: readable by everyone (Want to Try is public on profiles). A user can insert and delete only their own rows.
 
 ## Add + Rank (owner: Jonny)
 

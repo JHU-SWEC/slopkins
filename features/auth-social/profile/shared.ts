@@ -11,9 +11,9 @@ export type ProfileData = {
   profile: Profile;
   /** False until the profile-page migration adds grade/major/bio. */
   detailsReady: boolean;
-  /** Only filled for the profile's owner (dish_alerts is private). */
+  /** Dishes they bookmarked on menus. Public. */
   wantToTry: WantToTryItem[];
-  /** Plates saved from other people's posts. Empty unless it's your profile. */
+  /** Plates saved from other people's posts. Public. */
   savedPlates: SavedPlate[];
   followers: number;
   following: number;

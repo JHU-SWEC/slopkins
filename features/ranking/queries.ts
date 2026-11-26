@@ -158,8 +158,8 @@ export async function getMealsWithPendingDishes(
 }
 
 /**
- * Dishes a user saved to Want to try, newest first. dish_alerts RLS returns
- * rows only to their owner, so anyone else gets an empty list.
+ * Dishes a user saved to Want to try, newest first. Public (anyone can read
+ * dish_alerts); only the owner can change them.
  */
 export async function getWantToTry(supabase: SupabaseClient, userId: string): Promise<WantToTryItem[]> {
   const { data } = await supabase
@@ -190,7 +190,7 @@ export async function getWantToTryFoodIds(supabase: SupabaseClient, userId: stri
   });
 }
 
-/** Plates you saved from other people's posts, newest first. Private to you. */
+/** Plates a user saved from other people's posts, newest first. Public. */
 export async function getSavedPlates(supabase: SupabaseClient, userId: string): Promise<SavedPlate[]> {
   const { data } = await supabase
     .from("saved_plates")

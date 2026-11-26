@@ -9,11 +9,27 @@ import { DishMeta } from "./ui";
 const CARD = "rounded-2xl border border-gray-200 px-4 py-4 transition hover:border-gray-300";
 
 /**
- * Your saved dishes and plates, newest first. Only shown on your own profile.
+ * Someone's saved dishes and plates, newest first. Public on every profile;
+ * `isOwner` adds the remove buttons and changes the empty state.
  * Plates are whole meals saved from other people's feed posts.
  */
-export default function WantToTry({ items, plates = [] }: { items: WantToTryItem[]; plates?: SavedPlate[] }) {
+export default function WantToTry({
+  items,
+  plates = [],
+  isOwner,
+}: {
+  items: WantToTryItem[];
+  plates?: SavedPlate[];
+  isOwner: boolean;
+}) {
   if (items.length === 0 && plates.length === 0) {
+    if (!isOwner) {
+      return (
+        <p className="rounded-2xl border-2 border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+          Nothing saved yet.
+        </p>
+      );
+    }
     return (
       <div className="mt-6 text-center">
         <p className="text-gray-500">
@@ -34,7 +50,7 @@ export default function WantToTry({ items, plates = [] }: { items: WantToTryItem
             <p className="font-medium">{dish.name}</p>
             <DishMeta dish={dish} />
           </div>
-          <RemoveWantToTry dishId={dish.id} name={dish.name} />
+          {isOwner && <RemoveWantToTry dishId={dish.id} name={dish.name} />}
         </li>
       ))}
     </ul>
@@ -62,7 +78,7 @@ export default function WantToTry({ items, plates = [] }: { items: WantToTryItem
                   ))}
                 </ul>
               </div>
-              <RemoveSavedPlate plateId={plate.id} />
+              {isOwner && <RemoveSavedPlate plateId={plate.id} />}
             </li>
           ))}
         </ul>

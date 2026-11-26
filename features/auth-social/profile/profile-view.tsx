@@ -144,16 +144,12 @@ export function ProfileView({
             label: "Ranked Plates",
             panel: <MyList plates={posts.posts} isOwner={isOwner} />,
           },
-          // Saved dishes are private, so only you see this tab.
-          ...(isOwner
-            ? [
-                {
-                  id: "want-to-try",
-                  label: "Want to Try",
-                  panel: <WantToTry items={wantToTry} plates={savedPlates} />,
-                },
-              ]
-            : []),
+          // Public, like the rest of the profile; only you can remove things.
+          {
+            id: "want-to-try",
+            label: "Want to Try",
+            panel: <WantToTry items={wantToTry} plates={savedPlates} isOwner={isOwner} />,
+          },
         ]}
       />
 

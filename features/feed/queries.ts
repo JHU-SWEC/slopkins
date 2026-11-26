@@ -130,8 +130,8 @@ async function getPosts(
             .select(`id, meal_id, body, created_at, person:profiles!meal_comments_user_id_fkey(${PERSON})`)
             .in("meal_id", postIds)
             .order("created_at", { ascending: true }),
-          // Counts only; who saved a plate stays private. Until the migration
-          // that adds this function is applied, this errors and counts are 0.
+          // How many people saved each post. (Who saved it shows on their
+          // public Want to Try lists, not here.)
           supabase.rpc("meal_save_counts", { p_meal_ids: postIds }),
           // Every ranked plate by these people (not just the posts shown), so
           // each post can say where it sits on its poster's list. Deleted posts
