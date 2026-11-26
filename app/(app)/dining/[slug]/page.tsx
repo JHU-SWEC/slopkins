@@ -7,6 +7,7 @@ import { formatDay, menuDays, pickMenuDate, todayISO } from "@/lib/dates";
 import { getMenus } from "@/lib/menus";
 import { createClient } from "@/lib/supabase/server";
 import { getDishScoresByFoodId, getWantToTryFoodIds } from "@/features/ranking/queries";
+import { DaySwitcher, type MenuDay } from "./day-switcher";
 import { MenuPicker } from "./menu-picker";
 
 // Cache Components needs at least one param to prerender.
@@ -63,10 +64,11 @@ async function HallMenu({
     return (
       <>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">{hall.name}</h1>
-        <DayPicker slug={hall.slug} date={date} today={today} />
-        <p className="mt-6 text-gray-500">
-          Couldn&apos;t load {isToday ? "today's" : `${formatDay(date)}'s`} menu. Try again in a bit.
-        </p>
+        <DaySwitcher days={dayLinks(hall.slug, today)} date={date}>
+          <p className="mt-6 text-gray-500">
+            Couldn&apos;t load {isToday ? "today's" : `${formatDay(date)}'s`} menu. Try again in a bit.
+          </p>
+        </DaySwitcher>
       </>
     );
   }
@@ -85,52 +87,30 @@ async function HallMenu({
           ? "Select everything you ate."
           : `Plan ahead for ${formatDay(date, { weekday: "long" })}. You can log it that day.`}
       </p>
-      <DayPicker slug={hall.slug} date={date} today={today} />
-
-      {/* Keyed by date so picking another day starts a fresh meal. */}
-      <MenuPicker
-        key={date}
-        hallSlug={hall.slug}
-        tabs={tabs}
-        canLog={isToday}
-        date={date}
-        savedFoodIds={await savedFoodIds}
-        scores={scores}
-      />
+      <DaySwitcher days={dayLinks(hall.slug, today)} date={date}>
+        {/* Keyed by date so picking another day starts a fresh meal. */}
+        <MenuPicker
+          key={date}
+          hallSlug={hall.slug}
+          tabs={tabs}
+          canLog={isToday}
+          date={date}
+          savedFoodIds={await savedFoodIds}
+          scores={scores}
+        />
+      </DaySwitcher>
     </>
   );
 }
 
 // Today and the next few days. Future days can be browsed and planned, not logged.
-function DayPicker({ slug, date, today }: { slug: string; date: string; today: string }) {
-  return (
-    <nav aria-label="Day" className="-mx-4 mt-4 overflow-x-auto px-4">
-      <ul className="flex gap-2">
-        {menuDays(today).map((day, i) => {
-          const active = day === date;
-          return (
-            <li key={day}>
-              <Link
-                href={day === today ? `/dining/${slug}` : `/dining/${slug}?date=${day}`}
-                scroll={false}
-                aria-current={active ? "date" : undefined}
-                className={`flex w-14 flex-col items-center rounded-xl py-1.5 text-center transition ${
-                  active ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                <span className="text-xs font-medium">
-                  {i === 0 ? "Today" : formatDay(day, { month: undefined, day: undefined })}
-                </span>
-                <span className="text-lg font-semibold leading-tight">
-                  {formatDay(day, { weekday: undefined, month: undefined })}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
-  );
+function dayLinks(slug: string, today: string): MenuDay[] {
+  return menuDays(today).map((day, i) => ({
+    date: day,
+    href: day === today ? `/dining/${slug}` : `/dining/${slug}?date=${day}`,
+    top: i === 0 ? "Today" : formatDay(day, { month: undefined, day: undefined }),
+    number: formatDay(day, { weekday: undefined, month: undefined }),
+  }));
 }
 
 function MenuFallback() {
