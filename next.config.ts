@@ -10,12 +10,18 @@ const nextConfig: NextConfig = {
     agentUpgrade: "security",
   },
   images: {
-    // Allow profile pictures stored in Supabase Storage's public "avatars" bucket.
+    // Allow images from Supabase Storage's public buckets.
     remotePatterns: [
       {
         protocol: "https",
         hostname: "*.supabase.co",
         pathname: "/storage/v1/object/public/avatars/**",
+      },
+      // Meal photos on the feed, from the public "meal-photos" bucket.
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/public/meal-photos/**",
       },
     ],
   },

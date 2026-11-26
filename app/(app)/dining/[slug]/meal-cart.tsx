@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { MealPhotoPicker, type MealPhoto } from "@/features/ranking/components/meal-photo-picker";
 import type { MenuDish } from "@/lib/menus";
 import { mealTotals, nutritionForServings } from "@/lib/nutrition";
 import { NutritionLabel } from "./nutrition-facts";
@@ -50,6 +51,7 @@ export function MealCart({
   showMacros,
   logging = false,
   logError = null,
+  photo,
 }: {
   items: CartItem[];
   open: boolean;
@@ -66,6 +68,8 @@ export function MealCart({
   /** The meal is being saved. */
   logging?: boolean;
   logError?: string | null;
+  /** Optional meal photo, shown above the Log buttons. */
+  photo: MealPhoto;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -165,6 +169,7 @@ export function MealCart({
 
           {/* Saved to Supabase by logMealAction; signed-out people are sent to log in. */}
           <div className="border-t border-gray-100 px-5 py-4">
+            {canLog && items.length > 0 && <MealPhotoPicker photo={photo} disabled={logging} />}
             {logError && (
               <p role="alert" className="mb-3 text-center text-sm text-rose-600">
                 {logError}
@@ -174,7 +179,7 @@ export function MealCart({
               {canRank && (
                 <button
                   type="button"
-                  disabled={items.length === 0 || !canLog || logging}
+                  disabled={items.length === 0 || !canLog || logging || photo.uploading}
                   onClick={() => onLog(false)}
                   className="shrink-0 rounded-md border border-gray-200 px-4 py-3 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-40"
                 >
@@ -183,11 +188,11 @@ export function MealCart({
               )}
               <button
                 type="button"
-                disabled={items.length === 0 || !canLog || logging}
+                disabled={items.length === 0 || !canLog || logging || photo.uploading}
                 onClick={() => onLog(canRank)}
                 className="flex-1 rounded-md bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600"
               >
-                {logging ? "Saving…" : canRank ? "Log & rank" : "Log meal"}
+                {logging ? "Saving…" : photo.uploading ? "Uploading photo…" : canRank ? "Log & rank" : "Log meal"}
               </button>
             </div>
             {!canLog && (

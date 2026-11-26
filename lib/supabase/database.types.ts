@@ -225,7 +225,10 @@ export type Database = {
           dining_hall_id: number
           eaten_on: string
           id: number
+          deleted_at: string | null
           meal: Database["public"]["Enums"]["meal_type"] | null
+          photo_deleted_at: string | null
+          photo_path: string | null
           user_id: string
         }
         Insert: {
@@ -233,7 +236,10 @@ export type Database = {
           dining_hall_id: number
           eaten_on?: string
           id?: never
+          deleted_at?: string | null
           meal?: Database["public"]["Enums"]["meal_type"] | null
+          photo_deleted_at?: string | null
+          photo_path?: string | null
           user_id: string
         }
         Update: {
@@ -241,7 +247,10 @@ export type Database = {
           dining_hall_id?: number
           eaten_on?: string
           id?: never
+          deleted_at?: string | null
           meal?: Database["public"]["Enums"]["meal_type"] | null
+          photo_deleted_at?: string | null
+          photo_path?: string | null
           user_id?: string
         }
         Relationships: [
@@ -491,9 +500,14 @@ export type Database = {
           p_dining_hall_id: number
           p_dish_ids: number[]
           p_meal: Database["public"]["Enums"]["meal_type"] | null
+          p_photo_path?: string
           p_rank?: boolean
         }
         Returns: number
+      }
+      remove_meal_photo: {
+        Args: { p_meal_id: number }
+        Returns: undefined
       }
       profile_rank: {
         Args: { target: string }
@@ -502,6 +516,10 @@ export type Database = {
           rank: number
           total_users: number
         }[]
+      }
+      soft_delete_meal: {
+        Args: { p_meal_id: number }
+        Returns: undefined
       }
       rank_dish: {
         Args: {

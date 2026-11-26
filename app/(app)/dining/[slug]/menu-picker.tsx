@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { logMealAction } from "@/features/ranking/actions";
+import { useMealPhoto } from "@/features/ranking/components/meal-photo-picker";
 import { WantToTryToggle } from "@/features/ranking/components/want-to-try-buttons";
 import type { HallSlug } from "@/lib/halls";
 import type { MenuDish, MenuTab, Nutrition } from "@/lib/menus";
@@ -56,6 +57,7 @@ export function MenuPicker({
 }) {
   const [logging, startLogging] = useTransition();
   const [logError, setLogError] = useState<string | null>(null);
+  const photo = useMealPhoto();
   const [tabIndex, setTabIndex] = useState(0);
   // Selected dishes and how much of each, in the order they were picked.
   const [cart, setCart] = useState<Map<number, CartItem>>(new Map());
@@ -132,6 +134,7 @@ export function MenuPicker({
         menuTypeSlug: tab.menuTypeSlug,
         foodIds: cartItems.map(({ dish }) => dish.id),
         rank,
+        photoPath: photo.path,
       });
       if (result?.error) setLogError(result.error);
     });
@@ -341,6 +344,7 @@ export function MenuPicker({
         onLog={log}
         logging={logging}
         logError={logError}
+        photo={photo}
       />
 
       <div data-tour="review-meal" className="fixed inset-x-0 bottom-16 border-t border-gray-200 bg-white px-4 py-3">

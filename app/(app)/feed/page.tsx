@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { Avatar } from "@/features/auth-social/profile/avatar";
 import { avatarSrc, shownName } from "@/features/auth-social/profile/shared";
 import { timeAgo } from "@/features/auth-social/activity/shared";
+import { PostMenu } from "@/features/feed/post-menu";
 import { getFeed, type FeedPost } from "@/features/feed/queries";
 import { SENTIMENT_STYLES } from "@/features/ranking/components/styles";
+import { mealPhotoSrc } from "@/features/ranking/photo";
 import { formatScore } from "@/features/ranking/score";
 import { createClient } from "@/lib/supabase/server";
 
@@ -65,13 +68,13 @@ async function Feed() {
   return (
     <ul className="mt-6 space-y-4">
       {posts.map((post) => (
-        <Post key={post.id} post={post} now={now} />
+        <Post key={post.id} post={post} now={now} mine={post.person.id === user.id} />
       ))}
     </ul>
   );
 }
 
-function Post({ post, now }: { post: FeedPost; now: number }) {
+function Post({ post, now, mine }: { post: FeedPost; now: number; mine: boolean }) {
   const name = shownName(post.person);
   const profileHref = `/u/${post.person.username}`;
   const comments = post.dishes.filter((dish) => dish.ranking?.comment);
@@ -100,7 +103,21 @@ function Post({ post, now }: { post: FeedPost; now: number }) {
         <time dateTime={post.at} className="text-xs text-gray-400">
           {timeAgo(post.at, now)}
         </time>
+        {mine && <PostMenu mealId={post.id} hasPhoto={post.photoPath !== null} />}
       </div>
+
+      {post.photoPath && (
+        // Every photo shows as the same 200×200 square, cropped to fit.
+        <div className="relative mt-3 size-[200px] overflow-hidden rounded-xl bg-gray-100">
+          <Image
+            src={mealPhotoSrc(post.photoPath)}
+            alt={`${name}'s meal${post.hall ? ` at ${post.hall.name}` : ""}`}
+            fill
+            sizes="200px"
+            className="object-cover"
+          />
+        </div>
+      )}
 
       <ul className="mt-3 flex flex-wrap gap-2">
         {post.dishes.map((dish) => (
