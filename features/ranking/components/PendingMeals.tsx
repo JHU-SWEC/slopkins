@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSignedInUser } from "@/lib/supabase/server";
 import { mealTitle } from "../format";
 import { getMealsWithPendingDishes } from "../queries";
 import { listBox } from "./styles";
@@ -12,7 +12,7 @@ export default async function PendingMeals() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getSignedInUser(supabase);
   if (!user) return null;
 
   const meals = await getMealsWithPendingDishes(supabase, user.id);

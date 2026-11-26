@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSignedInUser } from "@/lib/supabase/server";
 import { getProfileData } from "@/features/auth-social/profile/queries";
 import { getRelationships } from "@/features/auth-social/social/queries";
 import { getUserPosts } from "@/features/feed/queries";
@@ -31,7 +31,7 @@ async function UserProfile({ username }: { username: string }) {
       data: { user },
     },
     data,
-  ] = await Promise.all([supabase.auth.getUser(), getProfileData(supabase, { username })]);
+  ] = await Promise.all([getSignedInUser(supabase), getProfileData(supabase, { username })]);
 
   if (!data) {
     return (

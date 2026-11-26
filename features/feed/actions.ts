@@ -4,7 +4,7 @@
 // own posts. Soft deletes remove nothing: the database functions set a
 // timestamp and the app hides the post, photo, or comment.
 import { refresh } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSignedInUser } from "@/lib/supabase/server";
 
 export type ActionResult = { error?: string };
 
@@ -43,7 +43,7 @@ export async function setLiked(mealId: number, liked: boolean): Promise<ActionRe
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getSignedInUser(supabase);
   if (!user) return { error: "Log in to like posts." };
   if (!isId(mealId)) return { error: "That post couldn't be found." };
 
@@ -65,7 +65,7 @@ export async function setCommentLiked(commentId: number, liked: boolean): Promis
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getSignedInUser(supabase);
   if (!user) return { error: "Log in to like comments." };
   if (!isId(commentId)) return { error: "That comment couldn't be found." };
 
@@ -89,7 +89,7 @@ export async function addComment(mealId: number, body: string): Promise<ActionRe
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getSignedInUser(supabase);
   if (!user) return { error: "Log in to comment." };
   if (!isId(mealId)) return { error: "That post couldn't be found." };
   const text = typeof body === "string" ? body.trim() : "";
@@ -126,7 +126,7 @@ export async function setPlateSaved(mealId: number, save: boolean): Promise<Acti
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getSignedInUser(supabase);
   if (!user) return { error: "Log in to save plates." };
   if (!isId(mealId)) return { error: "That post couldn't be found." };
 
@@ -169,7 +169,7 @@ export async function removeSavedPlate(plateId: number): Promise<ActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getSignedInUser(supabase);
   if (!user) return { error: "Log in to change your list." };
   const { error } = await supabase.from("saved_plates").delete().eq("user_id", user.id).eq("id", plateId);
   if (error) return { error: "Couldn't remove that. Please try again." };

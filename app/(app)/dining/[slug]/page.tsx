@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { getHall, halls } from "@/lib/halls";
 import { formatDay, menuDays, pickMenuDate, todayISO } from "@/lib/dates";
 import { getMenus, listMenus } from "@/lib/menus";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSignedInUser } from "@/lib/supabase/server";
 import { getDishScoresByFoodId, getWantToTryFoodIds } from "@/features/ranking/queries";
 import { DaySwitcher, type MenuDay } from "./day-switcher";
 import { MenuPicker } from "./menu-picker";
@@ -51,8 +51,7 @@ async function HallMenu({
 
   // Signed-in people get bookmarks for Want to try, already filled for saved dishes.
   const supabase = await createClient();
-  const savedFoodIds = supabase.auth
-    .getUser()
+  const savedFoodIds = getSignedInUser(supabase)
     .then(({ data: { user } }) => (user ? getWantToTryFoodIds(supabase, user.id) : null))
     .catch(() => null);
 

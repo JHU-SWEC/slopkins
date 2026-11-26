@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSignedInUser } from "@/lib/supabase/server";
 import {
   BIO_LIMIT,
   DISPLAY_NAME_LIMIT,
@@ -20,7 +20,7 @@ export async function updateProfile(
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getSignedInUser(supabase);
   if (!user) redirect("/login");
 
   const username = String(formData.get("username") ?? "").trim().toLowerCase();

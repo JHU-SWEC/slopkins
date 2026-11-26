@@ -3,7 +3,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSignedInUser } from "@/lib/supabase/server";
 import { ActivityList } from "@/features/auth-social/activity/activity-list";
 import { MarkActivitySeen } from "@/features/auth-social/activity/mark-seen";
 import { getActivity } from "@/features/auth-social/activity/queries";
@@ -30,7 +30,7 @@ async function Activity() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getSignedInUser(supabase);
 
   if (!user) {
     return (
