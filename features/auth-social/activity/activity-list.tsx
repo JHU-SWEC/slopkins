@@ -75,6 +75,11 @@ function Row({ item, highlighted, now }: { item: ActivityItem; highlighted: bool
             {item.comment}
           </p>
         )}
+        {item.kind === "comment" && (
+          <p className="mt-1 border-l-2 border-slate-200 pl-3 italic text-slate-600 dark:border-white/20 dark:text-white/70">
+            {item.body}
+          </p>
+        )}
       </div>
 
       {item.kind === "follow" && (
@@ -121,6 +126,38 @@ function Sentence({ item }: { item: ActivityItem }) {
         </>
       );
     }
+    case "comment":
+      return (
+        <>
+          commented on your {item.meal ?? "meal"}
+          {item.hall && (
+            <>
+              {" "}
+              at{" "}
+              <Link href={`/dining/${item.hall.slug}`} className="font-semibold hover:underline">
+                {item.hall.name}
+              </Link>
+            </>
+          )}
+          .
+        </>
+      );
+    case "like":
+      return (
+        <>
+          liked your {item.meal ?? "meal"}
+          {item.hall && (
+            <>
+              {" "}
+              at{" "}
+              <Link href={`/dining/${item.hall.slug}`} className="font-semibold hover:underline">
+                {item.hall.name}
+              </Link>
+            </>
+          )}
+          .
+        </>
+      );
   }
 }
 

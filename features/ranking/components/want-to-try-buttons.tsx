@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { removeSavedPlate } from "@/features/feed/actions";
 import { removeWantToTryAction, setWantToTryAction } from "../actions";
 
 /** Bookmark outline, filled when saved. */
@@ -76,6 +77,22 @@ export function RemoveWantToTry({ dishId, name }: { dishId: number; name: string
       disabled={pending}
       onClick={() => startTransition(async () => void (await removeWantToTryAction(dishId)))}
       aria-label={`Remove ${name} from want to try`}
+      className="shrink-0 text-sm text-gray-500 transition hover:text-gray-700 disabled:opacity-40"
+    >
+      {pending ? "Removing…" : "Remove"}
+    </button>
+  );
+}
+
+/** "Remove" on a plate saved from someone's post. */
+export function RemoveSavedPlate({ plateId }: { plateId: number }) {
+  const [pending, startTransition] = useTransition();
+  return (
+    <button
+      type="button"
+      disabled={pending}
+      onClick={() => startTransition(async () => void (await removeSavedPlate(plateId)))}
+      aria-label="Remove this plate from want to try"
       className="shrink-0 text-sm text-gray-500 transition hover:text-gray-700 disabled:opacity-40"
     >
       {pending ? "Removing…" : "Remove"}

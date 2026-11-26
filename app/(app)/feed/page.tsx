@@ -6,8 +6,11 @@ import { Suspense } from "react";
 import { Avatar } from "@/features/auth-social/profile/avatar";
 import { avatarSrc, shownName } from "@/features/auth-social/profile/shared";
 import { timeAgo } from "@/features/auth-social/activity/shared";
+import { LikeButton } from "@/features/feed/like-button";
+import { PostComments } from "@/features/feed/post-comments";
 import { PostMenu } from "@/features/feed/post-menu";
-import { getFeed, type FeedPost } from "@/features/feed/queries";
+import { getFeed, type FeedComment, type FeedPost } from "@/features/feed/queries";
+import { SavePlateButton } from "@/features/feed/save-plate-button";
 import { SENTIMENT_STYLES } from "@/features/ranking/components/styles";
 import { mealPhotoSrc } from "@/features/ranking/photo";
 import { formatScore } from "@/features/ranking/score";
@@ -48,7 +51,7 @@ async function Feed() {
     );
   }
 
-  const { posts, now } = await getFeed(supabase, user.id);
+  const { posts, now, viewer } = await getFeed(supabase, user.id);
   if (posts.length === 0) {
     return (
       <Empty>
@@ -65,16 +68,33 @@ async function Feed() {
     );
   }
 
+  // The label sits just above the newest post, apart from the title.
   return (
-    <ul className="mt-6 space-y-4">
-      {posts.map((post) => (
-        <Post key={post.id} post={post} now={now} mine={post.person.id === user.id} />
-      ))}
-    </ul>
+    <section className="mt-6" aria-labelledby="feed-label">
+      <h2 id="feed-label" className="text-sm text-gray-500">
+        Your feed
+      </h2>
+      <ul className="mt-2 space-y-4">
+        {posts.map((post) => (
+          <Post key={post.id} post={post} now={now} mine={post.person.id === user.id} viewer={viewer} />
+        ))}
+      </ul>
+    </section>
   );
 }
 
-function Post({ post, now, mine }: { post: FeedPost; now: number; mine: boolean }) {
+function Post({
+  post,
+  now,
+  mine,
+  viewer,
+}: {
+  post: FeedPost;
+  now: number;
+  mine: boolean;
+  /** Null only if your profile row couldn't be read; then there's no comment box. */
+  viewer: FeedComment["person"] | null;
+}) {
   const name = shownName(post.person);
   const profileHref = `/u/${post.person.username}`;
   const comments = post.dishes.filter((dish) => dish.ranking?.comment);
@@ -149,6 +169,24 @@ function Post({ post, now, mine }: { post: FeedPost; now: number; mine: boolean 
           <span className="not-italic font-medium text-gray-700">{dish.name}:</span> {dish.ranking?.comment}
         </p>
       ))}
+
+      {/* Like, comment, and (on other people's posts) save the plate, side by side. */}
+      {viewer ? (
+        <PostComments
+          mealId={post.id}
+          comments={post.comments}
+          viewer={viewer}
+          postOwnerId={post.person.id}
+          now={now}
+          like={<LikeButton mealId={post.id} liked={post.likedByMe} likes={post.likes} />}
+          save={mine ? undefined : <SavePlateButton mealId={post.id} saved={post.savedByMe} />}
+        />
+      ) : (
+        <div className="mt-2 flex items-center gap-1">
+          <LikeButton mealId={post.id} liked={post.likedByMe} likes={post.likes} />
+          {!mine && <SavePlateButton mealId={post.id} saved={post.savedByMe} />}
+        </div>
+      )}
     </li>
   );
 }
@@ -163,16 +201,20 @@ function Empty({ children }: { children: React.ReactNode }) {
 
 function FeedSkeleton() {
   return (
-    <div className="mt-6 animate-pulse space-y-4" aria-label="Loading feed">
-      {[0, 1, 2].map((i) => (
-        <div key={i} className="rounded-2xl border border-gray-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="size-10 rounded-full bg-gray-100" />
-            <div className="h-4 flex-1 rounded bg-gray-100" />
+    // Same label and spacing as the loaded feed, so nothing jumps.
+    <div className="mt-6" aria-label="Loading feed">
+      <p className="text-sm text-gray-500">Your feed</p>
+      <div className="mt-2 animate-pulse space-y-4">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="rounded-2xl border border-gray-200 p-4">
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-full bg-gray-100" />
+              <div className="h-4 flex-1 rounded bg-gray-100" />
+            </div>
+            <div className="mt-3 h-6 w-2/3 rounded-full bg-gray-100" />
           </div>
-          <div className="mt-3 h-6 w-2/3 rounded-full bg-gray-100" />
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

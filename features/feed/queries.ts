@@ -11,6 +11,14 @@ export type FeedDish = {
   ranking: { score: number; sentiment: Sentiment; comment: string | null } | null;
 };
 
+/** A comment under a post. `at` is an ISO timestamp. */
+export type FeedComment = {
+  id: number;
+  at: string;
+  body: string;
+  person: PersonBasics;
+};
+
 /** One logged meal on the feed. `at` is an ISO timestamp. */
 export type FeedPost = {
   id: number;
@@ -21,6 +29,12 @@ export type FeedPost = {
   /** Path in the meal-photos bucket, or null if no photo. */
   photoPath: string | null;
   dishes: FeedDish[];
+  likes: number;
+  likedByMe: boolean;
+  /** Oldest first. */
+  comments: FeedComment[];
+  /** You've saved this plate to your Want to Try list. */
+  savedByMe: boolean;
 };
 
 const PERSON = "id, username, display_name, avatar_url";
@@ -39,21 +53,21 @@ function one<T>(value: unknown): T | null {
 export async function getFeed(
   supabase: SupabaseClient,
   viewerId: string,
-): Promise<{ posts: FeedPost[]; now: number }> {
+): Promise<{ posts: FeedPost[]; now: number; viewer: PersonBasics | null }> {
   // Also returned, so "3h ago" is measured from the same moment.
   const now = Date.now();
 
-  const { data: following } = await supabase
-    .from("follows")
-    .select("followee_id")
-    .eq("follower_id", viewerId)
-    .limit(1000);
+  const [{ data: following }, { data: viewer }] = await Promise.all([
+    supabase.from("follows").select("followee_id").eq("follower_id", viewerId).limit(1000),
+    // You, for comments you post before the page reloads.
+    supabase.from("profiles").select(PERSON).eq("id", viewerId).maybeSingle(),
+  ]);
   const authorIds = [viewerId, ...(following ?? []).map((row) => row.followee_id as string)];
 
   const { data: meals } = await supabase
     .from("meals")
     .select(
-      `id, user_id, meal, photo_path, photo_deleted_at, created_at, hall:dining_halls(slug, name), person:profiles!meals_user_id_fkey(${PERSON}), meal_dishes(dish:dishes(id, name))`,
+      `id, user_id, meal, photo_path, photo_deleted_at, created_at, hall:dining_halls(slug, name), person:profiles!meals_user_id_fkey(${PERSON}), meal_dishes(dish:dishes(id, name)), meal_likes(count)`,
     )
     .in("user_id", authorIds)
     .order("created_at", { ascending: false })
@@ -76,6 +90,31 @@ export async function getFeed(
           .select("user_id, dish_id, score, sentiment, comment")
           .in("user_id", authorIds)
           .in("dish_id", [...dishIds]);
+  // Your likes and saves on these posts, and their comments.
+  const postIds = rows.map((row) => row.id as number);
+  const [{ data: myLikes }, { data: mySaves }, { data: commentRows }] =
+    postIds.length === 0
+      ? [{ data: [] }, { data: [] }, { data: [] }]
+      : await Promise.all([
+          supabase.from("meal_likes").select("meal_id").eq("user_id", viewerId).in("meal_id", postIds),
+          supabase.from("saved_plates").select("meal_id").eq("user_id", viewerId).in("meal_id", postIds),
+          supabase
+            .from("meal_comments")
+            .select(`id, meal_id, body, created_at, person:profiles!meal_comments_user_id_fkey(${PERSON})`)
+            .in("meal_id", postIds)
+            .order("created_at", { ascending: true }),
+        ]);
+  const liked = new Set((myLikes ?? []).map((row) => row.meal_id as number));
+  const saved = new Set((mySaves ?? []).map((row) => row.meal_id as number));
+  const comments = new Map<number, FeedComment[]>();
+  for (const row of (commentRows ?? []) as Record<string, unknown>[]) {
+    const person = one<PersonBasics>(row.person);
+    if (!person) continue;
+    const list = comments.get(row.meal_id as number) ?? [];
+    list.push({ id: row.id as number, at: row.created_at as string, body: row.body as string, person });
+    comments.set(row.meal_id as number, list);
+  }
+
   const scores = new Map<string, FeedDish["ranking"]>();
   for (const r of (rankings ?? []) as Record<string, unknown>[]) {
     scores.set(`${r.user_id}:${r.dish_id}`, {
@@ -104,8 +143,12 @@ export async function getFeed(
       // A removed photo stays in storage but isn't shown.
       photoPath: row.photo_deleted_at ? null : ((row.photo_path as string | null) ?? null),
       dishes,
+      likes: one<{ count: number }>(row.meal_likes)?.count ?? 0,
+      likedByMe: liked.has(row.id as number),
+      comments: comments.get(row.id as number) ?? [],
+      savedByMe: saved.has(row.id as number),
     });
   }
 
-  return { posts, now };
+  return { posts, now, viewer: (viewer as PersonBasics | null) ?? null };
 }

@@ -1,5 +1,5 @@
 // Used by both server code and browser code, so nothing server-only here.
-import type { RankedDish, WantToTryItem } from "@/features/ranking/types";
+import type { RankedDish, SavedPlate, WantToTryItem } from "@/features/ranking/types";
 import type { Tables } from "@/lib/supabase/database.types";
 
 export type Profile = Pick<
@@ -14,6 +14,8 @@ export type ProfileData = {
   rankedDishes: RankedDish[];
   /** Only filled for the profile's owner (dish_alerts is private). */
   wantToTry: WantToTryItem[];
+  /** Plates saved from other people's posts. Empty unless it's your profile. */
+  savedPlates: SavedPlate[];
   /** When this was loaded (ms), so "2h" times are measured from one moment. */
   loadedAt: number;
   followers: number;
