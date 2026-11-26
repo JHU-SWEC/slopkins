@@ -71,18 +71,32 @@ export function Tour() {
     if (route && !onRoute) router.push(route);
   }, [route, onRoute, router]);
 
+  // While the tour is open, load every page it visits ahead of time, so Next
+  // switches pages right away instead of waiting on the server. Nothing on
+  // the feed links to a hall's menu, so it wouldn't be loaded otherwise.
+  const active = step !== null;
+  const routes = [...new Set(steps.flatMap((s) => (s.route ? [s.route] : [])))].join("|");
+  useEffect(() => {
+    if (!active || !routes) return;
+    for (const r of routes.split("|")) router.prefetch(r);
+  }, [active, routes, router]);
+
   function go(next: number) {
     write(next >= steps.length ? "done" : String(next));
   }
 
-  if (!step || index === null || !onRoute) return null;
+  if (!step || index === null) return null;
   return (
     <TourOverlay
-      // Remount per step so the target search and focus start fresh.
+      // Remount per step so the target search and focus start fresh. The
+      // same instance carries on from loading to on-page for one step.
       key={index}
       step={step}
       index={index}
       total={steps.length}
+      // Still on the previous page: the overlay keeps the screen dimmed (the
+      // tap visibly did something) but holds the card until the page is here.
+      loading={!onRoute}
       onBack={() => go(index - 1)}
       onNext={() => go(index + 1)}
       onSkip={() => write("done")}
