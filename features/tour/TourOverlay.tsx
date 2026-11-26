@@ -67,7 +67,9 @@ export function TourOverlay({
         for (const selector of BARS) {
           const bar = shown(selector);
           if (bar && bar !== el && !bar.contains(el)) {
-            floor = Math.min(floor, bar.getBoundingClientRect().top - EDGE);
+            // On laptops the tabs are a sidebar, not a bottom bar: skip it.
+            const top = bar.getBoundingClientRect().top;
+            if (top > innerHeight / 2) floor = Math.min(floor, top - EDGE);
           }
         }
         // Not fully in view (above the bars)? Bring its top near the top of

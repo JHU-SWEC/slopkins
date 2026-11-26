@@ -347,7 +347,7 @@ export function MenuPicker({
         photo={photo}
       />
 
-      <div data-tour="review-meal" className="fixed inset-x-0 bottom-16 border-t border-gray-200 bg-white px-4 py-3">
+      <div data-tour="review-meal" className="fixed inset-x-0 bottom-16 border-t md:bottom-0 md:left-[72px] border-gray-200 bg-white px-4 py-3">
         <div className="mx-auto flex max-w-2xl items-center gap-3">
           <p className="flex-1 text-sm text-gray-500">
             {cartItems.length === 0 ? (

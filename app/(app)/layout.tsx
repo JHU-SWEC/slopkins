@@ -7,7 +7,7 @@ import { BottomNav, NavLinks } from "./bottom-nav";
 // mockup reachable through the Skip link.
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-white pb-16 text-gray-900">
+    <div className="min-h-screen bg-white pb-16 text-gray-900 md:pb-0 md:pl-[72px]">
       <main className="mx-auto max-w-2xl px-4 py-8">{children}</main>
       {/* usePathname suspends on routes with unknown params. */}
       <Suspense fallback={<NavLinks />}>
