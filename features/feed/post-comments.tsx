@@ -219,7 +219,7 @@ function CommentRow({ comment, now, canDelete }: { comment: Shown; now: number; 
   );
 }
 
-// Small heart on the right of a comment, with its like count. Flips the
+// Small heart on the right of a comment, with its like count just left of it. Flips the
 // moment you tap it, then the server catches up (same as LikeButton).
 function CommentLike({ commentId, liked, likes }: { commentId: number; liked: boolean; likes: number }) {
   const [shown, setShown] = useOptimistic({ liked, likes });
@@ -237,7 +237,9 @@ function CommentLike({ commentId, liked, likes }: { commentId: number; liked: bo
   }
 
   return (
-    <div className="flex shrink-0 flex-col items-center">
+    <div className="flex shrink-0 items-center">
+      {/* Count on the left, so the heart stays put at the right edge. */}
+      {shown.likes > 0 && <span className="text-xs text-gray-400 tabular-nums">{shown.likes}</span>}
       <button
         type="button"
         onClick={toggle}
@@ -261,7 +263,6 @@ function CommentLike({ commentId, liked, likes }: { commentId: number; liked: bo
           <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
         </svg>
       </button>
-      {shown.likes > 0 && <span className="text-[10px] leading-none text-gray-400 tabular-nums">{shown.likes}</span>}
       {error && (
         <span role="alert" className="sr-only">
           {error}
