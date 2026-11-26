@@ -31,6 +31,7 @@ Auth, profiles, follows, Activity, meals and rankings use Supabase. The feed (`l
 - [Next.js 16](https://nextjs.org) (App Router) with React 19, TypeScript and Tailwind 4
 - `cacheComponents` and `partialPrefetching` are on. APIs differ from older Next versions, so read `node_modules/next/dist/docs/` before writing Next code (see [AGENTS.md](AGENTS.md)).
 - [Supabase](https://supabase.com): Postgres, Auth and Storage, via `@supabase/ssr`
+- Hosted on Vercel. Server code runs in `pdx1` (Portland, set in `vercel.json`) to sit next to the Supabase project in `us-west-2`; every page makes several database calls, so a cross-country region adds up fast.
 
 ## Getting started
 
