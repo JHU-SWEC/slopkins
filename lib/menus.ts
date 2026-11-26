@@ -27,6 +27,8 @@ export type Nutrition = {
   potassium: number | null; // mg
 };
 
+// What the menu list needs for every dish: names, calories, sorting by macros,
+// and the meal cart's totals (which sum the whole label, so all of Nutrition).
 export type MenuDish = {
   id: number;
   name: string;
@@ -35,16 +37,24 @@ export type MenuDish = {
   nutrition: Nutrition;
   servingSize: string | null; // e.g. "4 oz"
   servingGrams: number | null; // serving weight, for comparing per 100 g
-  ingredients: string | null;
   tags: string[]; // e.g. "Vegan", "Contains Milk"
   isMain: boolean; // an entrée rather than a side, topping or drink; see isMainDish
 };
 
-export type MenuTab = {
+// Only shown at the bottom of a dish's nutrition label, so it's left out of
+// the menu sent to the browser (over a third of it) and fetched when a label
+// opens. At the bottom, it fills in without moving anything above it.
+export type DishDetails = {
+  ingredients: string | null;
+};
+
+export type FullDish = MenuDish & DishDetails;
+
+export type MenuTab<Dish extends MenuDish = MenuDish> = {
   label: string;
   meal: HallMenu["meal"];
   menuTypeSlug: string;
-  dishes: MenuDish[];
+  dishes: Dish[];
 };
 
 // Only the Nutrislice fields we use.
@@ -71,8 +81,11 @@ type NutrisliceWeek = {
   }[];
 };
 
-/** Every tab on the hall's menu page, with the dishes for a YYYY-MM-DD date. */
-export async function getMenus(hall: Hall, date: string): Promise<MenuTab[]> {
+/**
+ * Every tab on the hall's menu page, with the dishes for a YYYY-MM-DD date.
+ * Dishes include their label details; use listMenus for what the browser gets.
+ */
+export async function getMenus(hall: Hall, date: string): Promise<MenuTab<FullDish>[]> {
   return Promise.all(
     hall.menus.map(async (menu) => ({
       label: menu.label,
@@ -90,11 +103,29 @@ export async function getMenus(hall: Hall, date: string): Promise<MenuTab[]> {
  * one fetch. Only the parsed dishes are kept, not the raw response.
  * Failed fetches throw, and errors aren't cached, so the next visit retries.
  */
+/** The menu for the browser's list: each dish without its label details. */
+export function listMenus(tabs: MenuTab<FullDish>[]): MenuTab[] {
+  return tabs.map((tab) => ({
+    ...tab,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- pulled out to drop it
+    dishes: tab.dishes.map(({ ingredients, ...dish }) => dish),
+  }));
+}
+
+/** One dish's label details for a day at a hall, or null if it isn't on that day's menu. */
+export async function getDishDetails(hall: Hall, date: string, foodId: number): Promise<DishDetails | null> {
+  for (const tab of await getMenus(hall, date)) {
+    const dish = tab.dishes.find((d) => d.id === foodId);
+    if (dish) return { ingredients: dish.ingredients };
+  }
+  return null;
+}
+
 async function getWeek(
   schoolSlug: string,
   menuTypeSlug: string,
   sunday: string,
-): Promise<Record<string, MenuDish[]>> {
+): Promise<Record<string, FullDish[]>> {
   "use cache";
   // Refreshed in the background after an hour, in case the hall edits it.
   cacheLife("hours");
@@ -111,7 +142,7 @@ type NutrisliceItem = NonNullable<NonNullable<NutrisliceWeek["days"]>[number]["m
 
 function toDishes(items: NutrisliceItem[]) {
   // Items come in menu order; station headers are items with text and no food.
-  const dishes: MenuDish[] = [];
+  const dishes: FullDish[] = [];
   const seen = new Set<string>();
   let station = "Menu";
   for (const item of [...items].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))) {

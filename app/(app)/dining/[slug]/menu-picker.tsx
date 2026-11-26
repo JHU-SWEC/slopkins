@@ -345,6 +345,8 @@ export function MenuPicker({
 
       <NutritionFacts
         dish={detailDish}
+        hallSlug={hallSlug}
+        date={date}
         basis={basis}
         onBasisChange={setBasis}
         onClose={() => setDetailDish(null)}

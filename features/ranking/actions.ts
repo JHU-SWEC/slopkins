@@ -5,7 +5,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { pickMenuDate, todayISO } from "@/lib/dates";
 import { getHall } from "@/lib/halls";
-import { getMenus, type MenuDish } from "@/lib/menus";
+import { getMenus, type FullDish } from "@/lib/menus";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { SENTIMENT_ORDER } from "./insertion";
@@ -60,7 +60,7 @@ async function recordDishes(
     ...tabs.filter((tab) => tab.menuTypeSlug === menuTypeSlug),
     ...tabs.filter((tab) => tab.menuTypeSlug !== menuTypeSlug),
   ];
-  const picked: { menuTypeSlug: string; dish: MenuDish }[] = [];
+  const picked: { menuTypeSlug: string; dish: FullDish }[] = [];
   for (const foodId of foodIds) {
     const tab = ordered.find((t) => t.dishes.some((dish) => dish.id === foodId));
     const dish = tab?.dishes.find((d) => d.id === foodId);

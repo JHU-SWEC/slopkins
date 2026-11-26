@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import type { MenuDish, Nutrition } from "@/lib/menus";
+import { useEffect, useRef, useState } from "react";
+import type { DishDetails, MenuDish, Nutrition } from "@/lib/menus";
 import { nutritionFor, type Basis } from "@/lib/nutrition";
 import { BasisToggle } from "./basis-toggle";
 
@@ -52,16 +52,40 @@ const MINERAL_ROWS: Row[] = [
 // Modal with a dish's full nutrition label. Pass null to close it.
 export function NutritionFacts({
   dish,
+  hallSlug,
+  date,
   basis,
   onBasisChange,
   onClose,
 }: {
   dish: MenuDish | null;
+  hallSlug: string;
+  /** The menu's day, YYYY-MM-DD: which day's menu to look the dish up in. */
+  date: string;
   basis: Basis;
   onBasisChange: (basis: Basis) => void;
   onClose: () => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  // Ingredients aren't in the menu (they'd make every day's page much
+  // bigger), so each label fetches its own the first time it opens.
+  const [details, setDetails] = useState<Record<number, DishDetails | "error">>({});
+  const shown = dish ? details[dish.id] : undefined;
+  const dishId = dish?.id;
+
+  useEffect(() => {
+    if (dishId === undefined || details[dishId] !== undefined) return;
+    let cancelled = false;
+    fetch(`/dining/${hallSlug}/details?date=${date}&food=${dishId}`)
+      .then((res) => (res.ok ? (res.json() as Promise<DishDetails>) : Promise.reject(new Error(String(res.status)))))
+      .catch(() => "error" as const)
+      .then((result) => {
+        if (!cancelled) setDetails((prev) => ({ ...prev, [dishId]: result }));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [dishId, details, hallSlug, date]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -136,11 +160,24 @@ export function NutritionFacts({
             </p>
           )}
 
-          {dish.ingredients && (
+          {/* Last on the label, so filling it in doesn't move anything above. */}
+          {shown === undefined ? (
+            <div className="mt-4" aria-busy="true">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-400">Ingredients</h3>
+              <p className="mt-1 animate-pulse text-sm text-gray-400">Loading…</p>
+            </div>
+          ) : shown === "error" ? (
             <div className="mt-4">
               <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-400">Ingredients</h3>
-              <p className="mt-1 text-sm text-gray-600">{dish.ingredients}</p>
+              <p className="mt-1 text-sm text-gray-500">Couldn&apos;t load the ingredients.</p>
             </div>
+          ) : (
+            shown.ingredients && (
+              <div className="mt-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-400">Ingredients</h3>
+                <p className="mt-1 text-sm text-gray-600">{shown.ingredients}</p>
+              </div>
+            )
           )}
         </div>
       )}
