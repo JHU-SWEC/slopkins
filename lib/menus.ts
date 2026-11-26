@@ -1,6 +1,9 @@
-// A day's menu for a hall, fetched live from Nutrislice on every request.
+// A day's menu for a hall, from Nutrislice. Each menu's week is fetched once
+// and cached (see getWeek), since menus rarely change and Nutrislice is slow.
 // Server-only: Nutrislice doesn't allow browser requests (no CORS).
 import "server-only";
+import { cacheLife } from "next/cache";
+import { weekStart } from "@/lib/dates";
 import type { Hall, HallMenu } from "@/lib/halls";
 
 const NUTRISLICE = "https://hopkinsdining.api.nutrislice.com/menu/api";
@@ -75,21 +78,38 @@ export async function getMenus(hall: Hall, date: string): Promise<MenuTab[]> {
       label: menu.label,
       meal: menu.meal,
       menuTypeSlug: menu.menuTypeSlug,
-      dishes: await getDishes(hall.schoolSlug, menu.menuTypeSlug, date),
+      dishes: (await getWeek(hall.schoolSlug, menu.menuTypeSlug, weekStart(date)))[date] ?? [],
     })),
   );
 }
 
-async function getDishes(schoolSlug: string, menuTypeSlug: string, date: string) {
-  const [y, m, d] = date.split("-");
+/**
+ * Every day's dishes for one menu, Sunday to Saturday, keyed by YYYY-MM-DD.
+ * Nutrislice only serves whole weeks (about 5 MB, 1-1.5 s per menu), so the
+ * week is cached by its Sunday: every day and every visitor that week share
+ * one fetch. Only the parsed dishes are kept, not the raw response.
+ * Failed fetches throw, and errors aren't cached, so the next visit retries.
+ */
+async function getWeek(
+  schoolSlug: string,
+  menuTypeSlug: string,
+  sunday: string,
+): Promise<Record<string, MenuDish[]>> {
+  "use cache";
+  // Refreshed in the background after an hour, in case the hall edits it.
+  cacheLife("hours");
+  const [y, m, d] = sunday.split("-");
   const res = await fetch(
     `${NUTRISLICE}/weeks/school/${schoolSlug}/menu-type/${menuTypeSlug}/${y}/${m}/${d}/`,
-    { cache: "no-store" },
   );
   if (!res.ok) throw new Error(`Nutrislice returned ${res.status} for ${menuTypeSlug}`);
   const week = (await res.json()) as NutrisliceWeek;
-  const items = week.days?.find((day) => day.date === date)?.menu_items ?? [];
+  return Object.fromEntries((week.days ?? []).map((day) => [day.date, toDishes(day.menu_items ?? [])]));
+}
 
+type NutrisliceItem = NonNullable<NonNullable<NutrisliceWeek["days"]>[number]["menu_items"]>[number];
+
+function toDishes(items: NutrisliceItem[]) {
   // Items come in menu order; station headers are items with text and no food.
   const dishes: MenuDish[] = [];
   const seen = new Set<string>();
