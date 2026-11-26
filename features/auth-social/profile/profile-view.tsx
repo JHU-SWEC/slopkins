@@ -36,7 +36,11 @@ export function ProfileView({
   const name = shownName(profile);
 
   return (
-    <div className="text-heritage-blue dark:text-white">
+    // On phones the ?, settings, and bell buttons float at the top right
+    // (top-3, 36px tall, so they end 48px down). Main's py-8 starts the page at
+    // 32px; pt-6 pushes it to 56px so edit and share sit just below them.
+    // Laptops have no floating buttons (they're in the sidebar).
+    <div className="pt-6 text-heritage-blue md:pt-0 dark:text-white">
       {/* New accounts start with a placeholder username; nudge them to pick a real one. */}
       {isOwner && isPlaceholderUsername(profile.username) && (
         <Link
