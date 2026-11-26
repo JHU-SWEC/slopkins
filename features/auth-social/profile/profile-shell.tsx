@@ -3,7 +3,7 @@ import Link from "next/link";
 // Gray placeholder blocks shown for a split second while a profile loads.
 export function ProfileSkeleton() {
   return (
-    <div className="animate-pulse" aria-label="Loading profile">
+    <div className="animate-pulse pt-6 md:pt-0" aria-label="Loading profile">
       <div className="h-72 rounded-3xl bg-slate-100" />
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
