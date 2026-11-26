@@ -56,7 +56,7 @@ Auth, profiles, follows, Activity, meals and rankings use Supabase. The feed (`l
    npm run dev
    ```
 
-The sign-in page has a **Skip** link, so every screen is reachable without an account.
+Sign in with Google to use the app. Pages like the feed show a log-in prompt when you're signed out.
 
 ## Project layout
 

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { GoogleSignInButton } from "@/features/auth-social/google-sign-in-button";
 
 // Sign-in screen. Lucas and Amy own the real sign-in.
@@ -12,14 +11,6 @@ export default function SignIn() {
         <div className="mt-10">
           <GoogleSignInButton />
         </div>
-
-        {/* Mockup only. Remove when every screen uses real data. */}
-        <Link
-          href="/feed"
-          className="mt-6 inline-block text-sm font-medium text-gray-500 underline-offset-4 hover:underline"
-        >
-          Skip
-        </Link>
       </main>
     </div>
   );

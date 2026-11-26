@@ -5,8 +5,8 @@ import { BottomNav, NavLinks } from "./bottom-nav";
 import { NotificationsButton, NotificationsLink } from "./notifications-button";
 import { GearIcon, SettingsMenu } from "./settings-menu";
 
-// Shared shell for the signed-in screens. No auth check yet: everything is a
-// mockup reachable through the Skip link.
+// Shared shell for the app screens (tabs, bell, settings). There's no auth
+// check here: each page decides what signed-out visitors see.
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div data-app className="min-h-screen bg-white pb-16 text-gray-900 md:pb-0 md:pl-[72px]">
