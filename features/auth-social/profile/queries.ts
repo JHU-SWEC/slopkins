@@ -79,7 +79,7 @@ export async function getProfileData(
     // No rank until you've ranked a dish (otherwise everyone ties for #1 at 0).
     rank:
       rank.data && rank.data.dishes_ranked > 0
-        ? { position: rank.data.rank, totalUsers: rank.data.total_users }
+        ? { position: rank.data.rank }
         : null,
   };
 }

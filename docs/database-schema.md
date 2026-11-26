@@ -209,7 +209,7 @@ Halls a user has been to or wants to try. Shown on the profile.
 
 ### `profile_rank(target uuid)`
 
-Function. Returns `dishes_ranked`, `rank` (1 = most dishes ranked; ties share a rank) and `total_users`. Shown as "Rank on Slopkins".
+Function. Returns `dishes_ranked`, `rank` (1 = most dishes ranked; ties share a rank) and `total_users`. Shown on profiles as "#3 rank" (the total isn't shown).
 
 ### Storage: `avatars` bucket
 

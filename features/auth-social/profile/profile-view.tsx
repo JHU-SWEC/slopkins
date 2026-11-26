@@ -4,7 +4,6 @@ import MyList from "@/features/ranking/components/MyList";
 import WantToTry from "@/features/ranking/components/WantToTry";
 import { ProfileTabs } from "./profile-tabs";
 import { ProfilePosts } from "./profile-posts";
-import { logOut } from "../actions";
 import { FollowButton } from "../social/follow-button";
 import { Avatar } from "./avatar";
 import { ShareButton } from "./share-button";
@@ -19,7 +18,7 @@ import {
 export type Viewer = { signedIn: boolean; iFollow: boolean; followsMe: boolean };
 
 // The whole profile page. `isOwner` = you're looking at your own profile,
-// which adds Edit / Log out, your own ranked list, and "add something" hints. Anyone else
+// which adds Edit, your own ranked list, and "add something" hints. Anyone else
 // sees a Follow button instead.
 export function ProfileView({
   data,
@@ -99,10 +98,8 @@ export function ProfileView({
                 href={`/u/${profile.username}/followers`}
               />
               <Stat value={data.following} label="following" href={`/u/${profile.username}/following`} />
-              <Stat
-                value={data.rank ? `#${data.rank.position}` : "–"}
-                label={data.rank ? `of ${data.rank.totalUsers}` : "rank"}
-              />
+              {/* "#3 rank". Hidden until they've ranked a dish. */}
+              {data.rank && <Stat value={`#${data.rank.position}`} label="rank" />}
             </div>
           </div>
         </div>
@@ -156,16 +153,6 @@ export function ProfileView({
         ]}
       />
 
-      {isOwner && (
-        <form action={logOut} className="mt-10 text-center">
-          <button
-            type="submit"
-            className="text-sm font-medium text-slate-400 transition hover:text-slate-900"
-          >
-            Log out
-          </button>
-        </form>
-      )}
     </div>
   );
 }
@@ -174,10 +161,11 @@ export function ProfileView({
 
 // One number in the header's stat row. With `href`, it's a link (like tapping
 // "Followers" on Instagram).
-function Stat({ value, label, href }: { value: number | string; label: string; href?: string }) {
+function Stat({ value, label, href }: { value: number | string; label?: string; href?: string }) {
   const inner = (
     <>
-      <span className="font-bold text-slate-900">{value}</span> <span className="text-slate-500">{label}</span>
+      <span className="font-bold text-slate-900">{value}</span>
+      {label && <span className="text-slate-500"> {label}</span>}
     </>
   );
   return href ? (

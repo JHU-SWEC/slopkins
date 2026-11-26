@@ -18,7 +18,7 @@ export type ProfileData = {
   savedPlates: SavedPlate[];
   followers: number;
   following: number;
-  rank: { position: number; totalUsers: number } | null;
+  rank: { position: number } | null;
 };
 
 // Columns from the team's initial schema: always there.

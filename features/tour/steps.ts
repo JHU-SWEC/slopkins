@@ -16,7 +16,7 @@ const COMMON_STEPS: TourStep[] = [
     route: "/feed",
     target: "tabs",
     title: "Welcome to Slopkins",
-    body: "Rank the food at JHU's dining halls and see what your friends are eating. The house is your Feed, the fork and knife is Dining, the magnifying glass finds people, the bell is your activity, and the person is you.",
+    body: "Rank the food at JHU's dining halls and see what your friends are eating. The house is your Feed, the fork and knife is Dining, the magnifying glass finds people, and the person is you. The bell shows your notifications.",
   },
   {
     route: `/dining/${halls[0].slug}`,

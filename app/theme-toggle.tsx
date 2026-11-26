@@ -5,22 +5,25 @@ import { HoverLabel } from "./hover-label";
 // Flips data-theme on <html> and remembers the choice. The inline script in
 // app/layout.tsx applies it before first paint. Icons switch with dark:, so
 // nothing here depends on state that differs between server and client.
-export function ThemeToggle() {
-  function toggle() {
-    const root = document.documentElement;
-    const next = root.dataset.theme === "dark" ? "light" : "dark";
-    root.dataset.theme = next;
-    try {
-      localStorage.setItem("theme", next);
-    } catch {}
-  }
+// Also used by the settings menu.
+export function toggleTheme() {
+  const root = document.documentElement;
+  const next = root.dataset.theme === "dark" ? "light" : "dark";
+  root.dataset.theme = next;
+  try {
+    localStorage.setItem("theme", next);
+  } catch {}
+}
 
+// Top-right button for pages outside the app (landing, login). App pages
+// (data-app) have it in the settings menu instead, so it hides there.
+export function ThemeToggle() {
   return (
     <button
       type="button"
-      onClick={toggle}
+      onClick={toggleTheme}
       aria-label="Toggle dark mode"
-      className="group fixed right-3 top-3 z-50 grid h-9 w-9 place-items-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-100"
+      className="group fixed right-3 top-3 z-50 grid h-9 w-9 place-items-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-100 [body:has([data-app])_&]:hidden"
     >
       {/* Moon in light mode, sun in dark mode. */}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 dark:hidden" aria-hidden>
