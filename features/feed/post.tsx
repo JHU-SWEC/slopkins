@@ -13,7 +13,7 @@ import type { FeedComment, FeedPost } from "./queries";
 import { SaveCount, SavePlateButton } from "./save-plate-button";
 
 /**
- * One logged meal as a card: who, where, photo, dishes with scores, then
+ * One logged meal as a card: who, where, photo, dishes and the plate's score, then
  * likes, comments, and save. Used on the feed and on profiles.
  */
 export function Post({
@@ -33,7 +33,6 @@ export function Post({
 }) {
   const name = shownName(post.person);
   const profileHref = `/u/${post.person.username}`;
-  const comments = post.dishes.filter((dish) => dish.ranking?.comment);
 
   return (
     <li className="rounded-2xl border border-gray-200 p-4">
@@ -75,36 +74,30 @@ export function Post({
         </div>
       )}
 
-      <ul className="mt-3 flex flex-wrap gap-2">
-        {post.dishes.map((dish) => (
-          <li
-            key={dish.id}
-            className="flex items-center gap-2 rounded-full bg-gray-100 py-1 pl-3 pr-1 text-sm text-gray-700"
+      {/* What was on the plate, then the plate's score once it's ranked. */}
+      <div className="mt-3 flex items-start gap-3">
+        <ul className="flex min-w-0 flex-1 flex-wrap gap-2">
+          {post.dishes.map((dish) => (
+            <li key={dish.id} className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
+              {dish.name}
+            </li>
+          ))}
+        </ul>
+        {post.ranking && (
+          <span
+            title="Plate score"
+            className={`shrink-0 rounded-full px-2.5 py-1 text-sm font-semibold tabular-nums ${
+              SENTIMENT_STYLES[post.ranking.sentiment].score
+            }`}
           >
-            {dish.name}
-            {dish.ranking ? (
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${
-                  SENTIMENT_STYLES[dish.ranking.sentiment].score
-                }`}
-              >
-                {formatScore(dish.ranking.score)}
-              </span>
-            ) : (
-              <span className="pr-2" />
-            )}
-          </li>
-        ))}
-      </ul>
+            {formatScore(post.ranking.score)}
+          </span>
+        )}
+      </div>
 
-      {comments.map((dish) => (
-        <p
-          key={dish.id}
-          className="mt-3 border-l-2 border-gray-200 pl-3 text-sm italic text-gray-600"
-        >
-          <span className="not-italic font-medium text-gray-700">{dish.name}:</span> {dish.ranking?.comment}
-        </p>
-      ))}
+      {post.ranking?.comment && (
+        <p className="mt-3 border-l-2 border-gray-200 pl-3 text-sm italic text-gray-600">{post.ranking.comment}</p>
+      )}
 
       {/* Like, comment, and (on other people's posts) save the plate, side by side. */}
       {!signedIn ? null : viewer ? (

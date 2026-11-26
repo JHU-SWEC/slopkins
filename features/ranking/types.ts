@@ -23,27 +23,19 @@ export type Dish = {
   hall_slug: HallSlug | null;
 };
 
-/** One dish on one user's list. Higher score is better; bands never overlap. */
-export type Ranking = {
-  user_id: string;
-  dish_id: number;
+/** One of a user's ranked plates (a plate_rankings row) with its place on their list. */
+export type RankedPlate = {
+  meal_id: number;
   sentiment: Sentiment;
+  /** Higher is better; sentiment bands never overlap. */
   score: number;
   comment: string | null;
+  /** 1-based position on the whole list. */
+  rank: number;
+  hall_slug: HallSlug | null;
+  meal: MealType | null;
   created_at: string;
-  updated_at: string;
-};
-
-/** A ranking with its 1-based position on the whole list and dish details. */
-export type RankedDish = Ranking & { rank: number; dish: Dish };
-
-/** One answer to "Is dish X or Y better?". */
-export type Comparison = {
-  id: number;
-  user_id: string;
-  winner_dish_id: number;
-  loser_dish_id: number;
-  created_at: string;
+  dish_names: string[];
 };
 
 /** A logged meal: one visit to one hall. */
@@ -64,15 +56,13 @@ export type MealDish = {
 
 export type MealWithDishes = Meal & { dishes: (MealDish & { dish: Dish })[] };
 
-/** What rank_dish() needs. comparisons use dishes.id on both sides. */
-export type RankDishInput = {
-  dishId: number;
+/** What rank_plate() needs. */
+export type RankPlateInput = {
+  mealId: number;
   sentiment: Sentiment;
-  /** 0-based index in the sentiment group, not counting this dish. */
+  /** 0-based index in the sentiment group, not counting this plate. */
   position: number;
   comment: string | null;
-  mealId: number | null;
-  comparisons: { winner_dish_id: number; loser_dish_id: number }[];
 };
 
 /** A dish on your Want to try list (a dish_alerts row). */

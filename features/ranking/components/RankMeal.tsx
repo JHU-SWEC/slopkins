@@ -2,18 +2,18 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { rankDishAction, setRankStatusAction, skipRestAction, type ActionResult } from "../actions";
-import type { MealWithDishes, RankedDish, RankStatus } from "../types";
+import { rankPlateAction, rerankPlateAction, skipPlateAction, type ActionResult } from "../actions";
 import { mealTitle } from "../format";
-import { RankDish } from "./RankDish";
-import { listBox, primaryButton, secondaryButton } from "./styles";
+import type { MealWithDishes, RankedPlate } from "../types";
+import { DishNames, RankPlate } from "./RankPlate";
+import { primaryButton, secondaryButton } from "./styles";
 import { Score, TextButton } from "./ui";
 
 /**
- * The rank queue for one logged meal: each rankable dish in turn, then a summary.
+ * Ranking for one logged meal: the plate as a whole, then a summary.
  * `meal` and `list` come from the server; each action re-renders the page with fresh data.
  */
-export default function RankMeal({ meal, list }: { meal: MealWithDishes; list: RankedDish[] }) {
+export default function RankMeal({ meal, list }: { meal: MealWithDishes; list: RankedPlate[] }) {
   const [saving, startSaving] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -24,93 +24,69 @@ export default function RankMeal({ meal, list }: { meal: MealWithDishes; list: R
       if (result.error) setError(result.error);
     });
   }
-  function setStatus(dishId: number, status: RankStatus) {
-    run(() => setRankStatusAction(meal.id, dishId, status));
-  }
 
-  const rankable = meal.dishes.filter((row) => row.rank_status !== "unrankable");
-  const pending = rankable.filter((row) => row.rank_status === "pending");
-  const current = pending[0];
+  // The plate waits in the queue while any of its dishes is pending.
+  const waiting = meal.dishes.some((row) => row.rank_status === "pending");
   const errorLine = error && (
     <p role="alert" className="mt-4 text-sm text-rose-600">
       {error}
     </p>
   );
 
-  if (!current) {
+  if (!waiting) {
     return (
       <>
-        <Summary meal={meal} list={list} onRankAgain={(id) => setStatus(id, "pending")} />
+        <Summary meal={meal} list={list} onRank={() => run(() => rerankPlateAction(meal.id))} />
         {errorLine}
       </>
     );
   }
 
-  const done = rankable.length - pending.length;
-
   return (
-    // Ignore taps while a save is on its way, so a dish isn't saved twice.
+    // Ignore taps while a save is on its way, so a plate isn't saved twice.
     <div aria-busy={saving} className={saving ? "pointer-events-none opacity-60" : undefined}>
-      <RankDish
-        key={current.dish_id}
-        dish={current.dish}
+      <RankPlate
+        key={meal.id}
+        meal={meal}
         list={list}
-        progress={`${mealTitle(meal)} · ${done + 1} of ${rankable.length}`}
-        onRank={(result) => run(() => rankDishAction({ ...result, mealId: meal.id }))}
-        onKeep={() => setStatus(current.dish_id, "ranked")}
-        onSkip={() => setStatus(current.dish_id, "skipped")}
+        onRank={(result) => run(() => rankPlateAction({ ...result, mealId: meal.id }))}
+        onSkip={() => run(() => skipPlateAction(meal.id))}
       />
       {errorLine}
-      {pending.length > 1 && (
-        <div className="mt-8 border-t border-gray-100 pt-4 text-center">
-          <TextButton onClick={() => run(() => skipRestAction(meal.id))}>
-            Skip the rest ({pending.length})
-          </TextButton>
-        </div>
-      )}
     </div>
   );
 }
 
-function Summary({
-  meal,
-  list,
-  onRankAgain,
-}: {
-  meal: MealWithDishes;
-  list: RankedDish[];
-  onRankAgain: (dishId: number) => void;
-}) {
+function Summary({ meal, list, onRank }: { meal: MealWithDishes; list: RankedPlate[]; onRank: () => void }) {
+  const ranking = list.find((item) => item.meal_id === meal.id);
+
   return (
     <div className="mt-6">
       <p className="text-sm text-gray-500">{mealTitle(meal)}</p>
-      <h2 className="mt-1 text-xl font-semibold">Meal logged</h2>
+      <h2 className="mt-1 text-xl font-semibold">{ranking ? "Plate ranked" : "Meal logged"}</h2>
+      <DishNames names={meal.dishes.map((row) => row.dish.name)} />
 
-      <ul className={`mt-4 ${listBox}`}>
-        {meal.dishes.map((row) => {
-          const ranking = list.find((item) => item.dish_id === row.dish_id);
-          return (
-            <li key={row.dish_id} className="flex items-center gap-3 px-4 py-3">
-              <span className="min-w-0 flex-1 truncate font-medium">{row.dish.name}</span>
-              {row.rank_status === "ranked" && ranking ? (
-                <span className="text-sm text-gray-500">
-                  #{ranking.rank} · <Score score={ranking.score} />
-                </span>
-              ) : row.rank_status === "skipped" ? (
-                <button
-                  type="button"
-                  onClick={() => onRankAgain(row.dish_id)}
-                  className="text-sm font-semibold text-blue-600 hover:text-blue-700"
-                >
-                  Rank it
-                </button>
-              ) : (
-                <span className="text-sm text-gray-400">Not ranked</span>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+      <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-gray-200 px-4 py-3">
+        {ranking ? (
+          <>
+            <span className="text-gray-700">
+              #{ranking.rank} on your list · <Score score={ranking.score} />
+            </span>
+            <TextButton onClick={onRank}>Re-rank</TextButton>
+          </>
+        ) : (
+          <>
+            <span className="text-gray-500">Not ranked</span>
+            <button
+              type="button"
+              onClick={onRank}
+              className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+            >
+              Rank it
+            </button>
+          </>
+        )}
+      </div>
 
       <div className="mt-6 space-y-2">
         <Link href="/profile#ranked" className={primaryButton}>

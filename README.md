@@ -1,6 +1,6 @@
 # Slopkins
 
-A Beli-style app for Johns Hopkins students on the meal plan. Students rank dining hall dishes by answering "is X or Y better?", see what's on today's menu with the best dishes first, and follow friends to see what they ate.
+A Beli-style app for Johns Hopkins students on the meal plan. Students rank their dining hall plates by answering "which plate was better?", see what's on today's menu with the best dishes first, and follow friends to see what they ate.
 
 Built by JHU-SWEC (HopBuilds). Deadline: **Dec 11, 2026**. Full plan: [docs/project-plan.md](docs/project-plan.md).
 

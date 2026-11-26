@@ -7,9 +7,9 @@ import type {
   MealDish,
   MealType,
   MealWithDishes,
-  RankedDish,
-  Ranking,
+  RankedPlate,
   SavedPlate,
+  Sentiment,
   WantToTryItem,
 } from "./types";
 
@@ -58,41 +58,43 @@ async function withPlaces(supabase: SupabaseClient, rows: DishRow[]): Promise<Ma
   );
 }
 
-/** A user's list, best first (liked, then fine, then disliked), with rank and dish details. */
-export async function getRankedDishes(supabase: SupabaseClient, userId: string): Promise<RankedDish[]> {
+/**
+ * A user's ranked plates, best first (liked, then fine, then disliked), with
+ * rank and what was on each plate. Deleted posts drop out (meals RLS hides them).
+ */
+export async function getRankedPlates(supabase: SupabaseClient, userId: string): Promise<RankedPlate[]> {
   const { data } = await supabase
-    .from("rankings")
-    .select(`user_id, dish_id, sentiment, score, comment, created_at, updated_at, dish:dishes(${DISH_COLUMNS})`)
+    .from("plate_rankings")
+    .select(
+      "meal_id, sentiment, score, comment, meal:meals!inner(meal, created_at, hall:dining_halls(slug), meal_dishes(dish:dishes(name)))",
+    )
     .eq("user_id", userId)
     .order("score", { ascending: false });
 
-  const rows = (data ?? []) as (Omit<Ranking, "score"> & { score: number | string; dish: unknown })[];
-  const dishes = await withPlaces(
-    supabase,
-    rows.flatMap((row) => one<DishRow>(row.dish) ?? []),
-  );
+  type Row = { meal_id: number; sentiment: Sentiment; score: number | string; comment: string | null; meal: unknown };
+  const rows = (data ?? []) as Row[];
 
   // Scores are in non-overlapping bands, so score order is list order; sort by
-  // sentiment too in case a row was written before the band check existed.
-  return SENTIMENT_ORDER.flatMap((s) => rows.filter((row) => row.sentiment === s)).flatMap(
-    (row, index) => {
-      const dish = dishes.get(row.dish_id);
-      if (!dish) return [];
-      return [
-        {
-          user_id: row.user_id,
-          dish_id: row.dish_id,
-          sentiment: row.sentiment,
-          score: Number(row.score),
-          comment: row.comment,
-          created_at: row.created_at,
-          updated_at: row.updated_at,
-          rank: index + 1,
-          dish,
-        },
-      ];
-    },
-  );
+  // sentiment too in case a band was ever off.
+  return SENTIMENT_ORDER.flatMap((s) => rows.filter((row) => row.sentiment === s)).flatMap((row, index) => {
+    const meal = one<{ meal: MealType | null; created_at: string; hall: unknown; meal_dishes: { dish: unknown }[] }>(
+      row.meal,
+    );
+    if (!meal) return [];
+    return [
+      {
+        meal_id: row.meal_id,
+        sentiment: row.sentiment,
+        score: Number(row.score),
+        comment: row.comment,
+        rank: index + 1,
+        hall_slug: hallSlug(one<{ slug: string }>(meal.hall)?.slug),
+        meal: meal.meal,
+        created_at: meal.created_at,
+        dish_names: (meal.meal_dishes ?? []).flatMap((md) => one<{ name: string }>(md.dish)?.name ?? []),
+      },
+    ];
+  });
 }
 
 type MealRow = {
@@ -138,7 +140,7 @@ export async function getMeal(supabase: SupabaseClient, mealId: number): Promise
   return (await toMeals(supabase, [data as MealRow]))[0] ?? null;
 }
 
-/** A user's recent meals that still have dishes waiting to be ranked, newest first. */
+/** A user's recent plates still waiting to be ranked, newest first. */
 export async function getMealsWithPendingDishes(
   supabase: SupabaseClient,
   userId: string,
@@ -217,4 +219,36 @@ export async function getSavedPlates(supabase: SupabaseClient, userId: string): 
     from: one<{ username: string; display_name: string | null }>(one<{ person: unknown }>(row.source)?.person),
     saved_at: row.created_at as string,
   }));
+}
+
+/** An item's community score: the average of every ranked plate it was on. */
+export type DishScore = { score: number; plates: number };
+
+/**
+ * Community scores for menu items, keyed by Nutrislice food id (what menus
+ * use). Items no ranked plate has included are left out.
+ */
+export async function getDishScoresByFoodId(
+  supabase: SupabaseClient,
+  foodIds: number[],
+): Promise<Record<number, DishScore>> {
+  if (foodIds.length === 0) return {};
+  const { data: dishes } = await supabase
+    .from("dishes")
+    .select("id, nutrislice_food_id")
+    .in("nutrislice_food_id", [...new Set(foodIds)]);
+  const foodIdOf = new Map((dishes ?? []).map((d) => [d.id as number, d.nutrislice_food_id as number]));
+  if (foodIdOf.size === 0) return {};
+
+  const { data: scores } = await supabase
+    .from("dish_scores")
+    .select("dish_id, avg_score, num_rankings")
+    .in("dish_id", [...foodIdOf.keys()]);
+  const byFoodId: Record<number, DishScore> = {};
+  for (const row of scores ?? []) {
+    const foodId = foodIdOf.get(row.dish_id as number);
+    if (foodId === undefined || row.avg_score === null) continue;
+    byFoodId[foodId] = { score: Number(row.avg_score), plates: Number(row.num_rankings) };
+  }
+  return byFoodId;
 }

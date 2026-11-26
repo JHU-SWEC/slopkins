@@ -22,12 +22,12 @@ const COMMON_STEPS: TourStep[] = [
     route: `/dining/${halls[0].slug}`,
     target: "menu-list",
     title: "Log what you ate",
-    body: "Pick your hall on Dining, then check off your dishes. Tap Review meal, then Log & rank to save it and rank the mains.",
+    body: "Pick your hall on Dining, then check off your dishes. Tap Review meal, then Log & rank to save it and rank your plate.",
   },
 ];
 
 const RANK_BODY =
-  "Say if you liked each dish, then answer a few “which was better?” questions.";
+  "Say if you liked your plate, then answer a few “which plate was better?” questions.";
 
 // /profile sends signed-out people to /login, outside the app, so they get a
 // pointer to the Profile tab instead of a visit.
@@ -35,7 +35,7 @@ const SIGNED_IN_STEPS: TourStep[] = [
   {
     route: "/profile",
     target: "profile-tabs",
-    title: "Rank your dishes",
+    title: "Rank your plates",
     body: `${RANK_BODY} Activity shows every meal you've logged, Ranked Plates lists your meals best first, and Want to Try holds dishes you've bookmarked on menus.`,
   },
   {

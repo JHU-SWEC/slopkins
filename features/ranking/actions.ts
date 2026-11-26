@@ -10,7 +10,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { SENTIMENT_ORDER } from "./insertion";
 import { MEAL_PHOTO_PATH } from "./photo";
-import type { RankDishInput, RankStatus } from "./types";
+import type { RankPlateInput } from "./types";
 
 export type ActionResult = { error?: string };
 
@@ -177,77 +177,60 @@ export async function logMealAction(input: {
   redirect(input.rank ? `/rank?meal=${mealId}` : "/feed");
 }
 
-/** Places a dish on your list (see rank_dish in the migrations). */
-export async function rankDishAction(input: RankDishInput): Promise<ActionResult> {
+/** Places one of your plates on your list (see rank_plate in the migrations). */
+export async function rankPlateAction(input: RankPlateInput): Promise<ActionResult> {
   const { supabase, user } = await signedIn();
-  if (!user) return { error: "Log in to rank dishes." };
+  if (!user) return { error: "Log in to rank plates." };
 
-  const comparisons = Array.isArray(input.comparisons) ? input.comparisons : [];
   const valid =
-    isId(input.dishId) &&
+    isId(input.mealId) &&
     SENTIMENT_ORDER.includes(input.sentiment) &&
     Number.isInteger(input.position) &&
-    input.position >= 0 &&
-    (input.mealId === null || isId(input.mealId)) &&
-    comparisons.length <= 20 &&
-    comparisons.every((c) => isId(c.winner_dish_id) && isId(c.loser_dish_id));
+    input.position >= 0;
   if (!valid) return { error: "Couldn't save that ranking." };
 
   const comment = input.comment?.trim().slice(0, 500) || null;
-  const { error } = await supabase.rpc("rank_dish", {
-    p_dish_id: input.dishId,
+  const { error } = await supabase.rpc("rank_plate", {
+    p_meal_id: input.mealId,
     p_sentiment: input.sentiment,
     p_position: input.position,
     p_comment: comment,
-    p_meal_id: input.mealId,
-    p_comparisons: comparisons.map((c) => ({
-      winner_dish_id: c.winner_dish_id,
-      loser_dish_id: c.loser_dish_id,
-    })),
   });
   if (error) {
-    console.error("[ranking] rank_dish failed", error);
+    console.error("[ranking] rank_plate failed", error);
     return { error: "Couldn't save that ranking. Please try again." };
   }
 
-  // You've tried it now, so it comes off Want to try.
-  await supabase.from("dish_alerts").delete().eq("user_id", user.id).eq("dish_id", input.dishId);
-
-  refresh();
-  return {};
-}
-
-const SETTABLE: RankStatus[] = ["pending", "ranked", "skipped"];
-
-/** Skip a dish, keep its existing ranking ("ranked"), or put it back in the queue ("pending"). */
-export async function setRankStatusAction(
-  mealId: number,
-  dishId: number,
-  status: RankStatus,
-): Promise<ActionResult> {
-  const { supabase, user } = await signedIn();
-  if (!user) return { error: "Log in to rank dishes." };
-  if (!isId(mealId) || !isId(dishId) || !SETTABLE.includes(status)) {
-    return { error: "Couldn't update that dish." };
+  // You've tried these dishes now, so they come off Want to try.
+  const { data: eaten } = await supabase.from("meal_dishes").select("dish_id").eq("meal_id", input.mealId);
+  const dishIds = (eaten ?? []).map((row) => row.dish_id as number);
+  if (dishIds.length > 0) {
+    await supabase.from("dish_alerts").delete().eq("user_id", user.id).in("dish_id", dishIds);
   }
 
-  // RLS only allows rows on your own meals. Unrankable dishes stay that way.
-  const { error } = await supabase
-    .from("meal_dishes")
-    .update({ rank_status: status })
-    .eq("meal_id", mealId)
-    .eq("dish_id", dishId)
-    .neq("rank_status", "unrankable");
-  if (error) return { error: "Couldn't update that dish. Please try again." };
+  refresh();
+  return {};
+}
+
+/** Put a plate back in the queue, to rank it (again). */
+export async function rerankPlateAction(mealId: number): Promise<ActionResult> {
+  const { supabase, user } = await signedIn();
+  if (!user) return { error: "Log in to rank plates." };
+  if (!isId(mealId)) return { error: "Couldn't update that plate." };
+
+  // RLS only allows rows on your own meals. Includes 'unrankable' rows from
+  // before plates of sides could be ranked.
+  const { error } = await supabase.from("meal_dishes").update({ rank_status: "pending" }).eq("meal_id", mealId);
+  if (error) return { error: "Couldn't update that plate. Please try again." };
 
   refresh();
   return {};
 }
 
-/** "Skip the rest": every dish still waiting in this meal. */
-export async function skipRestAction(mealId: number): Promise<ActionResult> {
+/** Skip ranking this plate: every dish still waiting in it. */
+export async function skipPlateAction(mealId: number): Promise<ActionResult> {
   const { supabase, user } = await signedIn();
-  if (!user) return { error: "Log in to rank dishes." };
+  if (!user) return { error: "Log in to rank plates." };
   if (!isId(mealId)) return { error: "Couldn't update that meal." };
 
   const { error } = await supabase
@@ -255,7 +238,7 @@ export async function skipRestAction(mealId: number): Promise<ActionResult> {
     .update({ rank_status: "skipped" })
     .eq("meal_id", mealId)
     .eq("rank_status", "pending");
-  if (error) return { error: "Couldn't skip those dishes. Please try again." };
+  if (error) return { error: "Couldn't skip that plate. Please try again." };
 
   refresh();
   return {};

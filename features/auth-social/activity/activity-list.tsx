@@ -92,7 +92,18 @@ function Row({ item, highlighted, now }: { item: ActivityItem; highlighted: bool
           className="shrink-0"
         />
       )}
-      {item.kind === "ranking" && <ScoreBadge score={item.score} sentiment={item.sentiment} />}
+      {item.kind === "ranking" && (
+        // "#3" on their ranked plates, then the plate's score.
+        <div className="flex shrink-0 items-center gap-2">
+          <span
+            title={`#${item.rank} on ${name}'s ranked plates`}
+            className="grid size-8 place-items-center rounded-full bg-gray-100 text-xs font-semibold text-gray-500 tabular-nums"
+          >
+            #{item.rank}
+          </span>
+          <ScoreBadge score={item.score} sentiment={item.sentiment} />
+        </div>
+      )}
     </li>
   );
 }
@@ -104,7 +115,17 @@ function Sentence({ item }: { item: ActivityItem }) {
     case "ranking":
       return (
         <>
-          rated <span className="font-semibold">{item.dish.name}</span>.
+          ranked their {item.meal ?? "meal"}
+          {item.hall && (
+            <>
+              {" "}
+              at{" "}
+              <Link href={`/dining/${item.hall.slug}`} className="font-semibold hover:underline">
+                {item.hall.name}
+              </Link>
+            </>
+          )}
+          .
         </>
       );
     case "meal": {

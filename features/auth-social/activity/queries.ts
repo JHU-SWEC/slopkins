@@ -20,7 +20,11 @@ export type ActivityItem =
       key: string;
       at: string;
       person: PersonBasics;
-      dish: { id: number; name: string };
+      /** The plate they ranked. */
+      hall: { slug: string; name: string } | null;
+      meal: string | null;
+      /** Where it sits on their ranked plates now (1 = best). */
+      rank: number;
       score: number;
       sentiment: Sentiment | null;
       comment: string | null;
@@ -121,18 +125,19 @@ export async function getActivity(
     followingIds.length === 0
       ? [{ data: [] }, { data: [] }]
       : await Promise.all([
-          // created_at = when the dish went on their list. updated_at also moves
-          // whenever another ranking re-spreads scores in the same group, so
-          // one new ranking would show up as several.
+          // Every ranked plate of the people you follow, best first, so each
+          // one's spot on their list can be counted; only recent ones become
+          // items below. created_at = when the plate went on their list
+          // (updated_at also moves whenever another ranking re-spreads scores).
+          // Deleted posts drop out (meals RLS).
           supabase
-            .from("rankings")
+            .from("plate_rankings")
             .select(
-              `user_id, score, sentiment, comment, created_at, dish:dishes(id, name), person:profiles!rankings_user_id_fkey(${PERSON})`,
+              `meal_id, user_id, score, sentiment, comment, created_at, meal:meals!inner(meal, hall:dining_halls(slug, name)), person:profiles!plate_rankings_user_id_fkey(${PERSON})`,
             )
             .in("user_id", followingIds)
-            .gte("created_at", since)
-            .order("created_at", { ascending: false })
-            .limit(MAX_ITEMS),
+            .order("score", { ascending: false })
+            .limit(2000),
           supabase
             .from("meals")
             .select(
@@ -159,21 +164,31 @@ export async function getActivity(
     items.push({ kind: "follow", key: `follow-${person.id}`, at, person, iFollow: iFollow.has(person.id) });
   }
 
+  // Rows come best first, so counting per person gives each plate's rank.
+  const placed = new Map<string, number>();
+  const recentRankings: ActivityItem[] = [];
   for (const row of (rankings.data ?? []) as Record<string, unknown>[]) {
+    const rank = (placed.get(row.user_id as string) ?? 0) + 1;
+    placed.set(row.user_id as string, rank);
     const person = one<PersonBasics>(row.person);
-    const dish = one<{ id: number; name: string }>(row.dish);
-    if (!person || !dish) continue;
-    items.push({
+    const meal = one<{ meal: string | null; hall: unknown }>(row.meal);
+    if (!person || !meal || (row.created_at as string) < since) continue;
+    recentRankings.push({
       kind: "ranking",
-      key: `ranking-${person.id}-${dish.id}`,
+      key: `ranking-${row.meal_id}`,
       at: row.created_at as string,
       person,
-      dish,
+      hall: one<{ slug: string; name: string }>(meal.hall),
+      meal: meal.meal,
+      rank,
       score: Number(row.score),
       sentiment: (row.sentiment as Sentiment | null) ?? null,
       comment: (row.comment as string | null) ?? null,
     });
   }
+  items.push(
+    ...recentRankings.sort((x, y) => (x.at < y.at ? 1 : -1)).slice(0, MAX_ITEMS),
+  );
 
   for (const row of (meals.data ?? []) as Record<string, unknown>[]) {
     const person = one<PersonBasics>(row.person);

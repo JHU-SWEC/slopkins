@@ -54,7 +54,7 @@ Maps each Nutrislice menu (one school plus one menu type) to a hall. A hall can 
 | rankable           | boolean     | not null default `true`, see below          |
 | created_at         | timestamptz |                                             |
 
-- `rankable = false` for sides, toppings, cereals, sauces and drinks. They can be logged but never ranked. Set it from `isMainDish` in `lib/menus.ts` (serving size, calories and protein, plus name lists); admins can flip it.
+- `rankable = false` for sides, toppings, cereals, sauces and drinks. Set it from `isMainDish` in `lib/menus.ts` (serving size, calories and protein, plus name lists); admins can flip it. Since plates are ranked as a whole (2026-11-26), nothing uses it.
 
 ### `menu_items`
 
@@ -89,7 +89,7 @@ One row per dish served on a Nutrislice menu on a date.
 
 ## Add + Rank (owner: Jonny)
 
-Pipeline: log a meal (`log_meal`), then rank its rankable dishes one at a time (`rank_dish`). Any dish can be skipped, and "log without ranking" skips them all up front. Design notes: [features/ranking/README.md](../features/ranking/README.md).
+Pipeline: log a meal (`log_meal`), then rank the plate as a whole (`rank_plate`). The plate can be skipped, and "log without ranking" skips it up front. Design notes: [features/ranking/README.md](../features/ranking/README.md).
 
 ### `meals`
 
@@ -115,7 +115,7 @@ One visit to one hall. The feed can read these.
 | rank_status | `rank_status` enum | `pending`, `ranked`, `skipped`, `unrankable`       |
 
 - PK: `(meal_id, dish_id)`.
-- `log_meal` sets `unrankable` from `dishes.rankable`, else `pending` (or `skipped` for "log without ranking"). The rank queue is the rows still `pending`.
+- `log_meal` sets every dish `pending` (or `skipped` for "log without ranking"). A plate is waiting to be ranked while any of its rows is `pending`. `unrankable` only appears on meals logged before 2026-11-26.
 
 ### `comparisons`
 
@@ -151,28 +151,47 @@ A user's ranked list. One row per dish the user has ranked.
 - Within a band, scores are spread evenly by rank: `sentiment_score(sentiment, position, group_size)`. Ordering by `score desc` gives the list order.
 - Index: `(user_id, score desc)` for the "My list" page.
 
+### `plate_rankings`
+
+A user's ranked plates. One row per logged meal the user has ranked. Replaced `rankings` in the app on 2026-11-26 (`rankings` is kept, but nothing writes to it anymore).
+
+| column     | type        | notes                                   |
+| ---------- | ----------- | --------------------------------------- |
+| meal_id    | bigint      | PK, FK `meals` (cascade)                |
+| user_id    | uuid        | FK `profiles`                           |
+| sentiment  | `sentiment` enum | `liked`, `fine`, `disliked`   |
+| score      | numeric     | not null, kept in the sentiment's band  |
+| comment    | text        | nullable, at most 500 characters        |
+| created_at | timestamptz |                                         |
+| updated_at | timestamptz |                                         |
+
+- Same bands and spreading as `rankings`. Plates whose posts were deleted are left out of the groups.
+- Index: `(user_id, score desc)`.
+
 ### `dish_scores`
 
-Global score per dish, used to sort the landing page. Build it as a view or a materialized view over `rankings`.
+Global score per dish: the average score of every ranked plate (`plate_rankings`) the dish was on, across all users. Every dish counts, sides too. A view (`security_invoker`), so deleted posts drop out.
 
 | column       | type    | notes |
 | ------------ | ------- | ----- |
 | dish_id      | bigint  |       |
 | avg_score    | numeric |       |
-| num_rankings | int     |       |
+| num_rankings | int     | number of ranked plates |
 
 ### RPCs
 
-Both are `security invoker`, so RLS still applies.
+`log_meal` and `rank_dish` are `security invoker`, so RLS still applies.
 
 - `log_meal(p_dining_hall_id, p_meal, p_dish_ids, p_rank default true) returns bigint`: inserts the meal and its dishes in one transaction, returns the meal id.
-- `rank_dish(p_dish_id, p_sentiment, p_position, p_comment, p_meal_id, p_comparisons)`: logs the comparisons, upserts the ranking at `p_position` (0-based, within the sentiment group, not counting this dish), re-spreads scores in the new group and the old one if the dish moved, and marks the meal row `ranked`. Rejects unrankable dishes.
+- `rank_plate(p_meal_id, p_sentiment, p_position, p_comment)`: `security definer` (users can't write `plate_rankings` directly). Checks the meal is the caller's and not deleted, upserts the plate at `p_position` (0-based, within the sentiment group, not counting this plate), re-spreads scores in the new group and the old one if it moved, and marks the meal's `pending` and `skipped` dishes `ranked`.
+- `rank_dish(p_dish_id, p_sentiment, p_position, p_comment, p_meal_id, p_comparisons)` (no longer called by the app): logs the comparisons, upserts the ranking at `p_position` (0-based, within the sentiment group, not counting this dish), re-spreads scores in the new group and the old one if the dish moved, and marks the meal row `ranked`. Rejects unrankable dishes.
 
 ### RLS
 
 - `meals`, `meal_dishes`: readable by everyone. A user can insert and delete only their own meals, and insert, update and delete dishes only on their own meals.
 - `comparisons`: a user can insert and select only their own rows.
 - `rankings`: readable by everyone (profiles and the feed show them). A user can insert, update and delete only their own rows.
+- `plate_rankings`: readable by everyone. No direct writes; only `rank_plate`.
 
 ## Auth + Profile + Social (owner: Lucas, Amy)
 
@@ -209,7 +228,7 @@ Halls a user has been to or wants to try. Shown on the profile.
 
 ### `profile_rank(target uuid)`
 
-Function. Returns `dishes_ranked`, `rank` (1 = most dishes ranked; ties share a rank) and `total_users`. Shown on profiles as "#3 rank" (the total isn't shown).
+Function. Returns `dishes_ranked` (now the number of plates ranked; the column kept its name), `rank` (1 = most plates ranked; ties share a rank) and `total_users`. Shown on profiles as "#3 rank" (the total isn't shown).
 
 ### Storage: `avatars` bucket
 

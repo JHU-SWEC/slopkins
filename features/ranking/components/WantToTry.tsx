@@ -2,8 +2,11 @@ import Link from "next/link";
 import { shownName } from "@/features/auth-social/profile/shared";
 import type { SavedPlate, WantToTryItem } from "../types";
 import { RemoveSavedPlate, RemoveWantToTry } from "./want-to-try-buttons";
-import { listBox, primaryButton, sectionHeading } from "./styles";
+import { primaryButton, sectionHeading } from "./styles";
 import { DishMeta } from "./ui";
+
+/** Each saved plate or dish is its own card, like Ranked Plates. */
+const CARD = "rounded-2xl border border-gray-200 px-4 py-4 transition hover:border-gray-300";
 
 /**
  * Your saved dishes and plates, newest first. Only shown on your own profile.
@@ -24,9 +27,9 @@ export default function WantToTry({ items, plates = [] }: { items: WantToTryItem
   }
 
   const dishList = (
-    <ul className={listBox}>
+    <ul className="space-y-3">
       {items.map(({ dish }) => (
-        <li key={dish.id} className="flex items-center gap-3 px-4 py-3">
+        <li key={dish.id} className={`flex items-center gap-3 ${CARD}`}>
           <div className="min-w-0 flex-1">
             <p className="font-medium">{dish.name}</p>
             <DishMeta dish={dish} />
@@ -43,10 +46,9 @@ export default function WantToTry({ items, plates = [] }: { items: WantToTryItem
   return (
     <div className="space-y-6">
       <section>
-        <h3 className={sectionHeading}>Plates · {plates.length}</h3>
-        <ul className={`mt-2 ${listBox}`}>
+        <ul className="space-y-3">
           {plates.map((plate) => (
-            <li key={plate.id} className="flex items-start gap-3 px-4 py-3">
+            <li key={plate.id} className={`flex items-start gap-3 ${CARD}`}>
               <div className="min-w-0 flex-1">
                 <p className="font-medium">
                   {plate.from ? `${shownName(plate.from)}'s ${plate.meal ?? "meal"}` : `A ${plate.meal ?? "meal"}`}

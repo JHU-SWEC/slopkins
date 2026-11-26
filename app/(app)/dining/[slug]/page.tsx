@@ -6,7 +6,7 @@ import { getHall, halls } from "@/lib/halls";
 import { formatDay, menuDays, pickMenuDate, todayISO } from "@/lib/dates";
 import { getMenus } from "@/lib/menus";
 import { createClient } from "@/lib/supabase/server";
-import { getWantToTryFoodIds } from "@/features/ranking/queries";
+import { getDishScoresByFoodId, getWantToTryFoodIds } from "@/features/ranking/queries";
 import { MenuPicker } from "./menu-picker";
 
 // Cache Components needs at least one param to prerender.
@@ -70,6 +70,12 @@ async function HallMenu({
     );
   }
 
+  // Each item's score from everyone's ranked plates. Missing scores just don't show.
+  const scores = await getDishScoresByFoodId(
+    supabase,
+    tabs.flatMap((t) => t.dishes.map((dish) => dish.id)),
+  ).catch(() => ({}));
+
   return (
     <>
       <h1 className="mt-2 text-2xl font-bold tracking-tight">{hall.name}</h1>
@@ -88,6 +94,7 @@ async function HallMenu({
         canLog={isToday}
         date={date}
         savedFoodIds={await savedFoodIds}
+        scores={scores}
       />
     </>
   );

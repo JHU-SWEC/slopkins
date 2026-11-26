@@ -1,5 +1,5 @@
 // Used by both server code and browser code, so nothing server-only here.
-import type { RankedDish, SavedPlate, WantToTryItem } from "@/features/ranking/types";
+import type { SavedPlate, WantToTryItem } from "@/features/ranking/types";
 import type { Tables } from "@/lib/supabase/database.types";
 
 export type Profile = Pick<
@@ -11,7 +11,6 @@ export type ProfileData = {
   profile: Profile;
   /** False until the profile-page migration adds grade/major/bio. */
   detailsReady: boolean;
-  rankedDishes: RankedDish[];
   /** Only filled for the profile's owner (dish_alerts is private). */
   wantToTry: WantToTryItem[];
   /** Plates saved from other people's posts. Empty unless it's your profile. */

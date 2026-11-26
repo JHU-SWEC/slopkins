@@ -3,7 +3,11 @@
 import { useState, useTransition } from "react";
 import { logMealAction } from "@/features/ranking/actions";
 import { useMealPhoto } from "@/features/ranking/components/meal-photo-picker";
+import { SENTIMENT_STYLES } from "@/features/ranking/components/styles";
 import { WantToTryToggle } from "@/features/ranking/components/want-to-try-buttons";
+import type { DishScore } from "@/features/ranking/queries";
+import { formatScore } from "@/features/ranking/score";
+import type { Sentiment } from "@/features/ranking/types";
 import type { HallSlug } from "@/lib/halls";
 import type { MenuDish, MenuTab, Nutrition } from "@/lib/menus";
 import { mealTotals, nutritionFor, type Basis } from "@/lib/nutrition";
@@ -46,6 +50,7 @@ export function MenuPicker({
   canLog,
   date,
   savedFoodIds,
+  scores,
 }: {
   hallSlug: HallSlug;
   tabs: MenuTab[];
@@ -54,6 +59,8 @@ export function MenuPicker({
   date: string;
   /** Dishes on your Want to try list; null when signed out (no bookmarks). */
   savedFoodIds: number[] | null;
+  /** Community score per item (by food id), from everyone's ranked plates. */
+  scores: Record<number, DishScore>;
 }) {
   const [logging, startLogging] = useTransition();
   const [logError, setLogError] = useState<string | null>(null);
@@ -123,8 +130,8 @@ export function MenuPicker({
     ? mealTotals(cartItems.map((item) => ({ dish: item.dish, servings: servingsOf(item) }))).nutrition.calories
     : null;
 
-  // Log first, then rank the mains. "Log only" skips the rank step; dishes
-  // stay skippable one by one on the rank page either way.
+  // Log first, then rank the plate. "Log only" skips the rank step; the
+  // plate can still be skipped on the rank page either way.
   // The action redirects to /rank or /feed when it works (or /login when signed out).
   function log(rank: boolean) {
     setLogError(null);
@@ -166,6 +173,10 @@ export function MenuPicker({
   // menu order, or one ranked list otherwise.
   const sections: Section[] = [];
   const mains = unique.filter((dish) => dish.isMain);
+  // In menu order, the best-rated mains come first; unrated keep their order.
+  if (activeSort === "menu") {
+    mains.sort((a, b) => (scores[b.id]?.score ?? -1) - (scores[a.id]?.score ?? -1));
+  }
   if (mains.length) sections.push({ title: "Mains", dishes: mains, showStation: true, highlight: true });
   if (activeSort === "menu") {
     const stations = new Map<string, MenuDish[]>();
@@ -258,6 +269,12 @@ export function MenuPicker({
       )}
 
       <div className="mt-6 space-y-6 pb-20">
+        {/* Says once what the score bubbles mean, when this meal has any. */}
+        {tab.dishes.some((dish) => scores[dish.id]) && (
+          <p className="text-xs text-gray-500">
+            Scores are the average Slopkins rating of every plate that included the item.
+          </p>
+        )}
         {tab.dishes.length === 0 && (
           <p className="text-gray-500">Nothing posted for {tab.label.toLowerCase()} {canLog ? "today" : "yet"}.</p>
         )}
@@ -296,6 +313,7 @@ export function MenuPicker({
                     {sortValue(dish) && (
                       <span className="text-sm text-gray-400">{sortValue(dish)}</span>
                     )}
+                    {scores[dish.id] && <ScoreBubble score={scores[dish.id]} />}
                   </label>
                   {saved && (
                     <WantToTryToggle
@@ -339,7 +357,7 @@ export function MenuPicker({
         onChange={updateItem}
         onRemove={removeItem}
         canLog={canLog}
-        canRank={cartItems.some((item) => item.dish.isMain)}
+        canRank
         showMacros={showMacros}
         onLog={log}
         logging={logging}
@@ -375,3 +393,24 @@ export function MenuPicker({
   );
 }
 
+
+/** Same bands as plate scores: liked above 7, fine above 4. */
+function bandOf(score: number): Sentiment {
+  if (score > 7) return "liked";
+  if (score > 4) return "fine";
+  return "disliked";
+}
+
+/** An item's average Slopkins rating, e.g. "8.2", with the plate count on hover. */
+function ScoreBubble({ score }: { score: DishScore }) {
+  const plates = score.plates === 1 ? "1 plate" : `${score.plates} plates`;
+  return (
+    <span
+      title={`Avg Slopkins rating · ${plates}`}
+      aria-label={`Average Slopkins rating ${formatScore(score.score)}, from ${plates}`}
+      className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${SENTIMENT_STYLES[bandOf(score.score)].score}`}
+    >
+      {formatScore(score.score)}
+    </span>
+  );
+}

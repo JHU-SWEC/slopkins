@@ -61,7 +61,7 @@ export function MealCart({
   /** rank = false is "Log only". */
   onLog: (rank: boolean) => void;
   canLog: boolean;
-  /** At least one item is a main, so there's something to rank. */
+  /** Offer Log & rank (any plate can be ranked). */
   canRank: boolean;
   /** Off: a plain list of what you picked, no portions or nutrition. */
   showMacros: boolean;

@@ -4,15 +4,15 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import RankMeal from "@/features/ranking/components/RankMeal";
 import { primaryButton } from "@/features/ranking/components/styles";
-import { getMeal, getRankedDishes } from "@/features/ranking/queries";
+import { getMeal, getRankedPlates } from "@/features/ranking/queries";
 import { createClient } from "@/lib/supabase/server";
 
-// Step two of logging: rank the meal's rankable dishes. /rank?meal=<id>
+// Step two of logging: rank the plate as a whole. /rank?meal=<id>
 export default function RankPage({ searchParams }: PageProps<"/rank">) {
   return (
     <>
-      <h1 className="text-2xl font-bold tracking-tight">Rank your meal</h1>
-      <p className="mt-1 text-gray-500">A few quick questions per dish. Skip any you like.</p>
+      <h1 className="text-2xl font-bold tracking-tight">Rank your plate</h1>
+      <p className="mt-1 text-gray-500">How was it, and how does it compare to your past plates?</p>
       <Suspense fallback={<div className="mt-6 h-72 animate-pulse rounded-3xl bg-gray-100" />}>
         <RankQueue searchParams={searchParams} />
       </Suspense>
@@ -32,7 +32,7 @@ async function RankQueue({ searchParams }: { searchParams: PageProps<"/rank">["s
 
   const [meal, list] = await Promise.all([
     getMeal(supabase, Number(mealParam)),
-    getRankedDishes(supabase, user.id),
+    getRankedPlates(supabase, user.id),
   ]);
 
   // Meals are public, but only your own can be ranked.

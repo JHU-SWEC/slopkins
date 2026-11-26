@@ -5,7 +5,7 @@ import { mealTitle } from "../format";
 import { getMealsWithPendingDishes } from "../queries";
 import { listBox } from "./styles";
 
-/** Reminds the user about logged dishes they haven't ranked or skipped yet. Render in Suspense. */
+/** Reminds the user about logged plates they haven't ranked or skipped yet. Render in Suspense. */
 export default async function PendingMeals() {
   // The sign-in check reads the clock, which needs a real request.
   await connection();
@@ -20,25 +20,20 @@ export default async function PendingMeals() {
 
   return (
     <ul className={`mt-6 ${listBox}`}>
-      {meals.map((meal) => {
-        const count = meal.dishes.filter((row) => row.rank_status === "pending").length;
-        return (
+      {meals.map((meal) => (
           <li key={meal.id}>
             <Link
               href={`/rank?meal=${meal.id}`}
               className="flex items-center justify-between px-4 py-3 transition hover:bg-gray-50"
             >
               <div>
-                <p className="font-semibold">
-                  {count} {count === 1 ? "dish" : "dishes"} to rank
-                </p>
+                <p className="font-semibold">Plate to rank</p>
                 <p className="text-sm text-gray-500">{mealTitle(meal)}</p>
               </div>
               <span className="text-sm font-semibold text-blue-600">Rank ›</span>
             </Link>
           </li>
-        );
-      })}
+      ))}
     </ul>
   );
 }

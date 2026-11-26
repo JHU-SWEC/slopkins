@@ -6,7 +6,7 @@ import {
   type Profile,
   type ProfileData,
 } from "./shared";
-import { getRankedDishes, getSavedPlates, getWantToTry } from "@/features/ranking/queries";
+import { getSavedPlates, getWantToTry } from "@/features/ranking/queries";
 
 type BasicProfile = Omit<Profile, "grade" | "major" | "bio">;
 
@@ -47,9 +47,8 @@ export async function getProfileData(
   // Everything else only needs the profile id, so ask for it all at once.
   // Parts that need the migration (details, rank) just come back
   // empty until it's applied.
-  const [details, rankedDishes, wantToTry, savedPlates, followers, following, rank] = await Promise.all([
+  const [details, wantToTry, savedPlates, followers, following, rank] = await Promise.all([
     getProfileDetails(supabase, basic.id),
-    getRankedDishes(supabase, basic.id),
     getWantToTry(supabase, basic.id),
     getSavedPlates(supabase, basic.id),
     // follows: follower_id follows followee_id.
@@ -71,12 +70,11 @@ export async function getProfileData(
   return {
     profile: { ...basic, ...details.details },
     detailsReady: details.ready,
-    rankedDishes,
     wantToTry,
     savedPlates,
     followers: followers.count ?? 0,
     following: following.count ?? 0,
-    // No rank until you've ranked a dish (otherwise everyone ties for #1 at 0).
+    // No rank until you've ranked a plate (otherwise everyone ties for #1 at 0).
     rank:
       rank.data && rank.data.dishes_ranked > 0
         ? { position: rank.data.rank }

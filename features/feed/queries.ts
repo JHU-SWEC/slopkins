@@ -4,11 +4,19 @@ import type { Sentiment } from "@/features/ranking/types";
 
 type PersonBasics = Pick<Profile, "id" | "username" | "display_name" | "avatar_url">;
 
-/** One dish in a feed post, with the poster's score if they've ranked it. */
+/** One dish in a feed post. */
 export type FeedDish = {
   id: number;
   name: string;
-  ranking: { score: number; sentiment: Sentiment; comment: string | null } | null;
+};
+
+/** The poster's ranking of the whole plate. */
+export type PlateRanking = {
+  score: number;
+  sentiment: Sentiment;
+  comment: string | null;
+  /** 1-based spot on the poster's list of ranked plates. */
+  rank: number;
 };
 
 /** A comment under a post. `at` is an ISO timestamp. */
@@ -29,6 +37,8 @@ export type FeedPost = {
   /** Path in the meal-photos bucket, or null if no photo. */
   photoPath: string | null;
   dishes: FeedDish[];
+  /** Null until the poster ranks the plate. */
+  ranking: PlateRanking | null;
   likes: number;
   likedByMe: boolean;
   /** How many people saved this plate to Want to Try (not who). */
@@ -59,7 +69,7 @@ export type PostList = {
 
 /**
  * Meals logged by you and the people you follow, newest first, each with its
- * dishes and the poster's current score for every dish they've ranked.
+ * dishes and the poster's score for the plate if they've ranked it.
  */
 export async function getFeed(supabase: SupabaseClient, viewerId: string): Promise<PostList> {
   const { data: following } = await supabase
@@ -102,28 +112,12 @@ async function getPosts(
     .limit(MAX_POSTS);
   const rows = (meals ?? []) as Record<string, unknown>[];
 
-  // Scores for every dish in these posts, keyed by "user:dish".
-  const dishIds = new Set<number>();
-  for (const row of rows) {
-    for (const item of (row.meal_dishes as Record<string, unknown>[] | null) ?? []) {
-      const dish = one<{ id: number }>(item.dish);
-      if (dish) dishIds.add(dish.id);
-    }
-  }
-  const { data: rankings } =
-    dishIds.size === 0
-      ? { data: [] }
-      : await supabase
-          .from("rankings")
-          .select("user_id, dish_id, score, sentiment, comment")
-          .in("user_id", authorIds)
-          .in("dish_id", [...dishIds]);
   // Your likes and saves on these posts, and their comments.
   const postIds = rows.map((row) => row.id as number);
   const none = Promise.resolve({ data: [] as Record<string, unknown>[] });
-  const [{ data: myLikes }, { data: mySaves }, { data: commentRows }, { data: saveCounts }] =
+  const [{ data: myLikes }, { data: mySaves }, { data: commentRows }, { data: saveCounts }, { data: plateRows }] =
     postIds.length === 0
-      ? [{ data: [] }, { data: [] }, { data: [] }, { data: [] }]
+      ? [{ data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }]
       : await Promise.all([
           viewerId
             ? supabase.from("meal_likes").select("meal_id").eq("user_id", viewerId).in("meal_id", postIds)
@@ -139,6 +133,15 @@ async function getPosts(
           // Counts only; who saved a plate stays private. Until the migration
           // that adds this function is applied, this errors and counts are 0.
           supabase.rpc("meal_save_counts", { p_meal_ids: postIds }),
+          // Every ranked plate by these people (not just the posts shown), so
+          // each post can say where it sits on its poster's list. Deleted posts
+          // drop out (meals RLS). Until the plate_rankings migration is applied
+          // this errors and every post shows unranked.
+          supabase
+            .from("plate_rankings")
+            .select("meal_id, user_id, score, sentiment, comment, meal:meals!inner(id)")
+            .in("user_id", authorIds)
+            .order("score", { ascending: false }),
         ]);
   const saveCount = new Map(
     ((saveCounts ?? []) as { meal_id: number; saves: number }[]).map((row) => [row.meal_id, Number(row.saves)]),
@@ -154,12 +157,17 @@ async function getPosts(
     comments.set(row.meal_id as number, list);
   }
 
-  const scores = new Map<string, FeedDish["ranking"]>();
-  for (const r of (rankings ?? []) as Record<string, unknown>[]) {
-    scores.set(`${r.user_id}:${r.dish_id}`, {
+  // Rows come best first, so counting per person gives each plate's rank.
+  const plates = new Map<number, PlateRanking>();
+  const placed = new Map<string, number>();
+  for (const r of (plateRows ?? []) as Record<string, unknown>[]) {
+    const rank = (placed.get(r.user_id as string) ?? 0) + 1;
+    placed.set(r.user_id as string, rank);
+    plates.set(r.meal_id as number, {
       score: Number(r.score),
       sentiment: r.sentiment as Sentiment,
       comment: (r.comment as string | null) ?? null,
+      rank,
     });
   }
 
@@ -169,10 +177,8 @@ async function getPosts(
     if (!person) continue;
     const dishes = ((row.meal_dishes as Record<string, unknown>[] | null) ?? []).flatMap((item) => {
       const dish = one<{ id: number; name: string }>(item.dish);
-      return dish ? [{ ...dish, ranking: scores.get(`${row.user_id}:${dish.id}`) ?? null }] : [];
+      return dish ? [dish] : [];
     });
-    // Ranked dishes first, best score first; unranked keep their order after.
-    dishes.sort((a, b) => (b.ranking?.score ?? -1) - (a.ranking?.score ?? -1));
     posts.push({
       id: row.id as number,
       at: row.created_at as string,
@@ -182,6 +188,7 @@ async function getPosts(
       // A removed photo stays in storage but isn't shown.
       photoPath: row.photo_deleted_at ? null : ((row.photo_path as string | null) ?? null),
       dishes,
+      ranking: plates.get(row.id as number) ?? null,
       likes: one<{ count: number }>(row.meal_likes)?.count ?? 0,
       likedByMe: liked.has(row.id as number),
       saves: saveCount.get(row.id as number) ?? 0,

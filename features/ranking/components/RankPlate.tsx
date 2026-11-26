@@ -10,42 +10,36 @@ import {
   getNextComparison,
   getSentimentGroup,
 } from "../insertion";
+import { mealDate, mealTitle } from "../format";
 import { sentimentScore } from "../score";
-import type { Dish, RankDishInput, RankedDish, Sentiment } from "../types";
-import { SENTIMENT_LABELS, listBox, primaryButton, secondaryButton } from "./styles";
-import { DishMeta, Score, TextButton } from "./ui";
+import type { MealWithDishes, RankPlateInput, RankedPlate, Sentiment } from "../types";
+import { SENTIMENT_LABELS, listBox, primaryButton } from "./styles";
+import { Score, TextButton } from "./ui";
 
-type Answer = { opponent: RankedDish; newDishWon: boolean };
+type Answer = { opponent: RankedPlate; newWon: boolean };
 
-export type RankResult = Omit<RankDishInput, "mealId">;
+export type RankResult = Omit<RankPlateInput, "mealId">;
 
 /**
- * Ranks one dish: verdict, then "which is better?" until its spot is found,
- * then an optional comment. Skip is available at every step.
- * Key this component by dish id so its state resets per dish.
+ * Ranks one plate as a whole: verdict, then "which plate was better?" against
+ * your past plates until its spot is found, then an optional comment.
+ * Skip is available at every step. Key by meal id so state resets per plate.
  */
-export function RankDish({
-  dish,
+export function RankPlate({
+  meal,
   list,
-  progress,
   onRank,
-  onKeep,
   onSkip,
 }: {
-  dish: Dish;
-  /** The user's current list, best first. */
-  list: RankedDish[];
-  /** e.g. "FFC lunch · 1 of 3" */
-  progress: string;
+  meal: MealWithDishes;
+  /** The user's ranked plates, best first. */
+  list: RankedPlate[];
   onRank: (result: RankResult) => void;
-  /** Already on the list and the user doesn't want to move it. */
-  onKeep: () => void;
   onSkip: () => void;
 }) {
-  const existing = list.find((item) => item.dish_id === dish.id) ?? null;
-  const others = list.filter((item) => item.dish_id !== dish.id);
+  const existing = list.find((item) => item.meal_id === meal.id) ?? null;
+  const others = list.filter((item) => item.meal_id !== meal.id);
 
-  const [reranking, setReranking] = useState(false);
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [comment, setComment] = useState("");
@@ -53,38 +47,19 @@ export function RankDish({
   const frame = (body: React.ReactNode) => (
     <div className="mt-6">
       <div className="flex items-center justify-between gap-4 text-sm text-gray-500">
-        <span>{progress}</span>
+        <span>{mealDate(meal.created_at)}</span>
         <TextButton onClick={onSkip}>Skip</TextButton>
       </div>
-      <h2 className="mt-2 text-xl font-semibold">{dish.name}</h2>
-      <DishMeta dish={dish} />
+      <h2 className="mt-2 text-xl font-semibold">{mealTitle(meal)}</h2>
+      <DishNames names={meal.dishes.map((row) => row.dish.name)} />
       {body}
     </div>
   );
 
-  // Already ranked: default to keeping it, so re-logging a favorite is one tap.
-  if (existing && !reranking) {
-    return frame(
-      <>
-        <p className="mt-6 text-gray-700">
-          Already #{existing.rank} on your list (<Score score={existing.score} />).
-        </p>
-        <div className="mt-4 space-y-2">
-          <button type="button" onClick={onKeep} className={primaryButton}>
-            Keep it there
-          </button>
-          <button type="button" onClick={() => setReranking(true)} className={secondaryButton}>
-            Re-rank
-          </button>
-        </div>
-      </>,
-    );
-  }
-
   if (!sentiment) {
     return frame(
       <>
-        <p className="mt-6 font-semibold">How was it?</p>
+        <p className="mt-6 font-semibold">How was this plate?</p>
         <ul className={`mt-2 ${listBox}`}>
           {SENTIMENT_ORDER.map((s) => (
             <li key={s}>
@@ -99,21 +74,13 @@ export function RankDish({
             </li>
           ))}
         </ul>
-        {existing && (
-          <div className="mt-4">
-            <TextButton onClick={() => setReranking(false)}>‹ Keep it at #{existing.rank}</TextButton>
-          </div>
-        )}
       </>,
     );
   }
 
   // Replay the answers so far to find where the search stands.
   const group = getSentimentGroup(others, sentiment);
-  const range = answers.reduce(
-    (current, answer) => applyAnswer(current, answer.newDishWon),
-    beginSearch(group),
-  );
+  const range = answers.reduce((current, answer) => applyAnswer(current, answer.newWon), beginSearch(group));
   const opponent = getNextComparison(group, range);
 
   function goBack() {
@@ -122,26 +89,32 @@ export function RankDish({
   }
   const back = (
     <div className="mt-4">
-      <TextButton onClick={goBack}>
-        ‹ {answers.length > 0 ? "Undo last answer" : "Change your verdict"}
-      </TextButton>
+      <TextButton onClick={goBack}>‹ {answers.length > 0 ? "Undo last answer" : "Change your verdict"}</TextButton>
     </div>
   );
 
   if (opponent) {
-    const answer = (newDishWon: boolean) => setAnswers([...answers, { opponent, newDishWon }]);
+    const answer = (newWon: boolean) => setAnswers([...answers, { opponent, newWon }]);
     return frame(
       <>
         <div className="mt-6 flex items-baseline justify-between gap-4">
-          <p className="font-semibold">Which was better?</p>
+          <p className="font-semibold">Which plate was better?</p>
           <span className="text-sm text-gray-400">
             {answers.length + 1} of at most {getMaxComparisons(group)}
           </span>
         </div>
         <ul className={`mt-2 ${listBox}`}>
-          <Choice dish={dish} label="This meal" onClick={() => answer(true)} />
           <Choice
-            dish={opponent.dish}
+            title={mealTitle(meal)}
+            date={mealDate(meal.created_at)}
+            names={meal.dishes.map((row) => row.dish.name)}
+            label="This plate"
+            onClick={() => answer(true)}
+          />
+          <Choice
+            title={mealTitle(opponent)}
+            date={mealDate(opponent.created_at)}
+            names={opponent.dish_names}
             label={`#${opponent.rank} on your list`}
             onClick={() => answer(false)}
           />
@@ -157,17 +130,7 @@ export function RankDish({
 
   function save() {
     if (!sentiment) return;
-    onRank({
-      dishId: dish.id,
-      sentiment,
-      position,
-      comment: comment.trim() || null,
-      comparisons: answers.map(({ opponent, newDishWon }) =>
-        newDishWon
-          ? { winner_dish_id: dish.id, loser_dish_id: opponent.dish_id }
-          : { winner_dish_id: opponent.dish_id, loser_dish_id: dish.id },
-      ),
-    });
+    onRank({ sentiment, position, comment: comment.trim() || null });
   }
 
   return frame(
@@ -175,14 +138,15 @@ export function RankDish({
       <p className="mt-6 text-gray-700">
         Lands at #{rank} on your list (<Score score={score} />).
       </p>
-      <label htmlFor={`comment-${dish.id}`} className="mt-4 block text-sm font-semibold">
+      <label htmlFor={`comment-${meal.id}`} className="mt-4 block text-sm font-semibold">
         Comment <span className="font-normal text-gray-400">(optional)</span>
       </label>
       <textarea
-        id={`comment-${dish.id}`}
+        id={`comment-${meal.id}`}
         value={comment}
         onChange={(event) => setComment(event.target.value)}
         rows={2}
+        maxLength={500}
         placeholder={existing?.comment ?? "What made it good or bad?"}
         className="mt-2 w-full resize-none rounded-md border border-gray-200 p-3 placeholder:text-gray-400 focus:border-blue-600 focus:outline-none"
       />
@@ -194,17 +158,45 @@ export function RankDish({
   );
 }
 
-function Choice({ dish, label, onClick }: { dish: Dish; label: string; onClick: () => void }) {
+/** What was on the plate, as small gray tags. */
+export function DishNames({ names }: { names: string[] }) {
+  if (names.length === 0) return null;
+  return (
+    <ul className="mt-2 flex flex-wrap gap-1.5">
+      {names.map((name, index) => (
+        <li key={`${name}-${index}`} className="rounded-full bg-gray-100 px-2.5 py-0.5 text-sm text-gray-700">
+          {name}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function Choice({
+  title,
+  date,
+  names,
+  label,
+  onClick,
+}: {
+  title: string;
+  date: string;
+  names: string[];
+  label: string;
+  onClick: () => void;
+}) {
   return (
     <li>
       <button
         type="button"
         onClick={onClick}
-        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-gray-50"
+        className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left transition hover:bg-gray-50"
       >
         <span className="min-w-0">
-          <span className="block font-medium">{dish.name}</span>
-          <DishMeta dish={dish} />
+          <span className="block font-medium">
+            {title} <span className="font-normal text-gray-500">· {date}</span>
+          </span>
+          <span className="mt-0.5 block text-sm text-gray-500">{names.join(", ")}</span>
         </span>
         <span className="shrink-0 text-xs text-gray-400">{label}</span>
       </button>

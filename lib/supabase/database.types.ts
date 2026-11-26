@@ -419,6 +419,51 @@ export type Database = {
           },
         ]
       }
+      plate_rankings: {
+        Row: {
+          comment: string | null
+          created_at: string
+          meal_id: number
+          score: number
+          sentiment: Database["public"]["Enums"]["sentiment"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          meal_id: number
+          score: number
+          sentiment: Database["public"]["Enums"]["sentiment"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          meal_id?: number
+          score?: number
+          sentiment?: Database["public"]["Enums"]["sentiment"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plate_rankings_meal_id_fkey"
+            columns: ["meal_id"]
+            isOneToOne: true
+            referencedRelation: "meals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plate_rankings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -665,6 +710,15 @@ export type Database = {
           p_comparisons?: Json
           p_dish_id: number
           p_meal_id?: number | null
+          p_position: number
+          p_sentiment: Database["public"]["Enums"]["sentiment"]
+        }
+        Returns: undefined
+      }
+      rank_plate: {
+        Args: {
+          p_comment?: string | null
+          p_meal_id: number
           p_position: number
           p_sentiment: Database["public"]["Enums"]["sentiment"]
         }
