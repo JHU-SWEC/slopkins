@@ -16,6 +16,11 @@ export function addDays(date: string, days: number) {
   return d.toISOString().slice(0, 10);
 }
 
+/** The Sunday that starts a YYYY-MM-DD date's week (Nutrislice weeks run Sunday to Saturday). */
+export function weekStart(date: string) {
+  return addDays(date, -new Date(`${date}T00:00:00Z`).getUTCDay());
+}
+
 /** Today and the following days you can browse menus for. */
 export function menuDays(today = todayISO()) {
   return Array.from({ length: MENU_DAYS }, (_, i) => addDays(today, i));

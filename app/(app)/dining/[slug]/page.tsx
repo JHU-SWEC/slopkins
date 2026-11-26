@@ -15,7 +15,7 @@ export function generateStaticParams() {
 }
 
 // A day's menu for this hall (today unless ?date= picks a day in the coming
-// week), fetched live from Nutrislice.
+// week), from Nutrislice through the weekly cache in lib/menus.ts.
 export default function HallMenuPage({ params, searchParams }: PageProps<"/dining/[slug]">) {
   return (
     <>
@@ -41,7 +41,8 @@ async function HallMenu({
   const hall = getHall(slug);
   if (!hall) notFound();
 
-  // Fetch per request so the menu (and "today") is always current.
+  // Render per request so "today" is always current. The menu itself comes
+  // from the weekly cache, so this stays fast.
   await connection();
   const today = todayISO();
   const date = pickMenuDate((await searchParams).date, today);
