@@ -3,8 +3,9 @@
 import { HoverLabel } from "@/app/hover-label";
 import { setShowMacros, useShowMacros } from "./use-macros";
 
-// Shows or hides calories and macros on the dining pages. Sits left of the
-// tour button and matches the theme toggle's look.
+// Shows or hides calories and macros on the dining pages. Phones: the row
+// along the top right is settings, tour, notifications, then this. Laptops:
+// those live in the sidebar, so this takes the corner.
 export function MacroToggle() {
   const show = useShowMacros();
   const label = show ? "Hide macros" : "Show macros";
@@ -15,7 +16,7 @@ export function MacroToggle() {
       onClick={() => setShowMacros(!show)}
       aria-pressed={show}
       aria-label={label}
-      className={`group fixed right-[6.25rem] top-3 z-50 grid h-9 w-9 place-items-center rounded-full border shadow-sm transition hover:bg-gray-100 ${
+      className={`group fixed right-[144px] top-3 z-50 md:right-3 grid h-9 w-9 place-items-center rounded-full border shadow-sm transition hover:bg-gray-100 ${
         show ? "border-gray-200 bg-white text-gray-600" : "border-gray-200 bg-gray-100 text-gray-400"
       }`}
     >
