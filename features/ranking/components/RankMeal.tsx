@@ -114,7 +114,7 @@ function Summary({
 
       <div className="mt-6 space-y-2">
         <Link href="/profile#ranked" className={primaryButton}>
-          View my ranked dishes
+          View my ranked plates
         </Link>
         <Link href="/feed" className={secondaryButton}>
           Done

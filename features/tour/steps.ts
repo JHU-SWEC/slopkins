@@ -36,7 +36,7 @@ const SIGNED_IN_STEPS: TourStep[] = [
     route: "/profile",
     target: "profile-tabs",
     title: "Rank your dishes",
-    body: `${RANK_BODY} Activity shows every meal you've logged, Ranked Dishes is your full list, and Want to Try holds dishes you've bookmarked on menus.`,
+    body: `${RANK_BODY} Activity shows every meal you've logged, Ranked Plates lists your meals best first, and Want to Try holds dishes you've bookmarked on menus.`,
   },
   {
     route: "/profile",

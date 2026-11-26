@@ -35,7 +35,7 @@ Beli-style: the verdict picks a band (liked 7–10, fine 4–7, disliked 0–4),
 | `components/RankMeal.tsx` | Queue + summary for one meal. |
 | `components/RankDish.tsx` | Keep / verdict / compare / comment for one dish. |
 | `components/PendingMeals.tsx` | "Dishes to rank" banner. |
-| `components/MyList.tsx` | A ranked list, shown under "Ranked dishes" on every profile (`/my-list` redirects to yours). |
+| `components/MyList.tsx` | Plates ranked by average dish score, shown under "Ranked Plates" on every profile (`/my-list` redirects to yours). |
 
 Everything is in Supabase; you need to be signed in to log or rank. The browser sends only Nutrislice food ids. `logMealAction` re-fetches today's menu on the server, adds any new `dishes` (`rankable` from `isMain`, only on insert so admin fixes stick) and `menu_items` with the secret-key client (`lib/supabase/admin.ts`), then calls `log_meal` as the user. Dish ids everywhere else are `dishes.id`. Hall and station labels come from the `dish_places` view (latest `menu_items` row).
 

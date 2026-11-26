@@ -32,7 +32,7 @@ export function ProfileView({
   isOwner: boolean;
   viewer?: Viewer;
 }) {
-  const { profile, rankedDishes, wantToTry, savedPlates } = data;
+  const { profile, wantToTry, savedPlates } = data;
   const name = shownName(profile);
 
   return (
@@ -127,7 +127,7 @@ export function ProfileView({
         )}
       </section>
 
-      {/* ---------- 2. Tabs: Activity (default), Ranked Dishes, Want to Try ---------- */}
+      {/* ---------- 2. Tabs: Activity (default), Ranked Plates, Want to Try ---------- */}
       <ProfileTabs
         tabs={[
           {
@@ -137,8 +137,8 @@ export function ProfileView({
           },
           {
             id: "ranked",
-            label: "Ranked Dishes",
-            panel: <MyList list={rankedDishes} isOwner={isOwner} />,
+            label: "Ranked Plates",
+            panel: <MyList plates={posts.posts} isOwner={isOwner} />,
           },
           // Saved dishes are private, so only you see this tab.
           ...(isOwner
