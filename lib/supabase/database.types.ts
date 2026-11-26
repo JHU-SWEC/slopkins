@@ -186,6 +186,48 @@ export type Database = {
           },
         ]
       }
+      meal_comments: {
+        Row: {
+          body: string
+          created_at: string
+          deleted_at: string | null
+          id: number
+          meal_id: number
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: never
+          meal_id: number
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: never
+          meal_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_comments_meal_id_fkey"
+            columns: ["meal_id"]
+            isOneToOne: false
+            referencedRelation: "meals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meal_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meal_dishes: {
         Row: {
           dish_id: number
@@ -215,6 +257,39 @@ export type Database = {
             columns: ["meal_id"]
             isOneToOne: false
             referencedRelation: "meals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meal_likes: {
+        Row: {
+          created_at: string
+          meal_id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          meal_id: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          meal_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_likes_meal_id_fkey"
+            columns: ["meal_id"]
+            isOneToOne: false
+            referencedRelation: "meals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meal_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -458,6 +533,58 @@ export type Database = {
           },
         ]
       }
+      saved_plates: {
+        Row: {
+          created_at: string
+          dining_hall_id: number
+          dish_ids: number[]
+          id: number
+          meal: Database["public"]["Enums"]["meal_type"] | null
+          meal_id: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dining_hall_id: number
+          dish_ids: number[]
+          id?: never
+          meal?: Database["public"]["Enums"]["meal_type"] | null
+          meal_id?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dining_hall_id?: number
+          dish_ids?: number[]
+          id?: never
+          meal?: Database["public"]["Enums"]["meal_type"] | null
+          meal_id?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_plates_dining_hall_id_fkey"
+            columns: ["dining_hall_id"]
+            isOneToOne: false
+            referencedRelation: "dining_halls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_plates_meal_id_fkey"
+            columns: ["meal_id"]
+            isOneToOne: false
+            referencedRelation: "meals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_plates_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       dish_places: {
@@ -516,6 +643,10 @@ export type Database = {
           rank: number
           total_users: number
         }[]
+      }
+      soft_delete_comment: {
+        Args: { p_comment_id: number }
+        Returns: undefined
       }
       soft_delete_meal: {
         Args: { p_meal_id: number }

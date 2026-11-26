@@ -9,6 +9,7 @@ import type {
   MealWithDishes,
   RankedDish,
   Ranking,
+  SavedPlate,
   WantToTryItem,
 } from "./types";
 
@@ -185,4 +186,35 @@ export async function getWantToTryFoodIds(supabase: SupabaseClient, userId: stri
     const id = one<{ nutrislice_food_id: number }>(row.dish)?.nutrislice_food_id;
     return typeof id === "number" ? [id] : [];
   });
+}
+
+/** Plates you saved from other people's posts, newest first. Private to you. */
+export async function getSavedPlates(supabase: SupabaseClient, userId: string): Promise<SavedPlate[]> {
+  const { data } = await supabase
+    .from("saved_plates")
+    .select(
+      "id, meal_id, meal, dish_ids, created_at, hall:dining_halls(slug, name), source:meals(person:profiles!meals_user_id_fkey(username, display_name))",
+    )
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  const rows = (data ?? []) as Record<string, unknown>[];
+
+  // One lookup for every dish name across the plates.
+  const ids = [...new Set(rows.flatMap((row) => row.dish_ids as number[]))];
+  const { data: dishRows } =
+    ids.length === 0 ? { data: [] } : await supabase.from("dishes").select("id, name").in("id", ids);
+  const names = new Map((dishRows ?? []).map((dish) => [dish.id as number, dish.name as string]));
+
+  return rows.map((row) => ({
+    id: row.id as number,
+    meal_id: (row.meal_id as number | null) ?? null,
+    hall: one<{ slug: string; name: string }>(row.hall),
+    meal: (row.meal as string | null) ?? null,
+    dishes: (row.dish_ids as number[]).flatMap((id) => {
+      const name = names.get(id);
+      return name ? [{ id, name }] : [];
+    }),
+    from: one<{ username: string; display_name: string | null }>(one<{ person: unknown }>(row.source)?.person),
+    saved_at: row.created_at as string,
+  }));
 }
