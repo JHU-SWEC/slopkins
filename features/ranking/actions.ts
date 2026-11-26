@@ -9,6 +9,7 @@ import { getMenus, type MenuDish } from "@/lib/menus";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { SENTIMENT_ORDER } from "./insertion";
+import { MEAL_PHOTO_PATH } from "./photo";
 import type { RankDishInput, RankStatus } from "./types";
 
 export type ActionResult = { error?: string };
@@ -136,6 +137,8 @@ export async function logMealAction(input: {
   menuTypeSlug: string;
   foodIds: number[];
   rank: boolean;
+  /** Optional photo, already uploaded to the meal-photos bucket by the browser. */
+  photoPath?: string | null;
 }): Promise<ActionResult> {
   const { supabase, user } = await signedIn();
   if (!user) redirect("/login");
@@ -148,6 +151,11 @@ export async function logMealAction(input: {
   if (foodIds.length === 0) return { error: "Pick at least one dish." };
   if (foodIds.length > MAX_DISHES) return { error: `A meal can have up to ${MAX_DISHES} dishes.` };
 
+  const photoPath = input.photoPath || null;
+  if (photoPath && (!MEAL_PHOTO_PATH.test(photoPath) || !photoPath.startsWith(`${user.id}/`))) {
+    return { error: "That photo couldn't be used. Try adding it again." };
+  }
+
   // Meals are logged on the day they're eaten.
   const recorded = await recordDishes(hall, current.menuTypeSlug, todayISO(), foodIds);
   if ("error" in recorded) return recorded;
@@ -159,6 +167,7 @@ export async function logMealAction(input: {
     p_meal: current.meal,
     p_dish_ids: foodIds.map((id) => dishIds.get(id)!),
     p_rank: input.rank,
+    p_photo_path: photoPath ?? undefined,
   });
   if (error || typeof mealId !== "number") {
     console.error("[ranking] log_meal failed", error);

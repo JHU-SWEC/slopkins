@@ -18,6 +18,8 @@ export type FeedPost = {
   person: PersonBasics;
   hall: { slug: string; name: string } | null;
   meal: string | null;
+  /** Path in the meal-photos bucket, or null if no photo. */
+  photoPath: string | null;
   dishes: FeedDish[];
 };
 
@@ -51,7 +53,7 @@ export async function getFeed(
   const { data: meals } = await supabase
     .from("meals")
     .select(
-      `id, user_id, meal, created_at, hall:dining_halls(slug, name), person:profiles!meals_user_id_fkey(${PERSON}), meal_dishes(dish:dishes(id, name))`,
+      `id, user_id, meal, photo_path, photo_deleted_at, created_at, hall:dining_halls(slug, name), person:profiles!meals_user_id_fkey(${PERSON}), meal_dishes(dish:dishes(id, name))`,
     )
     .in("user_id", authorIds)
     .order("created_at", { ascending: false })
@@ -99,6 +101,8 @@ export async function getFeed(
       person,
       hall: one<{ slug: string; name: string }>(row.hall),
       meal: (row.meal as string | null) ?? null,
+      // A removed photo stays in storage but isn't shown.
+      photoPath: row.photo_deleted_at ? null : ((row.photo_path as string | null) ?? null),
       dishes,
     });
   }
