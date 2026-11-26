@@ -4,7 +4,7 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { getHall, halls } from "@/lib/halls";
 import { formatDay, menuDays, pickMenuDate, todayISO } from "@/lib/dates";
-import { getMenus } from "@/lib/menus";
+import { getMenus, listMenus } from "@/lib/menus";
 import { createClient } from "@/lib/supabase/server";
 import { getDishScoresByFoodId, getWantToTryFoodIds } from "@/features/ranking/queries";
 import { DaySwitcher, type MenuDay } from "./day-switcher";
@@ -92,7 +92,7 @@ async function HallMenu({
         <MenuPicker
           key={date}
           hallSlug={hall.slug}
-          tabs={tabs}
+          tabs={listMenus(tabs)}
           canLog={isToday}
           date={date}
           savedFoodIds={await savedFoodIds}
