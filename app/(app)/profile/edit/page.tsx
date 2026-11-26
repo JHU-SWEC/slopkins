@@ -66,9 +66,22 @@ async function EditProfile() {
     username: isPlaceholderUsername(basic.username) ? suggestUsername(user.email) || null : null,
   };
 
+  const profile = { ...basic, ...details.details };
   return (
     <EditProfileForm
-      profile={{ ...basic, ...details.details }}
+      // Next.js keeps this page alive when you leave it, and a saved form
+      // resets its boxes to their starting values. Keying on what's saved
+      // rebuilds the form whenever the profile changed, so it always opens
+      // with your latest bio, name, grade, and so on.
+      key={JSON.stringify([
+        profile.username,
+        profile.display_name,
+        profile.avatar_url,
+        profile.grade,
+        profile.major,
+        profile.bio,
+      ])}
+      profile={profile}
       detailsReady={details.ready}
       suggested={suggested}
     />
