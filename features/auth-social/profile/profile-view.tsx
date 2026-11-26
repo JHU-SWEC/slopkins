@@ -29,7 +29,7 @@ export function ProfileView({
   isOwner: boolean;
   viewer?: Viewer;
 }) {
-  const { profile, rankedDishes, wantToTry } = data;
+  const { profile, rankedDishes, wantToTry, savedPlates } = data;
   const name = shownName(profile);
 
   return (
@@ -146,7 +146,7 @@ export function ProfileView({
                 {
                   id: "want-to-try",
                   label: "Want to Try",
-                  panel: <WantToTry items={wantToTry} />,
+                  panel: <WantToTry items={wantToTry} plates={savedPlates} />,
                 },
               ]
             : []),

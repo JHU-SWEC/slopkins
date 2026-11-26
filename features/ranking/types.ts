@@ -77,3 +77,16 @@ export type RankDishInput = {
 
 /** A dish on your Want to try list (a dish_alerts row). */
 export type WantToTryItem = { dish: Dish; saved_at: string };
+
+/** Someone else's plate saved from the feed, as one Want to Try entry. */
+export type SavedPlate = {
+  id: number;
+  /** The post it came from; null once that post is gone. */
+  meal_id: number | null;
+  hall: { slug: string; name: string } | null;
+  meal: string | null;
+  dishes: { id: number; name: string }[];
+  /** Whose plate it was, if their post still exists. */
+  from: { username: string; display_name: string | null } | null;
+  saved_at: string;
+};

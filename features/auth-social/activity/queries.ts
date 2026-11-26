@@ -33,6 +33,25 @@ export type ActivityItem =
       hall: { slug: string; name: string } | null;
       meal: string | null;
       dishCount: number;
+    }
+  | {
+      kind: "comment";
+      key: string;
+      at: string;
+      person: PersonBasics;
+      /** Which of your meals they commented on. */
+      hall: { slug: string; name: string } | null;
+      meal: string | null;
+      body: string;
+    }
+  | {
+      kind: "like";
+      key: string;
+      at: string;
+      person: PersonBasics;
+      /** Which of your meals they liked. */
+      hall: { slug: string; name: string } | null;
+      meal: string | null;
     };
 
 const PERSON = "id, username, display_name, avatar_url";
@@ -48,6 +67,7 @@ function one<T>(value: unknown): T | null {
 /**
  * Everything for the Activity page, newest first, plus the time it was loaded:
  * - people who started following you
+ * - people who liked or commented on your meals
  * - dishes rated by people you follow
  * - meals logged by people you follow
  * Built from existing tables (follows, rankings, meals), so no extra
@@ -61,7 +81,7 @@ export async function getActivity(
   const now = Date.now();
   const since = new Date(now - DAYS_BACK * 24 * 60 * 60 * 1000).toISOString();
 
-  const [newFollowers, myFollowing] = await Promise.all([
+  const [newFollowers, myFollowing, likesOnMine, commentsOnMine] = await Promise.all([
     supabase
       .from("follows")
       .select(`created_at, person:profiles!follows_follower_id_fkey(${PERSON})`)
@@ -70,6 +90,28 @@ export async function getActivity(
       .order("created_at", { ascending: false })
       .limit(MAX_ITEMS),
     supabase.from("follows").select("followee_id").eq("follower_id", viewerId).limit(1000),
+    // Likes other people left on your meals.
+    supabase
+      .from("meal_likes")
+      .select(
+        `meal_id, created_at, person:profiles!meal_likes_user_id_fkey(${PERSON}), meal:meals!inner(user_id, meal, hall:dining_halls(slug, name))`,
+      )
+      .eq("meal.user_id", viewerId)
+      .neq("user_id", viewerId)
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(MAX_ITEMS),
+    // Comments other people left on your meals.
+    supabase
+      .from("meal_comments")
+      .select(
+        `id, body, created_at, person:profiles!meal_comments_user_id_fkey(${PERSON}), meal:meals!inner(user_id, meal, hall:dining_halls(slug, name))`,
+      )
+      .eq("meal.user_id", viewerId)
+      .neq("user_id", viewerId)
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(MAX_ITEMS),
   ]);
 
   const followingIds = (myFollowing.data ?? []).map((row) => row.followee_id as string);
@@ -145,6 +187,35 @@ export async function getActivity(
       hall: one<{ slug: string; name: string }>(row.hall),
       meal: (row.meal as string | null) ?? null,
       dishCount: counted?.count ?? 0,
+    });
+  }
+
+  for (const row of (likesOnMine.data ?? []) as Record<string, unknown>[]) {
+    const person = one<PersonBasics>(row.person);
+    const meal = one<{ meal: string | null; hall: unknown }>(row.meal);
+    if (!person || !meal) continue;
+    items.push({
+      kind: "like",
+      key: `like-${person.id}-${row.meal_id}`,
+      at: row.created_at as string,
+      person,
+      hall: one<{ slug: string; name: string }>(meal.hall),
+      meal: meal.meal ?? null,
+    });
+  }
+
+  for (const row of (commentsOnMine.data ?? []) as Record<string, unknown>[]) {
+    const person = one<PersonBasics>(row.person);
+    const meal = one<{ meal: string | null; hall: unknown }>(row.meal);
+    if (!person || !meal) continue;
+    items.push({
+      kind: "comment",
+      key: `comment-${row.id}`,
+      at: row.created_at as string,
+      person,
+      hall: one<{ slug: string; name: string }>(meal.hall),
+      meal: meal.meal ?? null,
+      body: row.body as string,
     });
   }
 
