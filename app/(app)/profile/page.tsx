@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSignedInUser } from "@/lib/supabase/server";
 import { getProfileData } from "@/features/auth-social/profile/queries";
 import { getUserPosts } from "@/features/feed/queries";
 import { ProfileView } from "@/features/auth-social/profile/profile-view";
@@ -26,7 +26,7 @@ async function MyProfile() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getSignedInUser(supabase);
   if (!user) redirect("/login");
 
   const [data, posts] = await Promise.all([

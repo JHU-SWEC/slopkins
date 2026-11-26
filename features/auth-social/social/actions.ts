@@ -1,7 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSignedInUser } from "@/lib/supabase/server";
 
 export type FollowResult = { error?: string };
 
@@ -12,7 +12,7 @@ export async function setFollowing(targetId: string, follow: boolean): Promise<F
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getSignedInUser(supabase);
   if (!user) return { error: "Log in to follow people." };
   if (!UUID.test(targetId)) return { error: "That account couldn't be found." };
   if (targetId === user.id) return { error: "You can't follow yourself." };

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSignedInUser } from "@/lib/supabase/server";
 import { ProfileMessage } from "../profile/profile-shell";
 import { getBasicProfile } from "../profile/queries";
 import { shownName } from "../profile/shared";
@@ -25,7 +25,7 @@ export async function FollowListPage({
       data: { user },
     },
     profile,
-  ] = await Promise.all([supabase.auth.getUser(), getBasicProfile(supabase, { username })]);
+  ] = await Promise.all([getSignedInUser(supabase), getBasicProfile(supabase, { username })]);
 
   if (!profile) {
     return (

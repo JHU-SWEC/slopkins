@@ -7,7 +7,7 @@ import { pickMenuDate, todayISO } from "@/lib/dates";
 import { getHall } from "@/lib/halls";
 import { getMenus, type FullDish } from "@/lib/menus";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSignedInUser } from "@/lib/supabase/server";
 import { SENTIMENT_ORDER } from "./insertion";
 import { MEAL_PHOTO_PATH } from "./photo";
 import type { RankPlateInput } from "./types";
@@ -25,7 +25,7 @@ async function signedIn() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getSignedInUser(supabase);
   return { supabase, user };
 }
 

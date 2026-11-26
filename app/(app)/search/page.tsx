@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSignedInUser } from "@/lib/supabase/server";
 import { PeopleList } from "@/features/auth-social/social/people-list";
 import { getNewestProfiles, searchProfiles } from "@/features/auth-social/social/queries";
 import { SearchBox } from "@/features/auth-social/social/search-box";
@@ -35,7 +35,7 @@ async function Results({ query }: { query: string }) {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getSignedInUser(supabase);
   const viewerId = user?.id ?? null;
 
   // Before you type: show the newest members, so there's someone to follow.

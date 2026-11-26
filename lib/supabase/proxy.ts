@@ -1,7 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Refreshes the Supabase auth session on each request.
+// Refreshes the Supabase auth session on each request (only calls Supabase
+// when the token is about to expire).
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -31,8 +32,10 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Don't put code between createServerClient and getUser().
-  await supabase.auth.getUser();
+  // Don't put code between createServerClient and getClaims(). It refreshes
+  // an expiring session (setAll writes the new cookies) and checks the token
+  // locally against Supabase's public key, instead of a call per request.
+  await supabase.auth.getClaims();
 
   return response;
 }

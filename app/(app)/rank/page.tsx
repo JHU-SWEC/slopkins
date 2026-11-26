@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import RankMeal from "@/features/ranking/components/RankMeal";
 import { primaryButton } from "@/features/ranking/components/styles";
 import { getMeal, getRankedPlates } from "@/features/ranking/queries";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSignedInUser } from "@/lib/supabase/server";
 
 // Step two of logging: rank the plate as a whole. /rank?meal=<id>
 export default function RankPage({ searchParams }: PageProps<"/rank">) {
@@ -27,7 +27,7 @@ async function RankQueue({ searchParams }: { searchParams: PageProps<"/rank">["s
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getSignedInUser(supabase);
   if (!user) redirect("/login");
 
   const [meal, list] = await Promise.all([

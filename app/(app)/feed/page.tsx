@@ -4,7 +4,7 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { Post } from "@/features/feed/post";
 import { getFeed } from "@/features/feed/queries";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSignedInUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Feed · Slopkins" };
 
@@ -28,7 +28,7 @@ async function Feed() {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await getSignedInUser(supabase);
 
   if (!user) {
     return (
