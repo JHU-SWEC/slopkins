@@ -94,8 +94,8 @@ export function Tour() {
       step={step}
       index={index}
       total={steps.length}
-      // Still on the previous page: keep the card up so the tap visibly did
-      // something, instead of a blank wait while the next page loads.
+      // Still on the previous page: the overlay keeps the screen dimmed (the
+      // tap visibly did something) but holds the card until the page is here.
       loading={!onRoute}
       onBack={() => go(index - 1)}
       onNext={() => go(index + 1)}

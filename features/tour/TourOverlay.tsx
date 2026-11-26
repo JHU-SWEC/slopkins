@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { TourStep } from "./steps";
 
 // floor: the lowest point the spotlight and card may use (above fixed bars).
@@ -24,6 +24,12 @@ const DIM = "rgb(0 0 0 / 0.6)";
 // are still read every frame (cheap), but searching the whole page is not:
 // pages you've left stay in the DOM, so it grows as you move around.
 const LOOKUP_MS = 250;
+// If the target still hasn't shown up by then (a hall with no menu today),
+// show the card in the middle and stop looking, so it can't jump later.
+const GIVE_UP_MS = 4000;
+// A short wait (prefetched page, target already there) shows no spinner at
+// all; only a slow one gets "Loading…", so it doesn't flash.
+const SPINNER_AFTER_MS = 300;
 
 // First match that's actually on the page. With cacheComponents, Next keeps
 // pages you've left in the DOM with display: none, so a hidden copy of a
@@ -57,23 +63,27 @@ export function TourOverlay({
   step: TourStep;
   index: number;
   total: number;
-  /** The step's page is still loading: show the card, don't look for the target yet. */
+  /** The step's page is still loading: don't look for the target yet. */
   loading?: boolean;
   onBack: () => void;
   onNext: () => void;
   onSkip: () => void;
 }) {
   const [rect, setRect] = useState<Rect | null>(null);
+  const [gaveUp, setGaveUp] = useState(false);
+  const [slow, setSlow] = useState(false);
   const card = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const bodyId = useId();
   const last = index === total - 1;
 
   // Track the target every frame: it can load late, scroll, or move on resize.
-  // Until it shows up, the card waits in the middle of the screen.
-  useEffect(() => {
+  // A layout effect, and the first measure runs right away rather than on
+  // the next frame, so the card's first paint is already in its final spot.
+  useLayoutEffect(() => {
     if (!step.target || loading) return;
     let frame = 0;
+    let found = false;
     // Found elements are reused between lookups while they're still on screen.
     let el: HTMLElement | null = null;
     let bars: HTMLElement[] = [];
@@ -82,7 +92,7 @@ export function TourOverlay({
     const usable = (node: HTMLElement | null) => node !== null && node.isConnected && node.getClientRects().length > 0;
     function measure(now: number) {
       // Look again on a timer, or right away if the old one left the page
-      // (e.g. a loading placeholder swapped for the real menu).
+      // (e.g. a re-render replaced it).
       if (!usable(el) || now - lookedAt > LOOKUP_MS) {
         el = shown(`[data-tour="${step.target}"]`);
         bars = BARS.flatMap((selector) => shown(selector) ?? []);
@@ -94,7 +104,7 @@ export function TourOverlay({
         lookedAt = now;
       }
       if (el) {
-        const r = el.getBoundingClientRect();
+        let r = el.getBoundingClientRect();
         // Stay above fixed bars (bottom nav, meal bar) unless they're the
         // target or sit above it (the meal bar rides above the bottom nav,
         // so it mustn't squash a highlighted tab).
@@ -113,11 +123,15 @@ export function TourOverlay({
         // are skipped: scrolling never moves them.
         if (!fixed && (r.top < EDGE || (r.bottom > floor && r.top > GAP * 2 + 1))) {
           scrollTo({ top: scrollY + r.top - GAP * 2 });
+          // Read it again after scrolling, or this frame would draw it where
+          // it was before and the next frame would jump it into place.
+          r = el.getBoundingClientRect();
         }
         // Clamp to the visible area between the top edge and the bars.
         const top = Math.max(r.top, EDGE);
         const bottom = Math.max(Math.min(r.bottom, floor), top);
         const next = { top, left: r.left, width: r.width, height: Math.max(bottom - top, 0), floor };
+        found = true;
         setRect((prev) =>
           prev &&
           prev.top === next.top &&
@@ -131,9 +145,27 @@ export function TourOverlay({
       }
       frame = requestAnimationFrame(measure);
     }
-    frame = requestAnimationFrame(measure);
-    return () => cancelAnimationFrame(frame);
+    measure(performance.now());
+    const giveUp = setTimeout(() => {
+      if (found) return;
+      cancelAnimationFrame(frame);
+      setGaveUp(true);
+    }, GIVE_UP_MS);
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(giveUp);
+    };
   }, [step.target, loading]);
+
+  // The card shows once it knows where it goes: on the step's page, and next
+  // to its target (or in the middle if there's no target or it never came).
+  const ready = !loading && (!step.target || rect !== null || gaveUp);
+
+  useEffect(() => {
+    if (ready) return;
+    const timer = setTimeout(() => setSlow(true), SPINNER_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, [ready]);
 
   // Lock page scrolling while a step is open, so the highlight can't be
   // scrolled away from its target. The tour's own scrollTo still works.
@@ -150,8 +182,8 @@ export function TourOverlay({
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") onSkip();
-      else if (event.key === "ArrowRight" && !loading) onNext();
-      else if (event.key === "ArrowLeft" && index > 0) onBack();
+      else if (event.key === "ArrowRight" && ready) onNext();
+      else if (event.key === "ArrowLeft" && ready && index > 0) onBack();
       else if (event.key === "Tab" && card.current) {
         const buttons = [...card.current.querySelectorAll<HTMLElement>("button")];
         const first = buttons[0];
@@ -167,18 +199,36 @@ export function TourOverlay({
     }
     addEventListener("keydown", onKey);
     return () => removeEventListener("keydown", onKey);
-  }, [index, loading, onBack, onNext, onSkip]);
+  }, [index, ready, onBack, onNext, onSkip]);
 
   useEffect(() => {
-    card.current?.focus();
-  }, []);
+    if (ready) card.current?.focus();
+  }, [ready]);
+
+  if (!ready) {
+    // Still on the last page or waiting for the target: dim and block the
+    // page, but hold the card back so it never shows up in the wrong spot.
+    return (
+      <div className="fixed inset-0 z-[60]" style={{ background: DIM }}>
+        {slow && (
+          <div className="fixed inset-x-0 top-1/2 flex -translate-y-1/2 flex-col items-center gap-3">
+            <span role="status" className="rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow dark:bg-gray-100">
+              Loading…
+            </span>
+            <button type="button" onClick={onSkip} className="text-sm font-medium text-white/80 hover:text-white">
+              Skip tour
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   // Card below or above the target, whichever has room; failing that, to its
   // right (the laptop sidebar runs the full height, so only beside it works).
   // On a short screen where nothing fits, put it at the top, scrolling inside
   // itself if needed.
-  // While loading, ignore where the last page's target was.
-  const target = loading ? null : rect;
+  const target = rect;
   let cardStyle: React.CSSProperties;
   if (target) {
     const spaceBelow = target.floor - (target.top + target.height + PAD + GAP);
@@ -230,7 +280,6 @@ export function TourOverlay({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={bodyId}
-        aria-busy={loading}
         tabIndex={-1}
         className="fixed inset-x-4 mx-auto max-w-sm rounded-2xl border border-gray-200 bg-white p-5 text-gray-900 shadow-xl outline-none dark:bg-gray-100"
         style={cardStyle}
@@ -255,11 +304,6 @@ export function TourOverlay({
             </button>
           )}
           <div className="ml-auto flex items-center gap-2">
-            {loading && (
-              <span role="status" className="text-sm text-gray-500">
-                Loading…
-              </span>
-            )}
             {index > 0 && (
               <button
                 type="button"
@@ -272,9 +316,7 @@ export function TourOverlay({
             <button
               type="button"
               onClick={onNext}
-              // Wait for this step's page before moving on, so taps can't skip ahead blind.
-              disabled={loading}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
               {last ? "Done" : "Next"}
             </button>
