@@ -46,23 +46,49 @@ function one<T>(value: unknown): T | null {
   return (value as T) ?? null;
 }
 
+/** What the feed and profile pages need to show a list of posts. */
+export type PostList = {
+  posts: FeedPost[];
+  /** "3h ago" is measured from this moment. */
+  now: number;
+  /** You, for comments you post before the page reloads. Null if signed out. */
+  viewer: PersonBasics | null;
+};
+
 /**
  * Meals logged by you and the people you follow, newest first, each with its
  * dishes and the poster's current score for every dish they've ranked.
  */
-export async function getFeed(
+export async function getFeed(supabase: SupabaseClient, viewerId: string): Promise<PostList> {
+  const { data: following } = await supabase
+    .from("follows")
+    .select("followee_id")
+    .eq("follower_id", viewerId)
+    .limit(1000);
+  const authorIds = [viewerId, ...(following ?? []).map((row) => row.followee_id as string)];
+  return getPosts(supabase, viewerId, authorIds);
+}
+
+/** One person's meals, newest first, for the Posts tab on their profile. */
+export function getUserPosts(
   supabase: SupabaseClient,
-  viewerId: string,
-): Promise<{ posts: FeedPost[]; now: number; viewer: PersonBasics | null }> {
+  viewerId: string | null,
+  userId: string,
+): Promise<PostList> {
+  return getPosts(supabase, viewerId, [userId]);
+}
+
+/** Posts by these people, as seen by the viewer (their likes and saves). */
+async function getPosts(
+  supabase: SupabaseClient,
+  viewerId: string | null,
+  authorIds: string[],
+): Promise<PostList> {
   // Also returned, so "3h ago" is measured from the same moment.
   const now = Date.now();
-
-  const [{ data: following }, { data: viewer }] = await Promise.all([
-    supabase.from("follows").select("followee_id").eq("follower_id", viewerId).limit(1000),
-    // You, for comments you post before the page reloads.
-    supabase.from("profiles").select(PERSON).eq("id", viewerId).maybeSingle(),
-  ]);
-  const authorIds = [viewerId, ...(following ?? []).map((row) => row.followee_id as string)];
+  const { data: viewer } = viewerId
+    ? await supabase.from("profiles").select(PERSON).eq("id", viewerId).maybeSingle()
+    : { data: null };
 
   const { data: meals } = await supabase
     .from("meals")
@@ -92,12 +118,17 @@ export async function getFeed(
           .in("dish_id", [...dishIds]);
   // Your likes and saves on these posts, and their comments.
   const postIds = rows.map((row) => row.id as number);
+  const none = Promise.resolve({ data: [] as Record<string, unknown>[] });
   const [{ data: myLikes }, { data: mySaves }, { data: commentRows }] =
     postIds.length === 0
       ? [{ data: [] }, { data: [] }, { data: [] }]
       : await Promise.all([
-          supabase.from("meal_likes").select("meal_id").eq("user_id", viewerId).in("meal_id", postIds),
-          supabase.from("saved_plates").select("meal_id").eq("user_id", viewerId).in("meal_id", postIds),
+          viewerId
+            ? supabase.from("meal_likes").select("meal_id").eq("user_id", viewerId).in("meal_id", postIds)
+            : none,
+          viewerId
+            ? supabase.from("saved_plates").select("meal_id").eq("user_id", viewerId).in("meal_id", postIds)
+            : none,
           supabase
             .from("meal_comments")
             .select(`id, meal_id, body, created_at, person:profiles!meal_comments_user_id_fkey(${PERSON})`)

@@ -74,7 +74,6 @@ export async function getProfileData(
     rankedDishes,
     wantToTry,
     savedPlates,
-    loadedAt: Date.now(),
     followers: followers.count ?? 0,
     following: following.count ?? 0,
     // No rank until you've ranked a dish (otherwise everyone ties for #1 at 0).

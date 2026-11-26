@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 const tabs = [
   {
     href: "/feed",
-    label: "Home",
+    label: "Feed",
     // House: the home screen.
     icon: (
       <>
@@ -90,7 +90,7 @@ export function NavLinks({ pathname }: { pathname?: string }) {
                 aria-label={tab.label}
                 aria-current={active ? "page" : undefined}
                 className={`flex h-full items-center justify-center transition md:h-12 md:justify-start md:gap-4 md:rounded-xl md:px-3 md:hover:bg-gray-100 ${
-                  active ? "text-blue-600" : "text-gray-400 hover:text-gray-600 md:text-gray-600 md:hover:text-gray-900"
+                  active ? "text-heritage-blue dark:text-white" : "text-gray-400 hover:text-gray-600 md:text-gray-600 md:hover:text-gray-900"
                 }`}
               >
                 <svg
@@ -119,35 +119,6 @@ export function NavLinks({ pathname }: { pathname?: string }) {
           );
         })}
       </ul>
-      {/* Main page (feed) only. */}
-      {pathname === "/feed" && (
-        <div className="fixed bottom-4 right-5 hidden items-center gap-1 text-sm font-semibold text-gray-400 lg:flex">
-          <span>built by</span>
-          <a
-            href="https://www.hopbuilds.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-blue-700 hover:text-blue-900"
-          >
-            HopBuilds
-            {/* External-link icon: square with a diagonal arrow. */}
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-              className="h-3.5 w-3.5"
-            >
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-              <path d="M15 3h6v6" />
-              <path d="M10 14 21 3" />
-            </svg>
-          </a>
-        </div>
-      )}
     </nav>
   );
 }

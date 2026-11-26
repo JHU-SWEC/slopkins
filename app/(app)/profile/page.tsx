@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileData } from "@/features/auth-social/profile/queries";
+import { getUserPosts } from "@/features/feed/queries";
 import { ProfileView } from "@/features/auth-social/profile/profile-view";
 import { ProfileMessage, ProfileSkeleton } from "@/features/auth-social/profile/profile-shell";
 import { connection } from "next/server";
@@ -28,7 +29,10 @@ async function MyProfile() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const data = await getProfileData(supabase, { id: user.id });
+  const [data, posts] = await Promise.all([
+    getProfileData(supabase, { id: user.id }),
+    getUserPosts(supabase, user.id, user.id),
+  ]);
   if (!data) {
     return (
       <ProfileMessage
@@ -40,5 +44,5 @@ async function MyProfile() {
     );
   }
 
-  return <ProfileView data={data} isOwner />;
+  return <ProfileView data={data} posts={posts} isOwner />;
 }

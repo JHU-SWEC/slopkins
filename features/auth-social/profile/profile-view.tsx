@@ -1,8 +1,9 @@
 import Link from "next/link";
+import type { PostList } from "@/features/feed/queries";
 import MyList from "@/features/ranking/components/MyList";
 import WantToTry from "@/features/ranking/components/WantToTry";
 import { ProfileTabs } from "./profile-tabs";
-import { RecentRankings } from "./recent-rankings";
+import { ProfilePosts } from "./profile-posts";
 import { logOut } from "../actions";
 import { FollowButton } from "../social/follow-button";
 import { Avatar } from "./avatar";
@@ -22,10 +23,13 @@ export type Viewer = { signedIn: boolean; iFollow: boolean; followsMe: boolean }
 // sees a Follow button instead.
 export function ProfileView({
   data,
+  posts,
   isOwner,
   viewer = { signedIn: false, iFollow: false, followsMe: false },
 }: {
   data: ProfileData;
+  /** Their logged meals, shown like the feed. */
+  posts: PostList;
   isOwner: boolean;
   viewer?: Viewer;
 }) {
@@ -126,14 +130,13 @@ export function ProfileView({
         )}
       </section>
 
-      {/* ---------- 2. Tabs: My posts (default), Ranked Dishes, Want to Try ---------- */}
+      {/* ---------- 2. Tabs: Activity (default), Ranked Dishes, Want to Try ---------- */}
       <ProfileTabs
         tabs={[
           {
             id: "activity",
-            // "My posts" on your own profile, "Posts" on someone else's.
-            label: isOwner ? "My posts" : "Posts",
-            panel: <RecentRankings dishes={rankedDishes} now={data.loadedAt} isOwner={isOwner} />,
+            label: "Activity",
+            panel: <ProfilePosts list={posts} isOwner={isOwner} signedIn={isOwner || viewer.signedIn} />,
           },
           {
             id: "ranked",

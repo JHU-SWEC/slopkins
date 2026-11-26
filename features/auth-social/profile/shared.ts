@@ -16,8 +16,6 @@ export type ProfileData = {
   wantToTry: WantToTryItem[];
   /** Plates saved from other people's posts. Empty unless it's your profile. */
   savedPlates: SavedPlate[];
-  /** When this was loaded (ms), so "2h" times are measured from one moment. */
-  loadedAt: number;
   followers: number;
   following: number;
   rank: { position: number; totalUsers: number } | null;
