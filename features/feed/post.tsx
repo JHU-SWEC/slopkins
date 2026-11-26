@@ -10,7 +10,7 @@ import { LikeButton } from "./like-button";
 import { PostComments } from "./post-comments";
 import { PostMenu } from "./post-menu";
 import type { FeedComment, FeedPost } from "./queries";
-import { OwnSaveCount, SavePlateButton } from "./save-plate-button";
+import { SaveCount, SavePlateButton } from "./save-plate-button";
 
 /**
  * One logged meal as a card: who, where, photo, dishes with scores, then
@@ -116,8 +116,9 @@ export function Post({
           now={now}
           like={<LikeButton mealId={post.id} liked={post.likedByMe} likes={post.likes} />}
           save={
+            // Your own post has no bookmark to tap, just the count.
             mine ? (
-              <OwnSaveCount saves={post.saves} />
+              <SaveCount saves={post.saves} />
             ) : (
               <SavePlateButton mealId={post.id} saved={post.savedByMe} saves={post.saves} />
             )
@@ -127,7 +128,7 @@ export function Post({
         <div className="mt-2 flex items-center gap-1">
           <LikeButton mealId={post.id} liked={post.likedByMe} likes={post.likes} />
           {mine ? (
-            <OwnSaveCount saves={post.saves} />
+            <SaveCount saves={post.saves} />
           ) : (
             <SavePlateButton mealId={post.id} saved={post.savedByMe} saves={post.saves} />
           )}

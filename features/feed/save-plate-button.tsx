@@ -22,8 +22,10 @@ export function SavePlateButton({ mealId, saved, saves }: { mealId: number; save
     });
   }
 
+  // A fragment, so the button sits with the like and comment icons and the
+  // count can push itself to the right end of that row.
   return (
-    <div className="flex items-center">
+    <>
       <button
         type="button"
         onClick={toggle}
@@ -47,35 +49,22 @@ export function SavePlateButton({ mealId, saved, saves }: { mealId: number; save
           <path d="M6 3h12v18l-6-4-6 4V3z" />
         </svg>
       </button>
-      <SaveCount saves={optimistic.saves} />
       {error && (
         <span role="alert" className="ml-1 text-xs text-rose-600">
           {error}
         </span>
       )}
-    </div>
+      <SaveCount saves={optimistic.saves} />
+    </>
   );
 }
 
-/** "3 saves" next to the bookmark. Also shown alone on your own posts. */
+/** "3 bookmarks", on the right end of the post's icon row. */
 export function SaveCount({ saves }: { saves: number }) {
   if (saves <= 0) return null;
   return (
-    <span className="text-sm font-medium text-gray-600 tabular-nums">
-      {saves} {saves === 1 ? "save" : "saves"}
+    <span className="ml-auto pr-1 text-sm font-medium text-gray-600 tabular-nums">
+      {saves} {saves === 1 ? "bookmark" : "bookmarks"}
     </span>
-  );
-}
-
-/** Your own post: you can't save it, but you can see how many people did. */
-export function OwnSaveCount({ saves }: { saves: number }) {
-  if (saves <= 0) return null;
-  return (
-    <div className="flex items-center gap-1.5 pl-2 text-gray-400" title="People who saved this plate">
-      <svg viewBox="0 0 24 24" aria-hidden="true" className="size-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinejoin="round">
-        <path d="M6 3h12v18l-6-4-6 4V3z" />
-      </svg>
-      <SaveCount saves={saves} />
-    </div>
   );
 }
