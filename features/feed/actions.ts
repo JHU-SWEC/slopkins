@@ -60,6 +60,28 @@ export async function setLiked(mealId: number, liked: boolean): Promise<ActionRe
   return {};
 }
 
+/** Like (liked = true) or unlike a comment under a post. */
+export async function setCommentLiked(commentId: number, liked: boolean): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Log in to like comments." };
+  if (!isId(commentId)) return { error: "That comment couldn't be found." };
+
+  const { error } = liked
+    ? await supabase.from("comment_likes").insert({ user_id: user.id, comment_id: commentId })
+    : await supabase.from("comment_likes").delete().eq("user_id", user.id).eq("comment_id", commentId);
+
+  // 23505 = "already exists": you already liked it, which is what we wanted.
+  if (error && error.code !== "23505") {
+    console.error("[feed] comment like failed", error);
+    return { error: liked ? "Couldn't like that comment." : "Couldn't unlike that comment." };
+  }
+  refresh();
+  return {};
+}
+
 const MAX_COMMENT = 500;
 
 /** Adds a comment to a post. */

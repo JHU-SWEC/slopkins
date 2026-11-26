@@ -22,34 +22,28 @@ export type RankResult = Omit<RankPlateInput, "mealId">;
 
 /**
  * Ranks one plate as a whole: verdict, then "which plate was better?" against
- * your past plates until its spot is found, then an optional comment.
- * Skip is available at every step. Key by meal id so state resets per plate.
+ * your past plates until its spot is found, then save. (Comments are written
+ * when logging the meal, not here.)
+ * There's no skip: every plate gets ranked. Key by meal id so state resets per plate.
  */
 export function RankPlate({
   meal,
   list,
   onRank,
-  onSkip,
 }: {
   meal: MealWithDishes;
   /** The user's ranked plates, best first. */
   list: RankedPlate[];
   onRank: (result: RankResult) => void;
-  onSkip: () => void;
 }) {
-  const existing = list.find((item) => item.meal_id === meal.id) ?? null;
   const others = list.filter((item) => item.meal_id !== meal.id);
 
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
   const [answers, setAnswers] = useState<Answer[]>([]);
-  const [comment, setComment] = useState("");
 
   const frame = (body: React.ReactNode) => (
     <div className="mt-6">
-      <div className="flex items-center justify-between gap-4 text-sm text-gray-500">
-        <span>{mealDate(meal.created_at)}</span>
-        <TextButton onClick={onSkip}>Skip</TextButton>
-      </div>
+      <p className="text-sm text-gray-500">{mealDate(meal.created_at)}</p>
       <h2 className="mt-2 text-xl font-semibold">{mealTitle(meal)}</h2>
       <DishNames names={meal.dishes.map((row) => row.dish.name)} />
       {body}
@@ -130,7 +124,7 @@ export function RankPlate({
 
   function save() {
     if (!sentiment) return;
-    onRank({ sentiment, position, comment: comment.trim() || null });
+    onRank({ sentiment, position, comment: null });
   }
 
   return frame(
@@ -138,19 +132,7 @@ export function RankPlate({
       <p className="mt-6 text-gray-700">
         Lands at #{rank} on your list (<Score score={score} />).
       </p>
-      <label htmlFor={`comment-${meal.id}`} className="mt-4 block text-sm font-semibold">
-        Comment <span className="font-normal text-gray-400">(optional)</span>
-      </label>
-      <textarea
-        id={`comment-${meal.id}`}
-        value={comment}
-        onChange={(event) => setComment(event.target.value)}
-        rows={2}
-        maxLength={500}
-        placeholder={existing?.comment ?? "What made it good or bad?"}
-        className="mt-2 w-full resize-none rounded-md border border-gray-200 p-3 placeholder:text-gray-400 focus:border-blue-600 focus:outline-none"
-      />
-      <button type="button" onClick={save} className={`mt-3 ${primaryButton}`}>
+      <button type="button" onClick={save} className={`mt-4 ${primaryButton}`}>
         Save ranking
       </button>
       {back}

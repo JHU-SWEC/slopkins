@@ -47,7 +47,6 @@ export function MealCart({
   onRemove,
   onLog,
   canLog,
-  canRank,
   showMacros,
   logging = false,
   logError = null,
@@ -60,11 +59,9 @@ export function MealCart({
   onClose: () => void;
   onChange: (item: CartItem) => void;
   onRemove: (dishId: number) => void;
-  /** rank = false is "Log only". */
-  onLog: (rank: boolean) => void;
+  /** Saves the meal, then opens the rank step. */
+  onLog: () => void;
   canLog: boolean;
-  /** Offer Log & rank (any plate can be ranked). */
-  canRank: boolean;
   /** Off: a plain list of what you picked, no portions or nutrition. */
   showMacros: boolean;
   /** The meal is being saved. */
@@ -197,26 +194,15 @@ export function MealCart({
                 {logError}
               </p>
             )}
-            <div className="flex gap-2">
-              {canRank && (
-                <button
-                  type="button"
-                  disabled={items.length === 0 || !canLog || logging || photo.uploading}
-                  onClick={() => onLog(false)}
-                  className="shrink-0 rounded-md border border-gray-200 px-4 py-3 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-40"
-                >
-                  Log only
-                </button>
-              )}
-              <button
-                type="button"
-                disabled={items.length === 0 || !canLog || logging || photo.uploading}
-                onClick={() => onLog(canRank)}
-                className="flex-1 rounded-md bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600"
-              >
-                {logging ? "Saving…" : photo.uploading ? "Uploading photo…" : canRank ? "Log & rank" : "Log meal"}
-              </button>
-            </div>
+            {/* Every plate gets ranked, so there's no "log only". */}
+            <button
+              type="button"
+              disabled={items.length === 0 || !canLog || logging || photo.uploading}
+              onClick={onLog}
+              className="w-full rounded-md bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600"
+            >
+              {logging ? "Saving…" : photo.uploading ? "Uploading photo…" : "Log & rank"}
+            </button>
             {!canLog && (
               <p className="mt-2 text-center text-xs text-gray-500">
                 This menu is for a future day. You can log meals on the day you eat them.

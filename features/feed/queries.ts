@@ -25,6 +25,9 @@ export type FeedComment = {
   at: string;
   body: string;
   person: PersonBasics;
+  likes: number;
+  /** You've liked this comment. */
+  likedByMe: boolean;
 };
 
 /** One logged meal on the feed. `at` is an ISO timestamp. */
@@ -129,7 +132,9 @@ async function getPosts(
             : none,
           supabase
             .from("meal_comments")
-            .select(`id, meal_id, body, created_at, person:profiles!meal_comments_user_id_fkey(${PERSON})`)
+            .select(
+              `id, meal_id, body, created_at, person:profiles!meal_comments_user_id_fkey(${PERSON}), comment_likes(count)`,
+            )
             .in("meal_id", postIds)
             .order("created_at", { ascending: true }),
           // How many people saved each post. (Who saved it shows on their
@@ -150,12 +155,27 @@ async function getPosts(
   );
   const liked = new Set((myLikes ?? []).map((row) => row.meal_id as number));
   const saved = new Set((mySaves ?? []).map((row) => row.meal_id as number));
+  // Which of these comments you've liked.
+  const commentIds = ((commentRows ?? []) as Record<string, unknown>[]).map((row) => row.id as number);
+  const { data: myCommentLikes } =
+    viewerId && commentIds.length > 0
+      ? await supabase.from("comment_likes").select("comment_id").eq("user_id", viewerId).in("comment_id", commentIds)
+      : { data: [] };
+  const likedComments = new Set((myCommentLikes ?? []).map((row) => row.comment_id as number));
+
   const comments = new Map<number, FeedComment[]>();
   for (const row of (commentRows ?? []) as Record<string, unknown>[]) {
     const person = one<PersonBasics>(row.person);
     if (!person) continue;
     const list = comments.get(row.meal_id as number) ?? [];
-    list.push({ id: row.id as number, at: row.created_at as string, body: row.body as string, person });
+    list.push({
+      id: row.id as number,
+      at: row.created_at as string,
+      body: row.body as string,
+      person,
+      likes: one<{ count: number }>(row.comment_likes)?.count ?? 0,
+      likedByMe: likedComments.has(row.id as number),
+    });
     comments.set(row.meal_id as number, list);
   }
 

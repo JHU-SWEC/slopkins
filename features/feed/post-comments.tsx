@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
 import { timeAgo } from "@/features/auth-social/activity/shared";
 import { shownName } from "@/features/auth-social/profile/shared";
-import { addComment, deleteComment } from "./actions";
+import { addComment, deleteComment, setCommentLiked } from "./actions";
 import type { FeedComment } from "./queries";
 
 const SHOWN = 2;
@@ -53,7 +53,15 @@ export function PostComments({
     setText("");
     setOpen(false);
     startSending(async () => {
-      addPending({ id: -Date.now(), at: new Date().toISOString(), body, person: viewer, pending: true });
+      addPending({
+        id: -Date.now(),
+        at: new Date().toISOString(),
+        body,
+        person: viewer,
+        likes: 0,
+        likedByMe: false,
+        pending: true,
+      });
       const result = await addComment(mealId, body);
       if (result.error) {
         setError(result.error);
@@ -170,7 +178,8 @@ function CommentRow({ comment, now, canDelete }: { comment: Shown; now: number; 
   }
 
   return (
-    <li className={`text-sm leading-snug ${comment.pending || deleting ? "opacity-60" : ""}`}>
+    <li className={`flex items-start gap-2 text-sm leading-snug ${comment.pending || deleting ? "opacity-60" : ""}`}>
+      <div className="min-w-0 flex-1">
       <Link href={`/u/${comment.person.username}`} className="font-semibold text-gray-900 hover:underline">
         {shownName(comment.person)}
       </Link>{" "}
@@ -203,6 +212,61 @@ function CommentRow({ comment, now, canDelete }: { comment: Shown; now: number; 
           {error}
         </span>
       )}
+      </div>
+      {/* A new comment can't be liked until it's saved. */}
+      {!comment.pending && <CommentLike commentId={comment.id} liked={comment.likedByMe} likes={comment.likes} />}
     </li>
+  );
+}
+
+// Small heart on the right of a comment, with its like count. Flips the
+// moment you tap it, then the server catches up (same as LikeButton).
+function CommentLike({ commentId, liked, likes }: { commentId: number; liked: boolean; likes: number }) {
+  const [shown, setShown] = useOptimistic({ liked, likes });
+  const [, startTransition] = useTransition();
+  const [error, setError] = useState("");
+
+  function toggle() {
+    const next = !shown.liked;
+    setError("");
+    startTransition(async () => {
+      setShown({ liked: next, likes: Math.max(0, shown.likes + (next ? 1 : -1)) });
+      const result = await setCommentLiked(commentId, next);
+      if (result.error) setError(result.error);
+    });
+  }
+
+  return (
+    <div className="flex shrink-0 flex-col items-center">
+      <button
+        type="button"
+        onClick={toggle}
+        aria-pressed={shown.liked}
+        aria-label={shown.liked ? "Unlike comment" : "Like comment"}
+        title={error || undefined}
+        className={`grid size-6 place-items-center rounded-full transition ${
+          shown.liked ? "text-rose-500" : "text-gray-300 hover:text-gray-500"
+        }`}
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill={shown.liked ? "currentColor" : "none"}
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          className="size-3.5"
+        >
+          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+        </svg>
+      </button>
+      {shown.likes > 0 && <span className="text-[10px] leading-none text-gray-400 tabular-nums">{shown.likes}</span>}
+      {error && (
+        <span role="alert" className="sr-only">
+          {error}
+        </span>
+      )}
+    </div>
   );
 }

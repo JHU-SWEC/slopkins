@@ -30,8 +30,8 @@ async function signedIn() {
 }
 
 /**
- * Logs today's meal at a hall, then opens the rank queue (rank = true) or the
- * feed. The browser only sends Nutrislice food ids: dish names and nutrition
+ * Logs today's meal at a hall, then opens the rank step (every plate gets
+ * ranked). The browser only sends Nutrislice food ids: dish names and nutrition
  * come from Nutrislice here on the server, so nobody can invent a dish.
  */
 type Hall = NonNullable<ReturnType<typeof getHall>>;
@@ -128,8 +128,8 @@ async function recordDishes(
 }
 
 /**
- * Logs today's meal at a hall, then opens the rank queue (rank = true) or the
- * feed. The browser only sends Nutrislice food ids: dish names and nutrition
+ * Logs today's meal at a hall, then opens the rank step (every plate gets
+ * ranked). The browser only sends Nutrislice food ids: dish names and nutrition
  * come from Nutrislice here on the server, so nobody can invent a dish.
  */
 export async function logMealAction(input: {
@@ -137,7 +137,6 @@ export async function logMealAction(input: {
   /** The menu tab the meal was picked from; sets breakfast / lunch / dinner. */
   menuTypeSlug: string;
   foodIds: number[];
-  rank: boolean;
   /** Optional photo, already uploaded to the meal-photos bucket by the browser. */
   photoPath?: string | null;
   /** Optional caption for the post. */
@@ -169,7 +168,7 @@ export async function logMealAction(input: {
     p_dining_hall_id: hallId,
     p_meal: current.meal,
     p_dish_ids: foodIds.map((id) => dishIds.get(id)!),
-    p_rank: input.rank,
+    p_rank: true,
     p_photo_path: photoPath ?? undefined,
     p_caption: input.caption?.trim().slice(0, MAX_CAPTION) || undefined,
   });
@@ -178,7 +177,7 @@ export async function logMealAction(input: {
     return { error: "Couldn't save your meal. Please try again." };
   }
 
-  redirect(input.rank ? `/rank?meal=${mealId}` : "/feed");
+  redirect(`/rank?meal=${mealId}`);
 }
 
 /** Places one of your plates on your list (see rank_plate in the migrations). */
@@ -226,23 +225,6 @@ export async function rerankPlateAction(mealId: number): Promise<ActionResult> {
   // before plates of sides could be ranked.
   const { error } = await supabase.from("meal_dishes").update({ rank_status: "pending" }).eq("meal_id", mealId);
   if (error) return { error: "Couldn't update that plate. Please try again." };
-
-  refresh();
-  return {};
-}
-
-/** Skip ranking this plate: every dish still waiting in it. */
-export async function skipPlateAction(mealId: number): Promise<ActionResult> {
-  const { supabase, user } = await signedIn();
-  if (!user) return { error: "Log in to rank plates." };
-  if (!isId(mealId)) return { error: "Couldn't update that meal." };
-
-  const { error } = await supabase
-    .from("meal_dishes")
-    .update({ rank_status: "skipped" })
-    .eq("meal_id", mealId)
-    .eq("rank_status", "pending");
-  if (error) return { error: "Couldn't skip that plate. Please try again." };
 
   refresh();
   return {};

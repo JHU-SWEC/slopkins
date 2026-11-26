@@ -97,10 +97,6 @@ export function Post({
         )}
       </div>
 
-      {post.ranking?.comment && (
-        <p className="mt-3 border-l-2 border-gray-200 pl-3 text-sm italic text-gray-600">{post.ranking.comment}</p>
-      )}
-
       {/* Like, comment, and (on other people's posts) save the plate, side by side. */}
       {!signedIn ? null : viewer ? (
         <PostComments

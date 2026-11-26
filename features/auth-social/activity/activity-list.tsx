@@ -70,11 +70,6 @@ function Row({ item, highlighted, now }: { item: ActivityItem; highlighted: bool
             {timeAgo(item.at, now)}
           </time>
         </p>
-        {item.kind === "ranking" && item.comment && (
-          <p className="mt-1 border-l-2 border-slate-200 pl-3 italic text-slate-600 dark:border-white/20 dark:text-white/70">
-            {item.comment}
-          </p>
-        )}
         {item.kind === "comment" && (
           <p className="mt-1 border-l-2 border-slate-200 pl-3 italic text-slate-600 dark:border-white/20 dark:text-white/70">
             {item.body}

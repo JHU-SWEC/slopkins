@@ -131,17 +131,15 @@ export function MenuPicker({
     ? mealTotals(cartItems.map((item) => ({ dish: item.dish, servings: servingsOf(item) }))).nutrition.calories
     : null;
 
-  // Log first, then rank the plate. "Log only" skips the rank step; the
-  // plate can still be skipped on the rank page either way.
-  // The action redirects to /rank or /feed when it works (or /login when signed out).
-  function log(rank: boolean) {
+  // Log, then rank the plate: every plate gets ranked.
+  // The action redirects to /rank when it works (or /login when signed out).
+  function log() {
     setLogError(null);
     startLogging(async () => {
       const result = await logMealAction({
         hallSlug,
         menuTypeSlug: tab.menuTypeSlug,
         foodIds: cartItems.map(({ dish }) => dish.id),
-        rank,
         photoPath: photo.path,
         caption,
       });
@@ -361,7 +359,6 @@ export function MenuPicker({
         caption={caption}
         onCaptionChange={setCaption}
         canLog={canLog}
-        canRank
         showMacros={showMacros}
         onLog={log}
         logging={logging}

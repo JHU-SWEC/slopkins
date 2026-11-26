@@ -6,14 +6,13 @@ Log a meal, then rank the plate as a whole. Schema: [docs/database-schema.md](..
 ## Pipeline
 
 1. **Log** (`/dining/[slug]`). Check off what you ate, then **Review meal**. Any plate can be ranked, sides and all.
-   - **Log & rank** saves the meal and opens `/rank?meal=<id>`.
-   - **Log only** saves the meal with every dish skipped and goes to the feed.
+   - **Log & rank** saves the meal and opens `/rank?meal=<id>`. There's no "log only": every plate gets ranked.
 2. **Rank** (`/rank?meal=<id>`). The whole plate:
    - Verdict: liked / fine / didn't like.
    - "Which plate was better?" against your past plates, binary search within that verdict's group (at most ⌈log₂(n+1)⌉ questions).
-   - Optional comment, then save (`rank_plate`).
-   - **Skip** is on every step.
-3. **Summary**. The plate's rank and score with **Re-rank**, or **Rank it** if it was skipped.
+   - Save (`rank_plate`). Comments are written when logging the meal, not here.
+   - No skip. Leave before saving and the plate waits in the queue.
+3. **Summary**. The plate's rank and score with **Re-rank** (or **Rank it** for older plates that were skipped).
 
 The queue still lives in `meal_dishes.rank_status`: a plate is waiting while any of its dishes is `pending`, and `rank_plate` marks them all `ranked`. Leave before saving and `/dining` shows a "Plate to rank" banner that resumes it.
 

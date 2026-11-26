@@ -62,9 +62,6 @@ export default function MyList({ plates, isOwner }: { plates: FeedPost[]; isOwne
                 </li>
               ))}
             </ul>
-            {ranking.comment && (
-              <p className="mt-2 text-sm text-gray-600">&ldquo;{ranking.comment}&rdquo;</p>
-            )}
           </div>
           {/* The plate's score. */}
           <span className={`shrink-0 text-xl font-bold tabular-nums ${SCORE_TEXT[ranking.sentiment]}`}>

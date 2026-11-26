@@ -89,7 +89,7 @@ One row per dish served on a Nutrislice menu on a date.
 
 ## Add + Rank (owner: Jonny)
 
-Pipeline: log a meal (`log_meal`), then rank the plate as a whole (`rank_plate`). The plate can be skipped, and "log without ranking" skips it up front. Design notes: [features/ranking/README.md](../features/ranking/README.md).
+Pipeline: log a meal (`log_meal`), then rank the plate as a whole (`rank_plate`). The app always ranks: there's no skip or "log only" (`log_meal`'s `p_rank = false` is unused). Design notes: [features/ranking/README.md](../features/ranking/README.md).
 
 ### `meals`
 

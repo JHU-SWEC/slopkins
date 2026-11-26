@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { rankPlateAction, rerankPlateAction, skipPlateAction, type ActionResult } from "../actions";
+import { rankPlateAction, rerankPlateAction, type ActionResult } from "../actions";
 import { mealTitle } from "../format";
 import type { MealWithDishes, RankedPlate } from "../types";
 import { DishNames, RankPlate } from "./RankPlate";
@@ -50,7 +50,6 @@ export default function RankMeal({ meal, list }: { meal: MealWithDishes; list: R
         meal={meal}
         list={list}
         onRank={(result) => run(() => rankPlateAction({ ...result, mealId: meal.id }))}
-        onSkip={() => run(() => skipPlateAction(meal.id))}
       />
       {errorLine}
     </div>
