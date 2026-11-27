@@ -21,25 +21,25 @@ const tabs: { href: string; label: string; laptopOnly?: boolean; icon: React.Rea
     ),
   },
   {
-    href: "/dining",
-    label: "Dining",
-    // Fork and knife.
-    icon: (
-      <>
-        <path d="M4 3v5a3 3 0 0 0 6 0V3" />
-        <path d="M7 3v18" />
-        <path d="M17 21V3a4 4 0 0 0-3 4v6a1 1 0 0 0 1 1h2" />
-      </>
-    ),
-  },
-  {
-    href: "/search",
-    label: "Search",
+    href: "/explore",
+    label: "Explore",
     // Magnifying glass.
     icon: (
       <>
         <circle cx="11" cy="11" r="7" />
         <path d="m20 20-4-4" />
+      </>
+    ),
+  },
+  {
+    href: "/dining",
+    label: "Log",
+    // Plus in a rounded square: log a meal.
+    icon: (
+      <>
+        <rect x="3" y="3" width="18" height="18" rx="5" />
+        <path d="M12 8v8" />
+        <path d="M8 12h8" />
       </>
     ),
   },

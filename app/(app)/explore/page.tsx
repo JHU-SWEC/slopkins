@@ -6,14 +6,18 @@ import { getNewestProfiles, searchProfiles } from "@/features/auth-social/social
 import { SearchBox } from "@/features/auth-social/social/search-box";
 import { connection } from "next/server";
 
-export const metadata: Metadata = { title: "Search · Slopkins" };
+export const metadata: Metadata = { title: "Explore · Slopkins" };
 
-// /search?q=... — find people by name or username.
-export default function SearchPage({ searchParams }: PageProps<"/search">) {
+// /explore?q=... — find people by name or username. (/search redirects here.)
+export default function ExplorePage({ searchParams }: PageProps<"/explore">) {
   const query = searchParams.then(({ q }) => (typeof q === "string" ? q : ""));
   return (
     <div className="text-heritage-blue dark:text-white">
-      <h1 className="mb-4 text-2xl font-bold tracking-tight">Search</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Explore</h1>
+
+      {/* Section 1: Find friends (search, then new members). Section 2, Featured
+          lists, comes after it inside Results, before you type. */}
+      <h2 className="mb-3 mt-6 text-lg font-bold tracking-tight">Find friends</h2>
       <Suspense fallback={<SearchBox initialQuery="" />}>
         {query.then((q) => (
           <SearchBox initialQuery={q} />
@@ -28,6 +32,8 @@ export default function SearchPage({ searchParams }: PageProps<"/search">) {
   );
 }
 
+const NEW_MEMBERS_SHOWN = 5;
+
 async function Results({ query }: { query: string }) {
   // Wait for the real request: the sign-in check reads the clock, which Next.js
   // doesn't allow while it's preparing pages ahead of time.
@@ -38,16 +44,26 @@ async function Results({ query }: { query: string }) {
   } = await getSignedInUser(supabase);
   const viewerId = user?.id ?? null;
 
-  // Before you type: show the newest members, so there's someone to follow.
+  // Before you type: a few of the newest members, so there's someone to follow
+  // (kept short so Featured lists stays in view), then Featured lists.
   if (!query.trim()) {
-    const newest = await getNewestProfiles(supabase, viewerId);
+    const newest = await getNewestProfiles(supabase, viewerId, NEW_MEMBERS_SHOWN);
     return (
-      <section className="mt-6">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">New on Slopkins</h2>
-        <div className="mt-1">
-          <PeopleList people={newest} viewerId={viewerId} empty="No one else has joined yet." />
-        </div>
-      </section>
+      <>
+        <section className="mt-5">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-400">New on Slopkins</h3>
+          <div className="mt-1">
+            <PeopleList people={newest} viewerId={viewerId} empty="No one else has joined yet." />
+          </div>
+        </section>
+        {/* Placeholder: the lists themselves are still to be decided. */}
+        <section className="mt-10">
+          <h2 className="text-lg font-bold tracking-tight">Featured lists</h2>
+          <p className="mt-3 rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center text-sm text-gray-500">
+            Coming soon.
+          </p>
+        </section>
+      </>
     );
   }
 

@@ -50,7 +50,7 @@ async function Feed() {
           Dining
         </Link>
         , or{" "}
-        <Link href="/search" className="font-semibold underline">
+        <Link href="/explore" className="font-semibold underline">
           find people to follow
         </Link>
         .

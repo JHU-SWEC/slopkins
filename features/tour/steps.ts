@@ -16,14 +16,14 @@ const COMMON_STEPS: TourStep[] = [
     route: "/feed",
     target: "tabs",
     title: "Welcome to Slopkins",
-    body: "Rank the food at JHU's dining halls and see what your friends are eating. The house is your Feed, the fork and knife is Dining, the magnifying glass finds people, and the person is you. The bell shows your notifications.",
+    body: "Rank the food at JHU's dining halls and see what your friends are eating. The house is your Feed, the magnifying glass finds people, the plus is Log (pick your hall and log a meal), and the person is you. The bell shows your notifications.",
   },
   {
     // Ranking happens here, right after logging, so it's explained here too.
     route: `/dining/${halls[0].slug}`,
     target: "menu-list",
     title: "Log and rank what you ate",
-    body: "Pick your hall on Dining and check off your dishes. Tap Review meal, then Log & rank: say if you liked your plate and answer a few “which plate was better?” questions.",
+    body: "Tap Log, pick your hall, and check off your dishes. Tap Review meal, then Log & rank: say if you liked your plate and answer a few “which plate was better?” questions.",
   },
 ];
 

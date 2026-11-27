@@ -53,7 +53,7 @@ async function Activity() {
         <Empty>
           Nothing here yet. When people follow you, or like, comment on or bookmark your posts,
           it&apos;ll show up here.{" "}
-          <Link href="/search" className="font-semibold underline">
+          <Link href="/explore" className="font-semibold underline">
             Find people to follow
           </Link>
         </Empty>

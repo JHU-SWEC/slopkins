@@ -32,7 +32,7 @@ export async function FollowListPage({
       <ProfileMessage
         title="Profile not found"
         body={`There's no one called @${username} on Slopkins.`}
-        linkHref="/search"
+        linkHref="/explore"
         linkLabel="Search people"
       />
     );
@@ -54,7 +54,7 @@ export async function FollowListPage({
         ? (
             <>
               You aren&apos;t following anyone yet.{" "}
-              <Link href="/search" className="font-semibold text-heritage-blue underline">
+              <Link href="/explore" className="font-semibold text-heritage-blue underline">
                 Find people
               </Link>
             </>

@@ -126,12 +126,13 @@ export async function searchProfiles(
 export async function getNewestProfiles(
   supabase: SupabaseClient,
   viewerId: string | null,
+  limit = 10,
 ): Promise<Person[]> {
   let query = supabase
     .from("profiles")
     .select(PERSON_COLUMNS)
     .order("created_at", { ascending: false })
-    .limit(10);
+    .limit(limit);
   if (viewerId) query = query.neq("id", viewerId);
   const { data } = await query;
   return withRelationships(supabase, viewerId, (data ?? []) as PersonBasics[]);

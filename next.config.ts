@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   // Keeps the dev indicator off the bottom nav and the theme toggle.
   devIndicators: { position: "top-left" },
+  // The Search tab became Explore. Old links (and ?q= searches) still work.
+  async redirects() {
+    return [{ source: "/search", destination: "/explore", permanent: false }];
+  },
   experimental: {
     agentUpgrade: "security",
   },
