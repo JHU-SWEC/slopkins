@@ -31,7 +31,7 @@ async function MyProfile() {
 
   const [data, posts] = await Promise.all([
     getProfileData(supabase, { id: user.id }),
-    getUserPosts(supabase, user.id, user.id),
+    getUserPosts(supabase, user.id),
   ]);
   if (!data) {
     return (
