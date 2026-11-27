@@ -1,25 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { deletePostAction, removePhotoAction } from "./actions";
-import { useEditNotes } from "./post-notes";
+import { deletePostAction } from "./actions";
+import { EditPostDialog } from "./edit-post-dialog";
+import type { FeedPost } from "./queries";
 
-type Pending = "photo" | "post" | null;
-
-const CONFIRM: Record<Exclude<Pending, null>, { title: string; action: string }> = {
-  photo: { title: "Remove this photo?", action: "Remove photo" },
-  post: { title: "Delete this post?", action: "Delete post" },
-};
-
-// "⋯" menu on your own feed posts: Edit notes, then Remove photo and Delete
-// post, each with a confirm step. Big tap targets for phones.
-export function PostMenu({ mealId, hasPhoto }: { mealId: number; hasPhoto: boolean }) {
+// "⋯" menu on your own feed posts: Edit post (a popup for the notes and
+// photo) and Delete post (with a confirm step). Big tap targets for phones.
+export function PostMenu({ post, now }: { post: FeedPost; now: number }) {
+  const mealId = post.id;
   const [open, setOpen] = useState(false);
-  const [confirming, setConfirming] = useState<Pending>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [working, startWorking] = useTransition();
   const root = useRef<HTMLDivElement>(null);
-  const editNotes = useEditNotes();
 
   // Close on a tap outside or Escape.
   useEffect(() => {
@@ -40,14 +35,14 @@ export function PostMenu({ mealId, hasPhoto }: { mealId: number; hasPhoto: boole
 
   function close() {
     setOpen(false);
-    setConfirming(null);
+    setConfirming(false);
     setError(null);
   }
 
-  function run(kind: Exclude<Pending, null>) {
+  function deletePost() {
     setError(null);
     startWorking(async () => {
-      const result = kind === "post" ? await deletePostAction(mealId) : await removePhotoAction(mealId);
+      const result = await deletePostAction(mealId);
       if (result.error) setError(result.error);
       else close();
     });
@@ -75,7 +70,7 @@ export function PostMenu({ mealId, hasPhoto }: { mealId: number; hasPhoto: boole
         >
           {confirming ? (
             <div className="p-4">
-              <p className="text-sm font-semibold text-gray-900">{CONFIRM[confirming].title}</p>
+              <p className="text-sm font-semibold text-gray-900">Delete this post?</p>
               <p className="mt-1 text-xs text-gray-500">It won&apos;t show on the feed anymore.</p>
               {error && (
                 <p role="alert" className="mt-2 text-xs text-red-600">
@@ -85,7 +80,7 @@ export function PostMenu({ mealId, hasPhoto }: { mealId: number; hasPhoto: boole
               <div className="mt-3 flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setConfirming(null)}
+                  onClick={() => setConfirming(false)}
                   disabled={working}
                   className="flex-1 rounded-md border border-gray-200 py-2.5 text-sm font-semibold text-gray-700 disabled:opacity-40"
                 >
@@ -93,11 +88,11 @@ export function PostMenu({ mealId, hasPhoto }: { mealId: number; hasPhoto: boole
                 </button>
                 <button
                   type="button"
-                  onClick={() => run(confirming)}
+                  onClick={deletePost}
                   disabled={working}
                   className="flex-1 rounded-md bg-red-600 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
                 >
-                  {working ? "Working…" : CONFIRM[confirming].action}
+                  {working ? "Deleting…" : "Delete post"}
                 </button>
               </div>
             </div>
@@ -108,23 +103,22 @@ export function PostMenu({ mealId, hasPhoto }: { mealId: number; hasPhoto: boole
                 role="menuitem"
                 onClick={() => {
                   close();
-                  editNotes(true);
+                  setEditing(true);
                 }}
                 className={`${item} text-gray-700`}
               >
-                Edit notes
+                Edit post
               </button>
-              {hasPhoto && (
-                <button type="button" role="menuitem" onClick={() => setConfirming("photo")} className={`${item} text-gray-700`}>
-                  Remove photo
-                </button>
-              )}
-              <button type="button" role="menuitem" onClick={() => setConfirming("post")} className={`${item} text-red-600`}>
+              <button type="button" role="menuitem" onClick={() => setConfirming(true)} className={`${item} text-red-600`}>
                 Delete post
               </button>
             </>
           )}
         </div>
+      )}
+
+      {editing && (
+        <EditPostDialog post={post} now={now} onClose={() => setEditing(false)} />
       )}
     </div>
   );

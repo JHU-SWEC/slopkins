@@ -28,30 +28,35 @@ export async function deletePostAction(mealId: number): Promise<ActionResult> {
   return {};
 }
 
-/** Hides the post's photo; the post stays. */
-export async function removePhotoAction(mealId: number): Promise<ActionResult> {
+/**
+ * Saves the Edit post popup: new notes (blank removes them) and, if asked,
+ * hides the photo. Only what changed is sent.
+ */
+export async function editPostAction(
+  mealId: number,
+  changes: { notes?: string; removePhoto?: boolean },
+): Promise<ActionResult> {
   if (!isId(mealId)) return { error: "That post couldn't be found." };
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("remove_meal_photo", { p_meal_id: mealId });
-  if (error) {
-    console.error("[feed] remove_meal_photo failed", error);
-    return { error: "Couldn't remove this photo. Please try again." };
-  }
-  refresh();
-  return {};
-}
-
-/** Changes your post's notes. Blank removes them. */
-export async function editNotesAction(mealId: number, notes: string): Promise<ActionResult> {
-  if (!isId(mealId)) return { error: "That post couldn't be found." };
-  if (typeof notes !== "string" || notes.length > MAX_NOTES) {
+  const { notes, removePhoto } = changes ?? {};
+  if (notes !== undefined && (typeof notes !== "string" || notes.length > MAX_NOTES)) {
     return { error: `Notes must be ${MAX_NOTES} characters or fewer.` };
   }
+
   const supabase = await createClient();
-  const { error } = await supabase.rpc("set_meal_caption", { p_meal_id: mealId, p_caption: notes });
-  if (error) {
-    console.error("[feed] set_meal_caption failed", error);
-    return { error: "Couldn't save your notes. Please try again." };
+  if (notes !== undefined) {
+    const { error } = await supabase.rpc("set_meal_caption", { p_meal_id: mealId, p_caption: notes });
+    if (error) {
+      console.error("[feed] set_meal_caption failed", error);
+      return { error: "Couldn't save your notes. Please try again." };
+    }
+  }
+  if (removePhoto === true) {
+    const { error } = await supabase.rpc("remove_meal_photo", { p_meal_id: mealId });
+    if (error) {
+      console.error("[feed] remove_meal_photo failed", error);
+      refresh(); // the notes may have saved; show them
+      return { error: "Couldn't remove the photo. Please try again." };
+    }
   }
   refresh();
   return {};
