@@ -1,7 +1,4 @@
 import Link from "next/link";
-import { SCORE_RANGES, formatScore } from "@/features/ranking/score";
-import { SENTIMENT_STYLES } from "@/features/ranking/components/styles";
-import type { Sentiment } from "@/features/ranking/types";
 import { Avatar } from "../profile/avatar";
 import { avatarSrc, shownName } from "../profile/shared";
 import { FollowButton } from "../social/follow-button";
@@ -87,18 +84,6 @@ function Row({ item, highlighted, now }: { item: ActivityItem; highlighted: bool
           className="shrink-0"
         />
       )}
-      {item.kind === "ranking" && (
-        // "#3" on their ranked plates, then the plate's score.
-        <div className="flex shrink-0 items-center gap-2">
-          <span
-            title={`#${item.rank} on ${name}'s ranked plates`}
-            className="grid size-8 place-items-center rounded-full bg-gray-100 text-xs font-semibold text-gray-500 tabular-nums"
-          >
-            #{item.rank}
-          </span>
-          <ScoreBadge score={item.score} sentiment={item.sentiment} />
-        </div>
-      )}
     </li>
   );
 }
@@ -107,41 +92,6 @@ function Sentence({ item }: { item: ActivityItem }) {
   switch (item.kind) {
     case "follow":
       return <>started following you.</>;
-    case "ranking":
-      return (
-        <>
-          ranked their {item.meal ?? "meal"}
-          {item.hall && (
-            <>
-              {" "}
-              at{" "}
-              <Link href={`/dining/${item.hall.slug}`} className="font-semibold hover:underline">
-                {item.hall.name}
-              </Link>
-            </>
-          )}
-          .
-        </>
-      );
-    case "meal": {
-      const dishes = item.dishCount === 1 ? "1 dish" : `${item.dishCount} dishes`;
-      const what = item.meal ? `logged ${item.meal}` : "logged a meal";
-      return (
-        <>
-          {what}
-          {item.hall && (
-            <>
-              {" "}
-              at{" "}
-              <Link href={`/dining/${item.hall.slug}`} className="font-semibold hover:underline">
-                {item.hall.name}
-              </Link>
-            </>
-          )}
-          {item.dishCount > 0 && <span className="text-slate-500 dark:text-white/60"> · {dishes}</span>}.
-        </>
-      );
-    }
     case "comment":
       return (
         <>
@@ -174,19 +124,21 @@ function Sentence({ item }: { item: ActivityItem }) {
           .
         </>
       );
+    case "save":
+      return (
+        <>
+          bookmarked your {item.meal ?? "meal"}
+          {item.hall && (
+            <>
+              {" "}
+              at{" "}
+              <Link href={`/dining/${item.hall.slug}`} className="font-semibold hover:underline">
+                {item.hall.name}
+              </Link>
+            </>
+          )}
+          .
+        </>
+      );
   }
-}
-
-// Same colors as the profile's ranked list: green = liked, amber = fine, red = didn't like.
-export function ScoreBadge({ score, sentiment }: { score: number; sentiment: Sentiment | null }) {
-  const band: Sentiment =
-    sentiment ?? (score >= SCORE_RANGES.liked.min ? "liked" : score >= SCORE_RANGES.fine.min ? "fine" : "disliked");
-  return (
-    <span
-      className={`grid h-10 w-10 shrink-0 place-items-center rounded-full text-sm font-bold shadow-sm ${SENTIMENT_STYLES[band].score}`}
-      aria-label={`Score ${formatScore(score)} out of 10`}
-    >
-      {formatScore(score)}
-    </span>
-  );
 }

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { getHall, halls } from "@/lib/halls";
-import { formatDay, menuDays, pickMenuDate, todayISO } from "@/lib/dates";
+import { currentMeal, formatDay, menuDays, pickMenuDate, todayISO } from "@/lib/dates";
 import { getMenus, listMenus } from "@/lib/menus";
 import { createClient, getSignedInUser } from "@/lib/supabase/server";
 import { getDishScoresByFoodId, getWantToTryFoodIds } from "@/features/ranking/queries";
@@ -78,6 +78,19 @@ async function HallMenu({
     tabs.flatMap((t) => t.dishes.map((dish) => dish.id)),
   ).catch(() => ({}));
 
+  // Today opens on the meal being served now (or the next one that has food);
+  // other days start on the first tab. Halls without meals (Levering) start on
+  // their first kitchen.
+  let firstTab = 0;
+  if (isToday) {
+    const order = ["breakfast", "lunch", "dinner"] as const;
+    const fromNow = order.slice(order.indexOf(currentMeal()));
+    const found = fromNow
+      .map((meal) => tabs.findIndex((t) => t.meal === meal && t.dishes.length > 0))
+      .find((index) => index >= 0);
+    if (found !== undefined) firstTab = found;
+  }
+
   return (
     <>
       <h1 className="mt-2 text-2xl font-bold tracking-tight">{hall.name}</h1>
@@ -92,6 +105,7 @@ async function HallMenu({
           key={date}
           hallSlug={hall.slug}
           tabs={listMenus(tabs)}
+          firstTab={firstTab}
           canLog={isToday}
           date={date}
           savedFoodIds={await savedFoodIds}

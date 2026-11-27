@@ -41,3 +41,23 @@ export function formatDay(date: string, options: Intl.DateTimeFormatOptions = {}
     ...options,
   }).format(new Date(`${date}T00:00:00Z`));
 }
+
+/**
+ * The meal being served right now in Baltimore: breakfast until 10:30am,
+ * lunch until 4pm, dinner after that.
+ */
+export function currentMeal(now = new Date()): "breakfast" | "lunch" | "dinner" {
+  const [hour, minute] = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "America/New_York",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  })
+    .format(now)
+    .split(":")
+    .map(Number);
+  const minutes = hour * 60 + minute;
+  if (minutes < 10 * 60 + 30) return "breakfast";
+  if (minutes < 16 * 60) return "lunch";
+  return "dinner";
+}

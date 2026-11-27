@@ -8,7 +8,7 @@ export function BuiltBy() {
         href="https://www.hopbuilds.org/"
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1 text-blue-700 hover:text-blue-900"
+        className="inline-flex items-center gap-1 text-heritage-blue hover:opacity-80 dark:text-white"
       >
         HopBuilds
         {/* External-link icon: square with a diagonal arrow. */}

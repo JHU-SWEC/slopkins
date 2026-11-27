@@ -11,7 +11,7 @@ import { ACTIVITY_SEEN_COOKIE } from "@/features/auth-social/activity/shared";
 
 export const metadata: Metadata = { title: "Activity · Slopkins" };
 
-// /activity — new followers, plus what the people you follow rated and ate.
+// /activity — things people did to you: follows, and likes, comments and bookmarks on your posts.
 export default function ActivityPage() {
   return (
     <div className="text-heritage-blue dark:text-white">
@@ -38,7 +38,7 @@ async function Activity() {
         <Link href="/login" className="font-semibold underline">
           Log in
         </Link>{" "}
-        to see who followed you and what your friends are eating.
+        to see who followed you and who liked, commented on or bookmarked your posts.
       </Empty>
     );
   }
@@ -51,7 +51,7 @@ async function Activity() {
       <MarkActivitySeen />
       {items.length === 0 ? (
         <Empty>
-          Nothing here yet. When people follow you, or people you follow rate a dish or log a meal,
+          Nothing here yet. When people follow you, or like, comment on or bookmark your posts,
           it&apos;ll show up here.{" "}
           <Link href="/search" className="font-semibold underline">
             Find people to follow

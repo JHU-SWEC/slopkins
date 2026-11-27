@@ -47,6 +47,7 @@ type Section = {
 export function MenuPicker({
   hallSlug,
   tabs,
+  firstTab = 0,
   canLog,
   date,
   savedFoodIds,
@@ -54,6 +55,8 @@ export function MenuPicker({
 }: {
   hallSlug: HallSlug;
   tabs: MenuTab[];
+  /** The tab to open on (today: the meal being served now). */
+  firstTab?: number;
   canLog: boolean;
   /** The menu's day, YYYY-MM-DD. */
   date: string;
@@ -66,7 +69,7 @@ export function MenuPicker({
   const [logError, setLogError] = useState<string | null>(null);
   const photo = useMealPhoto();
   const [caption, setCaption] = useState("");
-  const [tabIndex, setTabIndex] = useState(0);
+  const [tabIndex, setTabIndex] = useState(firstTab);
   // Selected dishes and how much of each, in the order they were picked.
   const [cart, setCart] = useState<Map<number, CartItem>>(new Map());
   const [cartOpen, setCartOpen] = useState(false);
