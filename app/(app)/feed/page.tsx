@@ -41,7 +41,7 @@ async function Feed() {
     );
   }
 
-  const { posts, now, viewer } = await getFeed(supabase, user.id);
+  const { posts, now, viewer } = await getFeed(supabase);
   if (posts.length === 0) {
     return (
       <Empty>
