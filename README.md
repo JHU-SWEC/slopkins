@@ -72,7 +72,7 @@ lib/
   nutrition.ts          nutrition per serving or per 100 g
   dates.ts              menu dates in Baltimore time
 supabase/migrations/    database migrations
-docs/                   project plan, schema, UI design, to-do
+docs/                   project plan, schema, UI/UX roadmap, to-do
 proxy.ts                refreshes the Supabase session; sends new users to /welcome
 ```
 
@@ -82,7 +82,6 @@ proxy.ts                refreshes the Supabase session; sends new users to /welc
 - [Database schema](docs/database-schema.md) and [diagram](docs/schema-diagram.md)
 - [To-do](docs/todo.md): next features, in order
 - [UI/UX roadmap](docs/ux-roadmap.md): planned UI and UX improvements, by phase
-- [UI refactor](docs/ui-refactor.md): the current skeleton screens
 
 ## Workflow
 
