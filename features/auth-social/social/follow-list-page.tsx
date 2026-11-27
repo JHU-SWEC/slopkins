@@ -70,9 +70,9 @@ export async function FollowListPage({
         ‹ Back to profile
       </Link>
       <h1 className="mt-3 truncate text-2xl font-bold tracking-tight">{shownName(profile)}</h1>
-      {profile.display_name && <p className="text-slate-500">@{profile.username}</p>}
+      {profile.display_name && <p className="text-gray-500">@{profile.username}</p>}
 
-      <nav aria-label="Followers and following" className="mt-5 grid grid-cols-2 border-b border-slate-200">
+      <nav aria-label="Followers and following" className="mt-5 grid grid-cols-2 border-b border-gray-200">
         <Tab
           href={`/u/${profile.username}/followers`}
           active={kind === "followers"}
@@ -99,7 +99,7 @@ function Tab({ href, active, label }: { href: string; active: boolean; label: st
       replace
       aria-current={active ? "page" : undefined}
       className={`-mb-px border-b-2 py-3 text-center text-sm font-semibold transition ${
-        active ? "border-heritage-blue text-heritage-blue" : "border-transparent text-slate-400 hover:text-slate-600"
+        active ? "border-brand text-brand" : "border-transparent text-gray-400 hover:text-gray-600"
       }`}
     >
       {label}

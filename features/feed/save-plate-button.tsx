@@ -1,6 +1,7 @@
 "use client";
 
 import { useOptimistic, useState, useTransition } from "react";
+import { ActionSlot } from "./action-count";
 import { setPlateSaved } from "./actions";
 
 // Bookmark on someone else's post: saves the whole plate to your Want to Try
@@ -22,49 +23,72 @@ export function SavePlateButton({ mealId, saved, saves }: { mealId: number; save
     });
   }
 
-  // A fragment, so the button sits with the like and comment icons and the
-  // count can push itself to the right end of that row.
+  // A fragment, so the bookmark and its count sit at the right end of the row
+  // with the like and comment icons.
   return (
     <>
-      <button
-        type="button"
-        onClick={toggle}
-        aria-pressed={shown}
-        aria-label={shown ? "Remove from Want to Try" : "Save plate to Want to Try"}
-        title={shown ? "Saved to Want to Try" : "Save to Want to Try"}
-        className={`grid size-11 place-items-center rounded-full transition hover:bg-gray-100 ${
-          shown ? "text-blue-600" : "text-gray-400 hover:text-gray-600"
-        }`}
-      >
-        {/* Same bookmark as the menu's Want to Try toggle. */}
-        <svg
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-          className="size-6"
-          fill={shown ? "currentColor" : "none"}
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinejoin="round"
-        >
-          <path d="M6 3h12v18l-6-4-6 4V3z" />
-        </svg>
-      </button>
+      {/* Before the bookmark, since the bookmark sits at the card's right edge. */}
       {error && (
-        <span role="alert" className="ml-1 text-xs text-rose-600">
+        <span role="alert" className="ml-auto text-xs text-red-600">
           {error}
         </span>
       )}
-      <SaveCount saves={optimistic.saves} />
+      <ActionSlot count={optimistic.saves} end>
+        <button
+          type="button"
+          onClick={toggle}
+          aria-pressed={shown}
+          aria-label={(shown ? "Remove from Want to Try" : "Save plate to Want to Try") + savedBy(optimistic.saves)}
+          title={shown ? "Saved to Want to Try" : "Save to Want to Try"}
+          className={`grid size-11 shrink-0 place-items-center rounded-full transition hover:bg-gray-100 ${
+            shown ? "text-spirit-blue" : "text-gray-400 hover:text-gray-600"
+          }`}
+        >
+          <BookmarkIcon filled={shown} />
+        </button>
+      </ActionSlot>
     </>
   );
 }
 
-/** "3 bookmarks", on the right end of the post's icon row. */
+/**
+ * Your own post: you can't bookmark it, so this is a plain bookmark with how
+ * many people saved it, shown once someone has.
+ */
 export function SaveCount({ saves }: { saves: number }) {
   if (saves <= 0) return null;
   return (
-    <span className="ml-auto pr-1 text-sm font-medium text-gray-600 tabular-nums">
-      {saves} {saves === 1 ? "bookmark" : "bookmarks"}
-    </span>
+    <ActionSlot count={saves} end>
+      <span
+        role="img"
+        aria-label={`Saved${savedBy(saves)}`}
+        title="Saved to Want to Try"
+        className="grid size-11 shrink-0 place-items-center text-gray-400"
+      >
+        <BookmarkIcon filled={false} />
+      </span>
+    </ActionSlot>
+  );
+}
+
+// " (saved by 3 people)", for screen readers: the number beside the icon is hidden from them.
+function savedBy(saves: number) {
+  return saves > 0 ? ` (saved by ${saves} ${saves === 1 ? "person" : "people"})` : "";
+}
+
+// Same bookmark as the menu's Want to Try toggle.
+function BookmarkIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="size-5"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinejoin="round"
+    >
+      <path d="M6 3h12v18l-6-4-6 4V3z" />
+    </svg>
   );
 }

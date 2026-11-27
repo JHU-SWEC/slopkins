@@ -59,8 +59,8 @@ export function WantToTryToggle({
       aria-pressed={saved}
       aria-label={saved ? `Remove ${name} from want to try` : `Save ${name} to want to try`}
       title={error ?? (saved ? "On your Want to try list" : "Save to Want to try")}
-      className={`rounded-full p-1.5 transition hover:bg-blue-50 ${
-        error ? "text-rose-500" : saved ? "text-blue-600" : "text-gray-300 hover:text-blue-600"
+      className={`rounded-full p-1.5 transition hover:bg-spirit-blue/10 ${
+        error ? "text-red-500" : saved ? "text-spirit-blue" : "text-gray-300 hover:text-spirit-blue"
       }`}
     >
       <BookmarkIcon filled={saved} />

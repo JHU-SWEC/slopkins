@@ -8,6 +8,9 @@ import { createClient, getSignedInUser } from "@/lib/supabase/server";
 
 export type ActionResult = { error?: string };
 
+/** Same limit as the database column (meals.caption). */
+const MAX_NOTES = 500;
+
 function isId(value: unknown): value is number {
   return Number.isInteger(value) && (value as number) > 0;
 }
@@ -33,6 +36,22 @@ export async function removePhotoAction(mealId: number): Promise<ActionResult> {
   if (error) {
     console.error("[feed] remove_meal_photo failed", error);
     return { error: "Couldn't remove this photo. Please try again." };
+  }
+  refresh();
+  return {};
+}
+
+/** Changes your post's notes. Blank removes them. */
+export async function editNotesAction(mealId: number, notes: string): Promise<ActionResult> {
+  if (!isId(mealId)) return { error: "That post couldn't be found." };
+  if (typeof notes !== "string" || notes.length > MAX_NOTES) {
+    return { error: `Notes must be ${MAX_NOTES} characters or fewer.` };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_meal_caption", { p_meal_id: mealId, p_caption: notes });
+  if (error) {
+    console.error("[feed] set_meal_caption failed", error);
+    return { error: "Couldn't save your notes. Please try again." };
   }
   refresh();
   return {};

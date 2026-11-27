@@ -12,7 +12,7 @@ export function GoogleSignInButton() {
       <button
         type="submit"
         disabled={pending}
-        className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white py-3 font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white py-3 font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <GoogleLogo />
         {pending ? "Opening Google…" : "Continue with Google"}

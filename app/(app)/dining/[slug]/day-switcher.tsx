@@ -52,7 +52,7 @@ export function DaySwitcher({
                     loading && active
                       ? "animate-pulse bg-gray-200 text-gray-700"
                       : active
-                        ? "bg-blue-600 text-white"
+                        ? "bg-brand text-on-brand"
                         : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >

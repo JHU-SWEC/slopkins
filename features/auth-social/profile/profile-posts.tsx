@@ -27,7 +27,7 @@ export function ProfilePosts({
         </Link>
       </div>
     ) : (
-      <p className="rounded-2xl border-2 border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+      <p className="rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center text-sm text-gray-500">
         Nothing yet.
       </p>
     );

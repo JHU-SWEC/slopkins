@@ -741,6 +741,10 @@ export type Database = {
           total_users: number
         }[]
       }
+      set_meal_caption: {
+        Args: { p_caption: string; p_meal_id: number }
+        Returns: undefined
+      }
       soft_delete_comment: {
         Args: { p_comment_id: number }
         Returns: undefined

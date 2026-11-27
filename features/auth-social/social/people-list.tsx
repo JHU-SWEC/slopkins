@@ -18,14 +18,14 @@ export function PeopleList({
 }) {
   if (people.length === 0) {
     return (
-      <p className="rounded-2xl border-2 border-dashed border-slate-200 p-6 text-center text-sm text-slate-500 dark:border-white/15 dark:text-white/60">
+      <p className="rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center text-sm text-gray-500 dark:border-white/15 dark:text-white/60">
         {empty}
       </p>
     );
   }
 
   return (
-    <ul className="divide-y divide-slate-100 dark:divide-white/10">
+    <ul className="divide-y divide-gray-100 dark:divide-white/10">
       {people.map((person) => {
         const name = shownName(person);
         return (
@@ -34,10 +34,10 @@ export function PeopleList({
               <Avatar src={avatarSrc(person.avatar_url)} name={name} size={48} />
               <span className="min-w-0">
                 <span className="block truncate font-semibold">{name}</span>
-                <span className="flex items-center gap-2 text-sm text-slate-500 dark:text-white/60">
+                <span className="flex items-center gap-2 text-sm text-gray-500 dark:text-white/60">
                   {person.display_name && <span className="truncate">@{person.username}</span>}
                   {person.followsMe && (
-                    <span className="shrink-0 rounded-md bg-slate-100 px-1.5 py-0.5 text-xs font-medium dark:bg-white/10">
+                    <span className="shrink-0 rounded-md bg-gray-100 px-1.5 py-0.5 text-xs font-medium dark:bg-white/10">
                       Follows you
                     </span>
                   )}
@@ -45,7 +45,7 @@ export function PeopleList({
               </span>
             </Link>
             {person.id === viewerId ? (
-              <span className="text-sm text-slate-400 dark:text-white/50">You</span>
+              <span className="text-sm text-gray-400 dark:text-white/50">You</span>
             ) : (
               <FollowButton
                 targetId={person.id}

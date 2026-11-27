@@ -209,7 +209,7 @@ export function MenuPicker({
             onClick={() => switchTab(index)}
             className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${
               index === tabIndex
-                ? "bg-blue-600 text-white"
+                ? "bg-brand text-on-brand"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
@@ -226,7 +226,7 @@ export function MenuPicker({
             onChange={(event) => setQuery(event.target.value)}
             placeholder={`Search ${tab.label.toLowerCase()}`}
             aria-label="Search dishes"
-            className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 pr-9 text-sm placeholder:text-gray-400 focus:border-blue-600 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+            className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 pr-9 text-sm placeholder:text-gray-400 focus:border-brand focus:outline-none [&::-webkit-search-cancel-button]:hidden"
           />
           {query && (
             <button
@@ -288,7 +288,7 @@ export function MenuPicker({
           <section key={highlight ? "mains" : `station:${title}`}>
             <h2
               className={`text-sm font-semibold uppercase tracking-wide ${
-                highlight ? "text-blue-600" : "text-gray-400"
+                highlight ? "text-brand" : "text-gray-400"
               }`}
             >
               {title}
@@ -306,7 +306,7 @@ export function MenuPicker({
                       type="checkbox"
                       checked={cart.has(dish.id)}
                       onChange={() => toggle(dish)}
-                      className="h-5 w-5 accent-blue-600"
+                      className="h-5 w-5 accent-brand"
                     />
                     <span className="flex-1">
                       <span className="block font-medium">{dish.name}</span>
@@ -334,7 +334,7 @@ export function MenuPicker({
                       type="button"
                       onClick={() => setDetailDish(dish)}
                       aria-label={`Nutrition facts for ${dish.name}`}
-                      className="mx-2 rounded-full px-2.5 py-1 text-xs font-semibold text-blue-600 transition hover:bg-blue-50"
+                      className="mx-2 rounded-full px-2.5 py-1 text-xs font-semibold text-brand transition hover:bg-brand/10"
                     >
                       Nutrition
                     </button>
@@ -389,7 +389,7 @@ export function MenuPicker({
             type="button"
             disabled={cartItems.length === 0}
             onClick={() => setCartOpen(true)}
-            className="rounded-md bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600"
+            className="rounded-md bg-brand px-5 py-3 font-semibold text-on-brand transition hover:bg-brand/90 disabled:opacity-40 disabled:hover:bg-brand"
           >
             Review meal
           </button>

@@ -7,15 +7,18 @@ export const SENTIMENT_LABELS: Record<Sentiment, { heading: string; prompt: stri
   disliked: { heading: "Didn't like", prompt: "Didn't like it" },
 };
 
-/** Score badge colors, used by the profile page's ranked list. */
-export const SENTIMENT_STYLES: Record<Sentiment, { score: string }> = {
-  liked: { score: "bg-emerald-500 text-white" },
-  fine: { score: "bg-amber-400 text-white" },
-  disliked: { score: "bg-rose-500 text-white" },
+/**
+ * Score colors. `score`: a filled badge (menus, ranked lists). `number`: just
+ * the number's color, for the gray-ringed circle on feed posts.
+ */
+export const SENTIMENT_STYLES: Record<Sentiment, { score: string; number: string }> = {
+  liked: { score: "bg-emerald-500 text-white", number: "text-emerald-600" },
+  fine: { score: "bg-amber-400 text-white", number: "text-amber-600" },
+  disliked: { score: "bg-rose-500 text-white", number: "text-rose-600" },
 };
 
 export const primaryButton =
-  "block w-full rounded-md bg-blue-600 py-3 text-center font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40";
+  "block w-full rounded-md bg-brand py-3 text-center font-semibold text-on-brand transition hover:bg-brand/90 disabled:opacity-40";
 export const secondaryButton =
   "block w-full rounded-md border border-gray-200 py-3 text-center font-semibold transition hover:bg-gray-50";
 

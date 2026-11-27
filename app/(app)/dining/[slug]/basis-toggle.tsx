@@ -25,7 +25,7 @@ export function BasisToggle({
           aria-pressed={basis === option.value}
           onClick={() => onChange(option.value)}
           className={`rounded px-2.5 py-1 text-sm font-medium transition ${
-            basis === option.value ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-200"
+            basis === option.value ? "bg-brand text-on-brand" : "text-gray-600 hover:bg-gray-200"
           }`}
         >
           {option.label}

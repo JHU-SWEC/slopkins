@@ -64,7 +64,7 @@ export function ProfileView({
         {/* Top right: edit (your own profile only) and share. */}
         <div data-tour="profile-actions" className="absolute right-0 top-0 flex gap-1">
           {isOwner && (
-            <Link href="/profile/edit" aria-label="Edit profile" title="Edit profile" className="grid h-10 w-10 cursor-pointer place-items-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900">
+            <Link href="/profile/edit" aria-label="Edit profile" title="Edit profile" className="grid h-10 w-10 cursor-pointer place-items-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-900">
               {/* Pencil */}
               <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
@@ -72,22 +72,22 @@ export function ProfileView({
               </svg>
             </Link>
           )}
-          <ShareButton username={profile.username} className="grid h-10 w-10 cursor-pointer place-items-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900" />
+          <ShareButton username={profile.username} className="grid h-10 w-10 cursor-pointer place-items-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-900" />
         </div>
 
         {/* Photo on the left; name, username, and stats on the right. */}
         <div className="flex items-center gap-4 sm:gap-6">
-          <div className="shrink-0 rounded-full ring-1 ring-slate-200">
+          <div className="shrink-0 rounded-full ring-1 ring-gray-200">
             <Avatar src={avatarSrc(profile.avatar_url)} name={name} size={80} eager />
           </div>
           <div className="min-w-0 flex-1">
             {/* pr keeps a long name from running under the edit/share icons. */}
             <div className="pr-20">
-              <h1 className="truncate text-xl font-bold tracking-tight text-slate-900">{name}</h1>
-              <p className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+              <h1 className="truncate text-xl font-bold tracking-tight text-gray-900">{name}</h1>
+              <p className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
                 {profile.display_name && <span className="truncate">@{profile.username}</span>}
                 {!isOwner && viewer.followsMe && (
-                  <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600">
+                  <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600">
                     Follows you
                   </span>
                 )}
@@ -110,13 +110,13 @@ export function ProfileView({
 
         {(profile.grade || profile.major) && (
           <div className="mt-4 flex flex-wrap gap-2 text-sm">
-            {profile.grade && <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">{profile.grade}</span>}
-            {profile.major && <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">{profile.major}</span>}
+            {profile.grade && <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">{profile.grade}</span>}
+            {profile.major && <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">{profile.major}</span>}
           </div>
         )}
 
         {/* Only if they've written one. */}
-        {profile.bio && <p className="mt-4 whitespace-pre-line text-sm text-slate-700">{profile.bio}</p>}
+        {profile.bio && <p className="mt-4 whitespace-pre-line text-sm text-gray-700">{profile.bio}</p>}
 
         {!isOwner && (
           <div className="mt-5">
@@ -164,8 +164,8 @@ export function ProfileView({
 function Stat({ value, label, href }: { value: number | string; label?: string; href?: string }) {
   const inner = (
     <>
-      <span className="font-bold text-slate-900">{value}</span>
-      {label && <span className="text-slate-500"> {label}</span>}
+      <span className="font-bold text-gray-900">{value}</span>
+      {label && <span className="text-gray-500"> {label}</span>}
     </>
   );
   return href ? (

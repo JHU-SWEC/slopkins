@@ -4,13 +4,13 @@ import Link from "next/link";
 export function ProfileSkeleton() {
   return (
     <div className="animate-pulse pt-6 md:pt-0" aria-label="Loading profile">
-      <div className="h-72 rounded-3xl bg-slate-100" />
+      <div className="h-72 rounded-3xl bg-gray-100" />
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="h-20 rounded-2xl bg-slate-100" />
+          <div key={i} className="h-20 rounded-2xl bg-gray-100" />
         ))}
       </div>
-      <div className="mt-6 h-72 rounded-3xl bg-slate-100" />
+      <div className="mt-6 h-72 rounded-3xl bg-gray-100" />
     </div>
   );
 }
@@ -30,10 +30,10 @@ export function ProfileMessage({
   return (
     <div className="py-16 text-center">
       <h1 className="text-2xl font-bold tracking-tight text-heritage-blue dark:text-white">{title}</h1>
-      <p className="mt-2 text-slate-500">{body}</p>
+      <p className="mt-2 text-gray-500">{body}</p>
       <Link
         href={linkHref}
-        className="mt-6 inline-block rounded-xl bg-heritage-blue px-5 py-3 font-semibold text-white transition hover:bg-heritage-blue/90"
+        className="mt-6 inline-block rounded-xl bg-brand px-5 py-3 font-semibold text-on-brand transition hover:bg-brand/90"
       >
         {linkLabel}
       </Link>

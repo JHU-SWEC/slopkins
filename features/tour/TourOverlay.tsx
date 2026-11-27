@@ -316,7 +316,7 @@ export function TourOverlay({
             <button
               type="button"
               onClick={onNext}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+              className="rounded-md bg-brand px-4 py-2 text-sm font-semibold text-on-brand transition hover:bg-brand/90"
             >
               {last ? "Done" : "Next"}
             </button>

@@ -19,7 +19,7 @@ export default function SearchPage({ searchParams }: PageProps<"/search">) {
           <SearchBox initialQuery={q} />
         ))}
       </Suspense>
-      <Suspense fallback={<div className="mt-6 h-64 animate-pulse rounded-2xl bg-slate-100 dark:bg-white/10" />}>
+      <Suspense fallback={<div className="mt-6 h-64 animate-pulse rounded-2xl bg-gray-100 dark:bg-white/10" />}>
         {query.then((q) => (
           <Results query={q} />
         ))}
@@ -43,7 +43,7 @@ async function Results({ query }: { query: string }) {
     const newest = await getNewestProfiles(supabase, viewerId);
     return (
       <section className="mt-6">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">New on Slopkins</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">New on Slopkins</h2>
         <div className="mt-1">
           <PeopleList people={newest} viewerId={viewerId} empty="No one else has joined yet." />
         </div>

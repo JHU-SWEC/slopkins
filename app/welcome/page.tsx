@@ -17,7 +17,7 @@ export default function WelcomePage() {
       <main className="mx-auto w-full max-w-sm px-4 py-12 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-heritage-blue">Welcome to Slopkins</h1>
         <div className="mt-8">
-          <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-slate-100" />}>
+          <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-gray-100" />}>
             <Welcome />
           </Suspense>
         </div>

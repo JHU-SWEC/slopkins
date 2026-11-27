@@ -30,7 +30,7 @@ export default async function PendingMeals() {
                 <p className="font-semibold">Plate to rank</p>
                 <p className="text-sm text-gray-500">{mealTitle(meal)}</p>
               </div>
-              <span className="text-sm font-semibold text-blue-600">Rank ›</span>
+              <span className="text-sm font-semibold text-brand">Rank ›</span>
             </Link>
           </li>
       ))}

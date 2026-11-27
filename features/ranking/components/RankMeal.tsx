@@ -28,7 +28,7 @@ export default function RankMeal({ meal, list }: { meal: MealWithDishes; list: R
   // The plate waits in the queue while any of its dishes is pending.
   const waiting = meal.dishes.some((row) => row.rank_status === "pending");
   const errorLine = error && (
-    <p role="alert" className="mt-4 text-sm text-rose-600">
+    <p role="alert" className="mt-4 text-sm text-red-600">
       {error}
     </p>
   );
@@ -79,7 +79,7 @@ function Summary({ meal, list, onRank }: { meal: MealWithDishes; list: RankedPla
             <button
               type="button"
               onClick={onRank}
-              className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+              className="text-sm font-semibold text-brand hover:text-brand/80"
             >
               Rank it
             </button>

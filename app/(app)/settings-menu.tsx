@@ -107,7 +107,7 @@ export function SettingsMenu({
             </Link>
           ) : (
             <form action={logOut}>
-              <button type="submit" role="menuitem" className={`${ITEM} text-rose-600 hover:text-rose-700`}>
+              <button type="submit" role="menuitem" className={`${ITEM} text-red-600 hover:text-red-700`}>
                 Log out
               </button>
             </form>

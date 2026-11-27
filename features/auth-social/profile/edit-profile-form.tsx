@@ -20,7 +20,7 @@ const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5 MB, same limit as the storage buck
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 const inputClass =
-  "mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-heritage-blue dark:text-white placeholder:text-slate-400 focus:border-heritage-blue focus:outline-none focus:ring-2 focus:ring-spirit-blue/40";
+  "mt-1 block w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-heritage-blue dark:text-white placeholder:text-gray-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30";
 const labelClass = "block text-sm font-semibold";
 
 export function EditProfileForm({
@@ -121,7 +121,7 @@ export function EditProfileForm({
             type="button"
             onClick={() => fileInput.current?.click()}
             disabled={uploading}
-            className="rounded-xl bg-heritage-blue px-4 py-2 text-sm font-semibold text-white transition hover:bg-heritage-blue/90 disabled:opacity-60"
+            className="rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-on-brand transition hover:bg-brand/90 disabled:opacity-60"
           >
             {uploading ? "Uploading…" : avatarPath ? "Change photo" : "Upload photo"}
           </button>
@@ -129,12 +129,12 @@ export function EditProfileForm({
             <button
               type="button"
               onClick={() => setAvatarPath("")}
-              className="text-sm text-slate-500 underline"
+              className="text-sm text-gray-500 underline"
             >
               Remove photo
             </button>
           )}
-          <span className="text-xs text-slate-500">JPG, PNG, WebP, or GIF, up to 5 MB.</span>
+          <span className="text-xs text-gray-500">JPG, PNG, WebP, or GIF, up to 5 MB.</span>
         </div>
         <input
           ref={fileInput}
@@ -175,7 +175,7 @@ export function EditProfileForm({
               Username
             </label>
             <div className="relative">
-              <span className="pointer-events-none absolute top-1/2 left-3 mt-0.5 -translate-y-1/2 text-slate-400">
+              <span className="pointer-events-none absolute top-1/2 left-3 mt-0.5 -translate-y-1/2 text-gray-400">
                 @
               </span>
               <input
@@ -192,7 +192,7 @@ export function EditProfileForm({
             </div>
             <p
               id="username-hint"
-              className={`mt-1 text-xs ${usernameOk ? "text-slate-500" : "text-red-700 dark:text-red-300"}`}
+              className={`mt-1 text-xs ${usernameOk ? "text-gray-500" : "text-red-700 dark:text-red-300"}`}
             >
               {usernameProblem ??
                 `3–20 characters: lowercase letters, numbers, and _. Your link: /u/${username || "…"}`}
@@ -249,7 +249,7 @@ export function EditProfileForm({
                   placeholder="Favorite dining hall? Hottest food take?"
                   className={inputClass}
                 />
-                <p className="mt-1 text-right text-xs text-slate-500">
+                <p className="mt-1 text-right text-xs text-gray-500">
                   {bio.length}/{BIO_LIMIT}
                 </p>
               </div>
@@ -257,7 +257,7 @@ export function EditProfileForm({
           </Card>
         </>
       ) : (
-        <p className="rounded-2xl border-2 border-dashed border-slate-200 p-4 text-center text-sm text-slate-500">
+        <p className="rounded-2xl border-2 border-dashed border-gray-200 p-4 text-center text-sm text-gray-500">
           Grade, major, and bio are coming soon.
         </p>
       )}
@@ -271,14 +271,14 @@ export function EditProfileForm({
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <Link
           href="/profile"
-          className="rounded-xl px-5 py-3 text-center font-semibold text-heritage-blue transition hover:bg-slate-100 dark:text-white"
+          className="rounded-xl px-5 py-3 text-center font-semibold text-heritage-blue transition hover:bg-gray-100 dark:text-white"
         >
           Cancel
         </Link>
         <button
           type="submit"
           disabled={saving || uploading || !usernameOk || !displayName.trim() || Boolean(displayNameProblem)}
-          className="rounded-xl bg-heritage-blue px-6 py-3 font-semibold text-white transition hover:bg-heritage-blue/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-xl bg-brand px-6 py-3 font-semibold text-on-brand transition hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {saving ? "Saving…" : "Save changes"}
         </button>
@@ -289,7 +289,7 @@ export function EditProfileForm({
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
+    <section className="rounded-3xl border border-gray-200/80 bg-white p-6 shadow-sm">
       <h2 className="mb-4 text-lg font-bold">{title}</h2>
       {children}
     </section>

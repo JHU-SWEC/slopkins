@@ -46,7 +46,7 @@ export function SearchBox({ initialQuery }: { initialQuery: string }) {
         strokeWidth={2}
         strokeLinecap="round"
         aria-hidden="true"
-        className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-slate-400"
+        className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-gray-400"
       >
         <circle cx="11" cy="11" r="7" />
         <path d="m20 20-3.5-3.5" />
@@ -59,12 +59,12 @@ export function SearchBox({ initialQuery }: { initialQuery: string }) {
         value={value}
         onChange={(e) => handleChange(e.target.value)}
         placeholder="Search by name or @username"
-        className="block w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pr-10 pl-10 text-heritage-blue placeholder:text-slate-400 focus:border-heritage-blue focus:bg-white focus:outline-none focus:ring-2 focus:ring-spirit-blue/40 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-white/40 dark:focus:border-spirit-blue dark:focus:bg-white/10"
+        className="block w-full rounded-xl border border-gray-300 bg-gray-50 py-3 pr-10 pl-10 text-heritage-blue placeholder:text-gray-400 focus:border-brand focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-white/40 dark:focus:bg-white/10"
       />
       {searching && (
         <span
           aria-label="Searching"
-          className="absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin rounded-full border-2 border-slate-300 border-t-heritage-blue dark:border-white/20 dark:border-t-spirit-blue"
+          className="absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin rounded-full border-2 border-gray-300 border-t-brand dark:border-white/20"
         />
       )}
     </form>

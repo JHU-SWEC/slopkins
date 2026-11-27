@@ -185,12 +185,12 @@ export function MealCart({
                   rows={2}
                   maxLength={500}
                   placeholder="Comments (optional)"
-                  className="mb-3 w-full resize-none rounded-md border border-gray-200 p-3 text-sm placeholder:text-gray-400 focus:border-blue-600 focus:outline-none"
+                  className="mb-3 w-full resize-none rounded-md border border-gray-200 p-3 text-sm placeholder:text-gray-400 focus:border-brand focus:outline-none"
                 />
               </>
             )}
             {logError && (
-              <p role="alert" className="mb-3 text-center text-sm text-rose-600">
+              <p role="alert" className="mb-3 text-center text-sm text-red-600">
                 {logError}
               </p>
             )}
@@ -199,7 +199,7 @@ export function MealCart({
               type="button"
               disabled={items.length === 0 || !canLog || logging || photo.uploading}
               onClick={onLog}
-              className="w-full rounded-md bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600"
+              className="w-full rounded-md bg-brand py-3 font-semibold text-on-brand transition hover:bg-brand/90 disabled:opacity-40 disabled:hover:bg-brand"
             >
               {logging ? "Saving…" : photo.uploading ? "Uploading photo…" : "Log & rank"}
             </button>

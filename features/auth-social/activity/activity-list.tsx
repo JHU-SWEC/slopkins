@@ -27,8 +27,8 @@ export function ActivityList({
     <div className="space-y-6">
       {groups.map((group) => (
         <section key={group.title}>
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">{group.title}</h2>
-          <ul className="mt-1 divide-y divide-slate-100 dark:divide-white/10">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">{group.title}</h2>
+          <ul className="mt-1 divide-y divide-gray-100 dark:divide-white/10">
             {group.items.map((item) => (
               <Row key={item.key} item={item} highlighted={group.title === "New"} now={now} />
             ))}
@@ -59,7 +59,7 @@ function Row({ item, highlighted, now }: { item: ActivityItem; highlighted: bool
             {name}
           </Link>{" "}
           <Sentence item={item} />{" "}
-          <time dateTime={item.at} className="whitespace-nowrap text-slate-400">
+          <time dateTime={item.at} className="whitespace-nowrap text-gray-400">
             {timeAgo(item.at, now)}
           </time>
         </p>
@@ -86,7 +86,7 @@ function Sentence({ item }: { item: ActivityItem }) {
     case "comment":
       return (
         <>
-          commented: <span className="italic text-slate-500 dark:text-white/60">{item.body}</span> on your{" "}
+          commented: <span className="italic text-gray-500 dark:text-white/60">{item.body}</span> on your{" "}
           {item.meal ?? "meal"}
           {item.hall && (
             <>

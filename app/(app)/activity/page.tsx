@@ -66,7 +66,7 @@ async function Activity() {
 
 function Empty({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-2xl border-2 border-dashed border-slate-200 p-6 text-center text-sm text-slate-500 dark:border-white/15 dark:text-white/60">
+    <p className="rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center text-sm text-gray-500 dark:border-white/15 dark:text-white/60">
       {children}
     </p>
   );
@@ -77,8 +77,8 @@ function ActivitySkeleton() {
     <div className="animate-pulse space-y-4" aria-label="Loading notifications">
       {[0, 1, 2, 3, 4].map((i) => (
         <div key={i} className="flex items-center gap-3">
-          <div className="size-11 rounded-full bg-slate-100 dark:bg-white/10" />
-          <div className="h-4 flex-1 rounded bg-slate-100 dark:bg-white/10" />
+          <div className="size-11 rounded-full bg-gray-100 dark:bg-white/10" />
+          <div className="h-4 flex-1 rounded bg-gray-100 dark:bg-white/10" />
         </div>
       ))}
     </div>

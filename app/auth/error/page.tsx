@@ -11,7 +11,7 @@ export default function AuthErrorPage() {
         </p>
         <Link
           href="/login"
-          className="mt-6 block w-full rounded-md bg-heritage-blue py-3 text-center font-semibold text-white transition hover:bg-heritage-blue/90 dark:bg-spirit-blue dark:text-heritage-blue dark:hover:bg-spirit-blue/90"
+          className="mt-6 block w-full rounded-md bg-brand py-3 text-center font-semibold text-on-brand transition hover:bg-brand/90"
         >
           Back to log in
         </Link>

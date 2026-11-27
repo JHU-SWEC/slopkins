@@ -140,7 +140,7 @@ export function MealPhotoPicker({ photo, disabled = false }: { photo: MealPhoto;
                 type="button"
                 onClick={choose}
                 disabled={disabled}
-                className="py-1 font-semibold text-blue-600 disabled:opacity-40"
+                className="py-1 font-semibold text-brand disabled:opacity-40"
               >
                 Change
               </button>
@@ -180,7 +180,7 @@ export function MealPhotoPicker({ photo, disabled = false }: { photo: MealPhoto;
       )}
 
       {photo.error && (
-        <p role="alert" className="mt-2 text-sm text-rose-600">
+        <p role="alert" className="mt-2 text-sm text-red-600">
           {photo.error}
         </p>
       )}

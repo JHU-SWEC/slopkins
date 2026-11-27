@@ -21,6 +21,12 @@
 @theme {
   --color-spirit-blue: #68ace5;
   --color-heritage-blue: #002d72;
+
+  /* The app's one accent color: buttons, selected tabs, links, active icons,
+     focus outlines. Heritage Blue here; Spirit Blue in dark mode (below), where
+     navy would disappear. Text on a bg-brand button uses text-on-brand. */
+  --color-brand: #002d72;
+  --color-on-brand: #ffffff;
 }
 
 /*
@@ -32,6 +38,9 @@
   color-scheme: dark;
   --background: #0a0a0a;
   --foreground: #ededed;
+
+  --color-brand: #68ace5;
+  --color-on-brand: #002d72;
 
   --color-black: #ededed;
 
@@ -45,17 +54,6 @@
   --color-gray-800: oklch(92.8% 0.006 264.531);
   --color-gray-900: oklch(96.7% 0.003 264.542);
   --color-gray-950: oklch(98.5% 0.002 247.839);
-
-  --color-slate-50: oklch(12.9% 0.042 264.695);
-  --color-slate-100: oklch(20.8% 0.042 265.755);
-  --color-slate-200: oklch(27.9% 0.041 260.031);
-  --color-slate-300: oklch(37.2% 0.044 257.287);
-  --color-slate-400: oklch(44.6% 0.043 257.281);
-  --color-slate-600: oklch(70.4% 0.04 256.788);
-  --color-slate-700: oklch(86.9% 0.022 252.894);
-  --color-slate-800: oklch(92.9% 0.013 255.508);
-  --color-slate-900: oklch(96.8% 0.007 247.896);
-  --color-slate-950: oklch(98.4% 0.003 247.858);
 
   /* Tinted badges: -50 backgrounds go dark (950), -700 text goes light (300). */
   --color-blue-50: oklch(28.2% 0.091 267.935);
@@ -97,10 +95,6 @@
   }
   :where([data-theme="dark"]) .to-white {
     --tw-gradient-to: var(--background);
-  }
-  /* RankFlow's "or" badge: keep it dark with a ring that matches the page. */
-  :where([data-theme="dark"]) .bg-slate-900 {
-    background-color: oklch(37.2% 0.044 257.287);
   }
   :where([data-theme="dark"]) .border-white {
     border-color: var(--background);

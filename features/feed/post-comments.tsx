@@ -23,6 +23,7 @@ export function PostComments({
   postOwnerId,
   now,
   like,
+  menu,
   save,
 }: {
   mealId: number;
@@ -32,8 +33,10 @@ export function PostComments({
   now: number;
   /** The like button, shown first in the row. */
   like: React.ReactNode;
-  /** After the comment icon: the bookmark (others' posts) and the bookmark count. */
+  /** The right end of the row: the bookmark and its count. */
   save?: React.ReactNode;
+  /** Your own post's ⋯ menu, right after the comment icon. */
+  menu?: React.ReactNode;
 }) {
   const [list, addPending] = useOptimistic<Shown[], Shown>(comments, (current, added) => [...current, added]);
   const [expanded, setExpanded] = useState(false);
@@ -75,16 +78,17 @@ export function PostComments({
 
   return (
     <div className="mt-2">
-      <div className="flex items-center gap-1">
+      <div className="flex items-center">
         {like}
+        {/* No count here: the comments show right below, with "View all" when there are more. */}
         <button
           type="button"
           onClick={() => setOpen((was) => !was)}
           aria-expanded={open}
           aria-controls={formId}
           aria-label={open ? "Close comment box" : "Add a comment"}
-          className={`grid size-11 place-items-center rounded-full transition hover:bg-gray-100 ${
-            open ? "text-blue-600" : "text-gray-400 hover:text-gray-600"
+          className={`-ml-3 grid size-11 shrink-0 place-items-center rounded-full transition hover:bg-gray-100 ${
+            open ? "text-brand" : "text-gray-400 hover:text-gray-600"
           }`}
         >
           {/* Speech bubble. */}
@@ -92,25 +96,28 @@ export function PostComments({
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth={2}
+            strokeWidth={1.75}
             strokeLinecap="round"
             strokeLinejoin="round"
             aria-hidden="true"
-            className="size-6"
+            className="size-5"
           >
             <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
           </svg>
         </button>
+        {menu}
         {save}
       </div>
 
-      {hidden > 0 && (
+      {/* "View all" opens the rest; then the same spot offers to hide them again. */}
+      {(hidden > 0 || (expanded && list.length > SHOWN)) && (
         <button
           type="button"
-          onClick={() => setExpanded(true)}
+          onClick={() => setExpanded((was) => !was)}
+          aria-expanded={expanded}
           className="py-1 text-sm font-medium text-gray-500 hover:text-gray-700"
         >
-          View all {list.length} comments
+          {expanded ? "Hide comments" : `View all ${list.length} comments`}
         </button>
       )}
 
@@ -144,19 +151,19 @@ export function PostComments({
             autoFocus
             onKeyDown={(event) => event.key === "Escape" && setOpen(false)}
             placeholder="Add a comment…"
-            className="min-w-0 flex-1 rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-base text-gray-900 placeholder:text-gray-400 focus:border-blue-600 focus:bg-white focus:outline-none sm:text-sm"
+            className="min-w-0 flex-1 rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-base text-gray-900 placeholder:text-gray-400 focus:border-brand focus:bg-white focus:outline-none sm:text-sm"
           />
           <button
             type="submit"
             disabled={!text.trim() || sending}
-            className="shrink-0 px-2 py-2 text-sm font-semibold text-blue-600 disabled:opacity-40"
+            className="shrink-0 px-2 py-2 text-sm font-semibold text-brand disabled:opacity-40"
           >
             Post
           </button>
         </form>
       )}
       {error && (
-        <p role="alert" className="mt-1 text-xs text-rose-600">
+        <p role="alert" className="mt-1 text-xs text-red-600">
           {error}
         </p>
       )}
@@ -190,7 +197,7 @@ function CommentRow({ comment, now, canDelete }: { comment: Shown; now: number; 
           (confirming ? (
             <>
               {" · "}
-              <button type="button" onClick={remove} disabled={deleting} className="font-semibold text-rose-600">
+              <button type="button" onClick={remove} disabled={deleting} className="font-semibold text-red-600">
                 Delete?
               </button>
               {" · "}
@@ -208,7 +215,7 @@ function CommentRow({ comment, now, canDelete }: { comment: Shown; now: number; 
           ))}
       </span>
       {error && (
-        <span role="alert" className="ml-2 text-xs text-rose-600">
+        <span role="alert" className="ml-2 text-xs text-red-600">
           {error}
         </span>
       )}

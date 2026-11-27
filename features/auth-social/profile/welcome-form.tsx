@@ -6,7 +6,7 @@ import { nameProblem } from "./name-rules";
 import { DISPLAY_NAME_LIMIT, USERNAME_PATTERN } from "./shared";
 
 const inputClass =
-  "mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-heritage-blue placeholder:text-slate-400 focus:border-heritage-blue focus:outline-none focus:ring-2 focus:ring-spirit-blue/40";
+  "mt-1 block w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-heritage-blue placeholder:text-gray-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30";
 const labelClass = "block text-sm font-semibold";
 
 /** First sign-in: pick a username (required) and a display name (optional). */
@@ -35,7 +35,7 @@ export function WelcomeForm({ suggested }: { suggested: { username: string; disp
           Username
         </label>
         <div className="relative">
-          <span className="pointer-events-none absolute top-1/2 left-3 mt-0.5 -translate-y-1/2 text-slate-400">
+          <span className="pointer-events-none absolute top-1/2 left-3 mt-0.5 -translate-y-1/2 text-gray-400">
             @
           </span>
           <input
@@ -54,7 +54,7 @@ export function WelcomeForm({ suggested }: { suggested: { username: string; disp
         </div>
         <p
           id="username-hint"
-          className={`mt-1 text-xs ${usernameOk || !username ? "text-slate-500" : "text-red-700"}`}
+          className={`mt-1 text-xs ${usernameOk || !username ? "text-gray-500" : "text-red-700"}`}
         >
           {(username && usernameProblem) ||
             "3–20 characters: lowercase letters, numbers, and _."}
@@ -92,7 +92,7 @@ export function WelcomeForm({ suggested }: { suggested: { username: string; disp
       <button
         type="submit"
         disabled={saving || !usernameOk || !displayName.trim() || Boolean(displayNameProblem)}
-        className="w-full rounded-xl bg-heritage-blue py-3 font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full rounded-xl bg-brand py-3 font-semibold text-on-brand shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {saving ? "Saving…" : "Continue"}
       </button>
