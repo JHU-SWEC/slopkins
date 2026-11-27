@@ -9,7 +9,6 @@ import { formatScore } from "@/features/ranking/score";
 import { LikeButton } from "./like-button";
 import { PostComments } from "./post-comments";
 import { PostMenu } from "./post-menu";
-import { PostEditProvider, PostNotes } from "./post-notes";
 import type { FeedComment, FeedPost } from "./queries";
 import { SaveCount, SavePlateButton } from "./save-plate-button";
 
@@ -41,105 +40,107 @@ export function Post({
   );
   // Your own post's ⋯ menu sits after the comment icon (kept out of the
   // header so the score sits in the same spot on every post).
-  const menu = mine ? <PostMenu mealId={post.id} hasPhoto={post.photoPath !== null} /> : null;
+  const menu = mine ? <PostMenu post={post} now={now} /> : null;
   const profileHref = `/u/${post.person.username}`;
 
   return (
     <li className="rounded-2xl border border-gray-200 p-4">
-      <PostEditProvider>
-        <div className="flex items-center gap-3">
-          <Link href={profileHref} className="shrink-0">
-            <Avatar src={avatarSrc(post.person.avatar_url)} name={name} size={40} />
+      <div className="flex items-center gap-3">
+        <Link href={profileHref} className="shrink-0">
+          <Avatar src={avatarSrc(post.person.avatar_url)} name={name} size={40} />
+        </Link>
+        <div className="min-w-0 flex-1">
+          <Link href={profileHref} className="font-semibold hover:underline">
+            {name}
           </Link>
-          <div className="min-w-0 flex-1">
-            <Link href={profileHref} className="font-semibold hover:underline">
-              {name}
-            </Link>
-            <p className="text-sm text-gray-500">
-              {post.hall ? (
-                <Link href={`/dining/${post.hall.slug}`} className="hover:underline">
-                  {post.hall.name}
-                </Link>
-              ) : (
-                "A dining hall"
-              )}
-              {post.meal && <span className="capitalize"> · {post.meal}</span>}
-              {" · "}
-              <time dateTime={post.at}>{timeAgo(post.at, now)}</time>
-            </p>
-          </div>
-          {/* The plate's score: a light gray circle with the number in its
-              sentiment color, in the same spot on every post. Your own unranked plate gets a nudge to rank it instead. */}
-          {post.ranking ? (
-            <span
-              role="img"
-              aria-label={`Plate score ${formatScore(post.ranking.score)} out of 10`}
-              title="Plate score"
-              className={`grid size-11 shrink-0 place-items-center rounded-full border-[1.5px] border-gray-200 bg-white text-sm font-semibold tracking-tight tabular-nums ${
-                SENTIMENT_STYLES[post.ranking.sentiment].number
-              }`}
-            >
-              {formatScore(post.ranking.score)}
-            </span>
-          ) : (
-            mine && (
-              <Link
-                href={`/rank?meal=${post.id}`}
-                className="grid size-11 shrink-0 place-items-center rounded-full border-2 border-dashed border-brand/40 text-xs font-semibold text-brand transition hover:border-brand hover:bg-brand/5"
-              >
-                Rank
+          <p className="text-sm text-gray-500">
+            {post.hall ? (
+              <Link href={`/dining/${post.hall.slug}`} className="hover:underline">
+                {post.hall.name}
               </Link>
-            )
-          )}
+            ) : (
+              "A dining hall"
+            )}
+            {post.meal && <span className="capitalize"> · {post.meal}</span>}
+            {" · "}
+            <time dateTime={post.at}>{timeAgo(post.at, now)}</time>
+          </p>
         </div>
-
-        {post.photoPath && (
-          // Every photo shows as the same 200×200 square, cropped to fit.
-          <div className="relative mt-3 size-[200px] overflow-hidden rounded-xl bg-gray-100">
-            <Image
-              src={mealPhotoSrc(post.photoPath)}
-              alt={`${name}'s meal${post.hall ? ` at ${post.hall.name}` : ""}`}
-              fill
-              sizes="200px"
-              className="object-cover"
-            />
-          </div>
-        )}
-
-        {/* What they thought, under the photo. Editable from your ⋯ menu. */}
-        <PostNotes mealId={post.id} notes={post.caption} />
-
-        {/* What was on the plate. */}
-        {post.dishes.length > 0 && (
-          <ul className="mt-3 flex flex-wrap gap-2">
-            {post.dishes.map((dish) => (
-              <li key={dish.id} className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                {dish.name}
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {/* Like, comment (and your ⋯ menu) on the left; the bookmark on the right. */}
-        {!signedIn ? null : viewer ? (
-          <PostComments
-            mealId={post.id}
-            comments={post.comments}
-            viewer={viewer}
-            postOwnerId={post.person.id}
-            now={now}
-            like={<LikeButton mealId={post.id} liked={post.likedByMe} likes={post.likes} />}
-            menu={menu}
-            save={rowEnd}
-          />
+        {/* The plate's score: a light gray circle with the number in its
+            sentiment color, in the same spot on every post. Your own unranked plate gets a nudge to rank it instead. */}
+        {post.ranking ? (
+          <span
+            role="img"
+            aria-label={`Plate score ${formatScore(post.ranking.score)} out of 10`}
+            title="Plate score"
+            className={`grid size-11 shrink-0 place-items-center rounded-full border-[1.5px] border-gray-200 bg-white text-sm font-semibold tracking-tight tabular-nums ${
+              SENTIMENT_STYLES[post.ranking.sentiment].number
+            }`}
+          >
+            {formatScore(post.ranking.score)}
+          </span>
         ) : (
-          <div className="mt-2 flex items-center">
-            <LikeButton mealId={post.id} liked={post.likedByMe} likes={post.likes} />
-            {menu}
-            {rowEnd}
-          </div>
+          mine && (
+            <Link
+              href={`/rank?meal=${post.id}`}
+              className="grid size-11 shrink-0 place-items-center rounded-full border-2 border-dashed border-brand/40 text-xs font-semibold text-brand transition hover:border-brand hover:bg-brand/5"
+            >
+              Rank
+            </Link>
+          )
         )}
-      </PostEditProvider>
+      </div>
+
+      {post.photoPath && (
+        // Every photo shows as the same 200×200 square, cropped to fit.
+        <div className="relative mt-3 size-[200px] overflow-hidden rounded-xl bg-gray-100">
+          <Image
+            src={mealPhotoSrc(post.photoPath)}
+            alt={`${name}'s meal${post.hall ? ` at ${post.hall.name}` : ""}`}
+            fill
+            sizes="200px"
+            className="object-cover"
+          />
+        </div>
+      )}
+
+      {/* What they thought, under the photo. Editable from your ⋯ menu. */}
+      {post.caption && (
+        <p className="mt-3 whitespace-pre-line text-sm text-gray-800">
+          <span className="font-semibold text-gray-900">Notes:</span> {post.caption}
+        </p>
+      )}
+
+      {/* What was on the plate. */}
+      {post.dishes.length > 0 && (
+        <ul className="mt-3 flex flex-wrap gap-2">
+          {post.dishes.map((dish) => (
+            <li key={dish.id} className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
+              {dish.name}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Like, comment (and your ⋯ menu) on the left; the bookmark on the right. */}
+      {!signedIn ? null : viewer ? (
+        <PostComments
+          mealId={post.id}
+          comments={post.comments}
+          viewer={viewer}
+          postOwnerId={post.person.id}
+          now={now}
+          like={<LikeButton mealId={post.id} liked={post.likedByMe} likes={post.likes} />}
+          menu={menu}
+          save={rowEnd}
+        />
+      ) : (
+        <div className="mt-2 flex items-center">
+          <LikeButton mealId={post.id} liked={post.likedByMe} likes={post.likes} />
+          {menu}
+          {rowEnd}
+        </div>
+      )}
     </li>
   );
 }
