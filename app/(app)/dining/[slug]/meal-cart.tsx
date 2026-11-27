@@ -102,7 +102,7 @@ export function MealCart({
       ref={dialogRef}
       onClose={onClose}
       onClick={(event) => event.target === dialogRef.current && onClose()}
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl bg-white p-0 text-gray-900 backdrop:bg-black/40"
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl bg-white p-0 text-heritage-blue dark:text-white backdrop:bg-black/40"
     >
       {open && (
         <div className="flex max-h-[85vh] flex-col">
@@ -169,7 +169,7 @@ export function MealCart({
             )}
           </div>
 
-          {/* Saved to Supabase by logMealAction; signed-out people are sent to log in. */}
+          {/* Opens the rank step; the meal is saved there once ranked (logAndRankMealAction). */}
           <div className="border-t border-gray-100 px-5 py-4">
             {canLog && items.length > 0 && (
               <>

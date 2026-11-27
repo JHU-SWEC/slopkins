@@ -281,7 +281,7 @@ export function TourOverlay({
         aria-labelledby={titleId}
         aria-describedby={bodyId}
         tabIndex={-1}
-        className="fixed inset-x-4 mx-auto max-w-sm rounded-2xl border border-gray-200 bg-white p-5 text-gray-900 shadow-xl outline-none dark:bg-gray-100"
+        className="fixed inset-x-4 mx-auto max-w-sm rounded-2xl border border-gray-200 bg-white p-5 text-heritage-blue dark:text-white shadow-xl outline-none dark:bg-gray-100"
         style={cardStyle}
       >
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">

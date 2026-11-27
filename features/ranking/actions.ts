@@ -3,6 +3,7 @@
 // Writes for meals and rankings. Reads are in queries.ts.
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { pickMenuDate, todayISO } from "@/lib/dates";
 import { getHall } from "@/lib/halls";
 import { getMenus, type FullDish } from "@/lib/menus";
@@ -10,7 +11,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient, getSignedInUser } from "@/lib/supabase/server";
 import { SENTIMENT_ORDER } from "./insertion";
 import { MEAL_PHOTO_PATH } from "./photo";
-import type { RankPlateInput } from "./types";
+import { getRankedPlates } from "./queries";
+import type { RankPlateInput, RankedPlate, Sentiment } from "./types";
 
 export type ActionResult = { error?: string };
 
@@ -29,11 +31,6 @@ async function signedIn() {
   return { supabase, user };
 }
 
-/**
- * Logs today's meal at a hall, then opens the rank step (every plate gets
- * ranked). The browser only sends Nutrislice food ids: dish names and nutrition
- * come from Nutrislice here on the server, so nobody can invent a dish.
- */
 type Hall = NonNullable<ReturnType<typeof getHall>>;
 
 /**
@@ -76,33 +73,37 @@ async function recordDishes(
     return { error: "Saving dishes isn't set up on this server yet." };
   }
 
-  const { data: menus } = await admin
-    .from("nutrislice_menus")
-    .select("id, menu_type_slug, dining_hall_id")
-    .eq("school_slug", hall.schoolSlug)
-    .in("menu_type_slug", [...new Set(picked.map((p) => p.menuTypeSlug))]);
+  // The hall's menus and the dish rows don't depend on each other, so both
+  // go out at once (each round trip to Supabase adds up).
+  const [{ data: menus }, inserted] = await Promise.all([
+    admin
+      .from("nutrislice_menus")
+      .select("id, menu_type_slug, dining_hall_id")
+      .eq("school_slug", hall.schoolSlug)
+      .in("menu_type_slug", [...new Set(picked.map((p) => p.menuTypeSlug))]),
+    // New dishes get rankable from isMain. Existing rows are left alone, so an
+    // admin's fix to rankable sticks.
+    admin.from("dishes").upsert(
+      picked.map(({ dish }) => ({
+        nutrislice_food_id: dish.id,
+        name: dish.name,
+        calories: dish.nutrition.calories,
+        protein_g: dish.nutrition.protein,
+        carbs_g: dish.nutrition.carbs,
+        fat_g: dish.nutrition.fat,
+        serving_size: dish.servingSize,
+        dietary_tags: dish.tags,
+        rankable: dish.isMain,
+      })),
+      { onConflict: "nutrislice_food_id", ignoreDuplicates: true },
+    ),
+  ]);
   const menuIds = new Map((menus ?? []).map((m) => [m.menu_type_slug, m]));
   const hallId = menus?.[0]?.dining_hall_id;
   if (!hallId || picked.some((p) => !menuIds.has(p.menuTypeSlug))) {
     return { error: "This dining hall isn't set up in the database yet." };
   }
 
-  // New dishes get rankable from isMain. Existing rows are left alone, so an
-  // admin's fix to rankable sticks.
-  const inserted = await admin.from("dishes").upsert(
-    picked.map(({ dish }) => ({
-      nutrislice_food_id: dish.id,
-      name: dish.name,
-      calories: dish.nutrition.calories,
-      protein_g: dish.nutrition.protein,
-      carbs_g: dish.nutrition.carbs,
-      fat_g: dish.nutrition.fat,
-      serving_size: dish.servingSize,
-      dietary_tags: dish.tags,
-      rankable: dish.isMain,
-    })),
-    { onConflict: "nutrislice_food_id", ignoreDuplicates: true },
-  );
   const { data: dishRows } = await admin
     .from("dishes")
     .select("id, nutrislice_food_id")
@@ -113,26 +114,32 @@ async function recordDishes(
     return { error: "Couldn't save that. Please try again." };
   }
 
-  const served = await admin.from("menu_items").upsert(
-    picked.map(({ menuTypeSlug: slug, dish }) => ({
-      nutrislice_menu_id: menuIds.get(slug)!.id,
-      dish_id: dishIds.get(dish.id)!,
-      served_on: date,
-      station: dish.station,
-    })),
-    { onConflict: "nutrislice_menu_id,dish_id,served_on", ignoreDuplicates: true },
-  );
-  if (served.error) console.warn("[ranking] saving menu items failed", served.error);
+  // Where and when each dish was served. Nothing below needs it, so it runs
+  // after the response instead of making the person wait.
+  after(async () => {
+    const served = await admin.from("menu_items").upsert(
+      picked.map(({ menuTypeSlug: slug, dish }) => ({
+        nutrislice_menu_id: menuIds.get(slug)!.id,
+        dish_id: dishIds.get(dish.id)!,
+        served_on: date,
+        station: dish.station,
+      })),
+      { onConflict: "nutrislice_menu_id,dish_id,served_on", ignoreDuplicates: true },
+    );
+    if (served.error) console.warn("[ranking] saving menu items failed", served.error);
+  });
 
   return { dishIds, hallId };
 }
 
 /**
- * Logs today's meal at a hall, then opens the rank step (every plate gets
- * ranked). The browser only sends Nutrislice food ids: dish names and nutrition
- * come from Nutrislice here on the server, so nobody can invent a dish.
+ * Saves today's meal and its ranking together, once ranking is done, so a
+ * plate is never posted unranked. Leaving mid-ranking saves nothing.
+ * The browser only sends Nutrislice food ids: dish names and nutrition come
+ * from Nutrislice here on the server, so nobody can invent a dish.
+ * On success, returns the new meal's id and your updated list.
  */
-export async function logMealAction(input: {
+export async function logAndRankMealAction(input: {
   hallSlug: string;
   /** The menu tab the meal was picked from; sets breakfast / lunch / dinner. */
   menuTypeSlug: string;
@@ -141,7 +148,10 @@ export async function logMealAction(input: {
   photoPath?: string | null;
   /** Optional caption for the post. */
   caption?: string | null;
-}): Promise<ActionResult> {
+  sentiment: Sentiment;
+  /** 0-based index in the sentiment group, from the comparisons. */
+  position: number;
+}): Promise<ActionResult & { mealId?: number; list?: RankedPlate[] }> {
   const { supabase, user } = await signedIn();
   if (!user) redirect("/login");
 
@@ -156,6 +166,10 @@ export async function logMealAction(input: {
   const photoPath = input.photoPath || null;
   if (photoPath && (!MEAL_PHOTO_PATH.test(photoPath) || !photoPath.startsWith(`${user.id}/`))) {
     return { error: "That photo couldn't be used. Try adding it again." };
+  }
+
+  if (!SENTIMENT_ORDER.includes(input.sentiment) || !Number.isInteger(input.position) || input.position < 0) {
+    return { error: "Couldn't save that ranking." };
   }
 
   // Meals are logged on the day they're eaten.
@@ -177,7 +191,30 @@ export async function logMealAction(input: {
     return { error: "Couldn't save your meal. Please try again." };
   }
 
-  redirect(`/rank?meal=${mealId}`);
+  const ranked = await supabase.rpc("rank_plate", {
+    p_meal_id: mealId,
+    p_sentiment: input.sentiment,
+    p_position: input.position,
+    p_comment: null,
+  });
+  if (ranked.error) {
+    // Don't leave an unranked post behind: take the meal back down.
+    console.error("[ranking] rank_plate failed", ranked.error);
+    await supabase.rpc("soft_delete_meal", { p_meal_id: mealId });
+    return { error: "Couldn't save your ranking. Please try again." };
+  }
+
+  // You've tried these dishes now, so they come off Want to try. Not shown on
+  // the result screen, so it runs after the response.
+  after(async () => {
+    await supabase
+      .from("dish_alerts")
+      .delete()
+      .eq("user_id", user.id)
+      .in("dish_id", foodIds.map((id) => dishIds.get(id)!));
+  });
+
+  return { mealId, list: await getRankedPlates(supabase, user.id) };
 }
 
 /** Places one of your plates on your list (see rank_plate in the migrations). */

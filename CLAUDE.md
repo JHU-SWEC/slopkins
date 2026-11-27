@@ -52,10 +52,12 @@ supabase gen types typescript --local > lib/supabase/database.types.ts
 **Menus.** `lib/halls.ts` maps each hall to its Nutrislice school and menu-type slugs. `lib/menus.ts` fetches and caches a whole week per menu server-side (Nutrislice has no CORS). Ingredients are left out of the menu payload and fetched on demand by `app/(app)/dining/[slug]/details/route.ts`.
 
 **Log → rank flow** (details in [features/ranking/README.md](features/ranking/README.md)):
-1. On `/dining/[slug]` the browser sends only Nutrislice food ids. `logMealAction` re-fetches the menu on the server, upserts dishes with the admin client, then calls `log_meal` as the user.
-2. `/rank?meal=<id>`: pick a verdict (liked/fine/disliked), then binary-insert against past plates in that group (`insertion.ts`), saved via `rank_plate`.
+1. On `/dining/[slug]`, "Log & rank" saves **nothing**: the picked meal goes to `/rank` as a draft in sessionStorage (`features/ranking/draft.ts`).
+2. `/rank` (`RankDraft`): pick a verdict (liked/fine/disliked), then binary-insert against past plates in that group (`insertion.ts`). On the last answer, `logAndRankMealAction` re-fetches the menu on the server (the browser sends only Nutrislice food ids), upserts dishes with the admin client, then calls `log_meal` and `rank_plate` as the user, soft-deleting the meal if ranking fails. So a meal is never posted unranked, and leaving mid-ranking saves nothing.
 3. Scores are banded by verdict (liked 7–10, fine 4–7, disliked 0–4) and re-spread across the band whenever a group changes, so `plate_rankings.score` always matches list order. `dish_scores` averages plate scores across all users.
-4. A plate is unranked while any `meal_dishes.rank_status` is `pending`; `/dining` shows a "Plate to rank" banner to resume.
+4. Legacy: meals saved unranked before this flow are unranked while any `meal_dishes.rank_status` is `pending`; `/dining` shows a "Plate to rank" banner that opens `/rank?meal=<id>`.
+
+The rank flow animates with React's `<ViewTransition>` (your plate's card morphs between steps; CSS in `app/globals.css`). React holds a view transition until new images load, so per-tap updates (each comparison) are plain state updates, not transitions.
 
 Ranking is per plate since 2026-11-26. The old per-dish tables (`rankings`, `comparisons`, `rank_dish`) and `dishes.rankable` still exist but the app no longer uses them.
 

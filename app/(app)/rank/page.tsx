@@ -2,21 +2,22 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import RankMeal from "@/features/ranking/components/RankMeal";
+import RankMeal, { RankDraft } from "@/features/ranking/components/RankMeal";
 import { primaryButton } from "@/features/ranking/components/styles";
 import { getMeal, getRankedPlates } from "@/features/ranking/queries";
 import { createClient, getSignedInUser } from "@/lib/supabase/server";
 
-// Step two of logging: rank the plate as a whole. /rank?meal=<id>
+// Step two of logging: rank the plate as a whole. /rank ranks the meal just
+// picked on a menu (saved only once ranked); /rank?meal=<id> ranks an older
+// plate that was saved unranked.
 export default function RankPage({ searchParams }: PageProps<"/rank">) {
   return (
-    <>
+    <div className="text-heritage-blue dark:text-white">
       <h1 className="text-2xl font-bold tracking-tight">Rank your plate</h1>
-      <p className="mt-1 text-gray-500">How was it, and how does it compare to your past plates?</p>
       <Suspense fallback={<div className="mt-6 h-72 animate-pulse rounded-3xl bg-gray-100" />}>
         <RankQueue searchParams={searchParams} />
       </Suspense>
-    </>
+    </div>
   );
 }
 
@@ -30,6 +31,10 @@ async function RankQueue({ searchParams }: { searchParams: PageProps<"/rank">["s
   } = await getSignedInUser(supabase);
   if (!user) redirect("/login");
 
+  // No ?meal: a meal just picked on a menu, not saved until it's ranked.
+  if (!mealParam) return <RankDraft list={await getRankedPlates(supabase, user.id)} />;
+
+  // ?meal=<id>: an older plate that was saved before ranking and is still waiting.
   const [meal, list] = await Promise.all([
     getMeal(supabase, Number(mealParam)),
     getRankedPlates(supabase, user.id),

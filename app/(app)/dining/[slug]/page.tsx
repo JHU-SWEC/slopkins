@@ -19,7 +19,7 @@ export function generateStaticParams() {
 // week), from Nutrislice through the weekly cache in lib/menus.ts.
 export default function HallMenuPage({ params, searchParams }: PageProps<"/dining/[slug]">) {
   return (
-    <>
+    <div className="text-heritage-blue dark:text-white">
       <Link href="/dining" className="text-sm text-gray-500 hover:text-gray-700">
         ‹ Dining halls
       </Link>
@@ -27,7 +27,7 @@ export default function HallMenuPage({ params, searchParams }: PageProps<"/dinin
       <Suspense fallback={<MenuFallback />}>
         <HallMenu params={params} searchParams={searchParams} />
       </Suspense>
-    </>
+    </div>
   );
 }
 

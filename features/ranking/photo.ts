@@ -4,7 +4,7 @@
 export const MEAL_PHOTO_BUCKET = "meal-photos";
 export const MAX_MEAL_PHOTO_BYTES = 5 * 1024 * 1024; // same limit as the bucket
 
-/** What logMealAction accepts as a photo path. */
+/** What logAndRankMealAction accepts as a photo path. */
 export const MEAL_PHOTO_PATH = /^[0-9a-f-]{36}\/\d+\.(jpg|png|webp)$/;
 
 // Phone photos are 3–12 MB; this keeps uploads around 200–400 KB.

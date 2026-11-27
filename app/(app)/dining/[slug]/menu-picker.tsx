@@ -1,8 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { logMealAction } from "@/features/ranking/actions";
 import { useMealPhoto } from "@/features/ranking/components/meal-photo-picker";
+import { saveDraft } from "@/features/ranking/draft";
 import { SENTIMENT_STYLES } from "@/features/ranking/components/styles";
 import { WantToTryToggle } from "@/features/ranking/components/want-to-try-buttons";
 import type { DishScore } from "@/features/ranking/queries";
@@ -134,20 +135,23 @@ export function MenuPicker({
     ? mealTotals(cartItems.map((item) => ({ dish: item.dish, servings: servingsOf(item) }))).nutrition.calories
     : null;
 
-  // Log, then rank the plate: every plate gets ranked.
-  // The action redirects to /rank when it works (or /login when signed out).
+  // Rank the plate before anything is saved: the meal is handed to /rank as a
+  // draft and saved together with its ranking there, so it's never posted
+  // unranked. (Signed-out people are sent to log in by /rank.)
+  const router = useRouter();
   function log() {
     setLogError(null);
-    startLogging(async () => {
-      const result = await logMealAction({
-        hallSlug,
-        menuTypeSlug: tab.menuTypeSlug,
-        foodIds: cartItems.map(({ dish }) => dish.id),
-        photoPath: photo.path,
-        caption,
-      });
-      if (result?.error) setLogError(result.error);
+    saveDraft({
+      hallSlug,
+      menuTypeSlug: tab.menuTypeSlug,
+      meal: tab.meal,
+      foodIds: cartItems.map(({ dish }) => dish.id),
+      dishNames: cartItems.map(({ dish }) => dish.name),
+      photoPath: photo.path,
+      caption,
+      createdAt: new Date().toISOString(),
     });
+    startLogging(() => router.push("/rank"));
   }
 
   // Search matches dish or station names, case-insensitively.
@@ -378,7 +382,7 @@ export function MenuPicker({
               "Check off what you ate"
             ) : (
               <>
-                <span className="font-semibold text-gray-900">
+                <span className="font-semibold text-heritage-blue dark:text-white">
                   {cartItems.length} {cartItems.length === 1 ? "item" : "items"}
                 </span>
                 {cartCalories !== null && ` · ${cartCalories} cal`}

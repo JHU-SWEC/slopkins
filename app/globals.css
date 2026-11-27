@@ -110,3 +110,36 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/*
+ * View transitions (React <ViewTransition>), used by the rank flow: your
+ * plate's card morphs between steps (.morph) and the rest of a step fades.
+ * Opponents swap with plain CSS instead, so taps never wait on a photo. Browsers without support just swap.
+ */
+::view-transition {
+  /* Taps during an animation reach the page instead of the overlay. */
+  pointer-events: none;
+}
+::view-transition-group(.morph) {
+  animation-duration: 350ms;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+::view-transition-new(.fade-in) {
+  animation: 220ms ease-out 120ms both vt-fade;
+}
+::view-transition-old(.fade-out) {
+  animation: 140ms ease-in both vt-fade reverse;
+}
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}

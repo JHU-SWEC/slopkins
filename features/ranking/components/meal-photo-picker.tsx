@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { MAX_MEAL_PHOTO_BYTES, MEAL_PHOTO_BUCKET, shrinkPhoto } from "../photo";
 
 export type MealPhoto = {
-  /** Storage path once uploaded, for logMealAction. */
+  /** Storage path once uploaded, for logAndRankMealAction. */
   path: string | null;
   /** Local preview of the picked photo. */
   preview: string | null;

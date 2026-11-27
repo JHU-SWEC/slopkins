@@ -14,7 +14,7 @@ import type {
 } from "./types";
 
 const DISH_COLUMNS = "id, name, calories, rankable";
-const MEAL_COLUMNS = `id, user_id, meal, created_at, hall:dining_halls(slug), meal_dishes(dish_id, rank_status, dish:dishes(${DISH_COLUMNS}))`;
+const MEAL_COLUMNS = `id, user_id, meal, created_at, photo_path, hall:dining_halls(slug), meal_dishes(dish_id, rank_status, dish:dishes(${DISH_COLUMNS}))`;
 
 type DishRow = { id: number; name: string; calories: number | string | null; rankable: boolean };
 
@@ -66,7 +66,7 @@ export async function getRankedPlates(supabase: SupabaseClient, userId: string):
   const { data } = await supabase
     .from("plate_rankings")
     .select(
-      "meal_id, sentiment, score, comment, meal:meals!inner(meal, created_at, hall:dining_halls(slug), meal_dishes(dish:dishes(name)))",
+      "meal_id, sentiment, score, comment, meal:meals!inner(meal, created_at, photo_path, hall:dining_halls(slug), meal_dishes(dish:dishes(name)))",
     )
     .eq("user_id", userId)
     .order("score", { ascending: false });
@@ -77,7 +77,13 @@ export async function getRankedPlates(supabase: SupabaseClient, userId: string):
   // Scores are in non-overlapping bands, so score order is list order; sort by
   // sentiment too in case a band was ever off.
   return SENTIMENT_ORDER.flatMap((s) => rows.filter((row) => row.sentiment === s)).flatMap((row, index) => {
-    const meal = one<{ meal: MealType | null; created_at: string; hall: unknown; meal_dishes: { dish: unknown }[] }>(
+    const meal = one<{
+      meal: MealType | null;
+      created_at: string;
+      photo_path: string | null;
+      hall: unknown;
+      meal_dishes: { dish: unknown }[];
+    }>(
       row.meal,
     );
     if (!meal) return [];
@@ -92,6 +98,7 @@ export async function getRankedPlates(supabase: SupabaseClient, userId: string):
         meal: meal.meal,
         created_at: meal.created_at,
         dish_names: (meal.meal_dishes ?? []).flatMap((md) => one<{ name: string }>(md.dish)?.name ?? []),
+        photo_path: meal.photo_path,
       },
     ];
   });
@@ -102,6 +109,7 @@ type MealRow = {
   user_id: string;
   meal: MealType | null;
   created_at: string;
+  photo_path: string | null;
   hall: unknown;
   meal_dishes: { dish_id: number; rank_status: MealDish["rank_status"]; dish: unknown }[];
 };
@@ -121,6 +129,7 @@ async function toMeals(supabase: SupabaseClient, rows: MealRow[]): Promise<MealW
         hall_slug: slug,
         meal: row.meal,
         created_at: row.created_at,
+        photo_path: row.photo_path,
         dishes: row.meal_dishes.flatMap((md) => {
           const dish = dishes.get(md.dish_id);
           // The meal's hall is where this dish was eaten, so prefer it.

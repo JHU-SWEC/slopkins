@@ -63,7 +63,7 @@ export function EditPostDialog({ post, now, onClose }: { post: FeedPost; now: nu
         close();
       }}
       onClick={(event) => event.target === dialogRef.current && close()}
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl bg-white p-0 text-gray-900 backdrop:bg-black/40"
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl bg-white p-0 text-heritage-blue dark:text-white backdrop:bg-black/40"
     >
       <div className="flex max-h-[85vh] flex-col">
         <div className="flex items-center justify-between gap-4 border-b border-gray-100 px-5 py-4">
@@ -83,7 +83,7 @@ export function EditPostDialog({ post, now, onClose }: { post: FeedPost; now: nu
         <div className="space-y-4 overflow-y-auto px-5 py-4">
           {/* Where and when, like the post's header. */}
           <p className="text-sm text-gray-500">
-            <span className="font-semibold text-gray-900">{hall ? hall.name : "A dining hall"}</span>
+            <span className="font-semibold">{hall ? hall.name : "A dining hall"}</span>
             {meal && <span className="capitalize"> · {meal}</span>}
             {" · "}
             <time dateTime={post.at}>{timeAgo(post.at, now)}</time>

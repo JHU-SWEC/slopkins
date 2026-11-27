@@ -36,6 +36,8 @@ export type RankedPlate = {
   meal: MealType | null;
   created_at: string;
   dish_names: string[];
+  /** Path in the meal-photos bucket, or null if the meal has no photo. */
+  photo_path: string | null;
 };
 
 /** A logged meal: one visit to one hall. */
@@ -45,6 +47,8 @@ export type Meal = {
   hall_slug: HallSlug;
   meal: MealType | null;
   created_at: string;
+  /** Path in the meal-photos bucket, or null if the meal has no photo. */
+  photo_path: string | null;
 };
 
 /** One dish in a logged meal and where it stands in the rank queue. */

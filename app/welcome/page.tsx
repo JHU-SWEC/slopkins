@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Pick a username · Slopkins" };
 // proxy.ts sends anyone still on the automatic "user_…" name here.
 export default function WelcomePage() {
   return (
-    <div className="flex min-h-screen items-center bg-white text-gray-900">
+    <div className="flex min-h-screen items-center bg-white text-heritage-blue dark:text-white">
       <main className="mx-auto w-full max-w-sm px-4 py-12 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-heritage-blue">Welcome to Slopkins</h1>
         <div className="mt-8">
