@@ -32,6 +32,19 @@ export function isPlaceholderUsername(username: string) {
   return /^user_[0-9a-f]{12}$/.test(username);
 }
 
+/**
+ * Cookie the proxy sets (to the user's id) once it has seen they picked a
+ * username, so it only asks the database once per browser. See lib/supabase/proxy.ts.
+ */
+export const USERNAME_CHOSEN_COOKIE = "slopkins_username_chosen";
+export const USERNAME_CHOSEN_COOKIE_OPTIONS = {
+  httpOnly: true,
+  sameSite: "lax",
+  secure: process.env.NODE_ENV === "production",
+  path: "/",
+  maxAge: 60 * 60 * 24 * 365, // a year
+} as const;
+
 /** "Amy.Yang7@gmail.com" -> "amyyang7". Empty if nothing usable is left. */
 export function suggestUsername(email: string | undefined) {
   const base = (email ?? "").split("@")[0].toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20);

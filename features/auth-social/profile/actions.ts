@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient, getSignedInUser } from "@/lib/supabase/server";
 import {
@@ -7,7 +8,10 @@ import {
   DISPLAY_NAME_LIMIT,
   GRADES,
   MAJOR_LIMIT,
+  USERNAME_CHOSEN_COOKIE,
+  USERNAME_CHOSEN_COOKIE_OPTIONS,
   USERNAME_PATTERN,
+  isPlaceholderUsername,
 } from "./shared";
 import { nameProblem } from "./name-rules";
 
@@ -31,15 +35,8 @@ export async function updateProfile(
   const avatarPath = String(formData.get("avatar_path") ?? "").trim();
 
   // Check everything before saving, with messages a person can act on.
-  if (!USERNAME_PATTERN.test(username)) {
-    return { error: "Usernames are 3–20 characters: lowercase letters, numbers, and _ only." };
-  }
-  // No slurs, derogatory terms, or official-sounding names (see name-rules.ts).
-  const problem = nameProblem(username, "username") ?? nameProblem(displayName, "display name");
-  if (problem) return { error: problem };
-  if (displayName.length > DISPLAY_NAME_LIMIT) {
-    return { error: `Name must be ${DISPLAY_NAME_LIMIT} characters or fewer.` };
-  }
+  const nameError = checkNames(username, displayName);
+  if (nameError) return { error: nameError };
   if (grade && !(GRADES as readonly string[]).includes(grade)) {
     return { error: "Pick a grade from the list." };
   }
@@ -55,17 +52,10 @@ export async function updateProfile(
   // The basics: photo, name, username. These columns always exist.
   const { error } = await supabase
     .from("profiles")
-    .update({ username, display_name: displayName || null, avatar_url: avatarPath || null })
+    .update({ username, display_name: displayName, avatar_url: avatarPath || null })
     .eq("id", user.id);
 
-  if (error) {
-    return {
-      error:
-        error.code === "23505" // Postgres code for "already exists"
-          ? `@${username} is taken. Try another username.`
-          : "Couldn't save your profile. Please try again.",
-    };
-  }
+  if (error) return { error: saveError(error.code, username, "your profile") };
 
   // The form only shows (and sends) the rest once the profile-page migration is applied.
   if (formData.get("details_ready") !== "1") redirect("/profile");
@@ -77,4 +67,57 @@ export async function updateProfile(
   if (details.error) return { error: "Saved your name and photo, but couldn't save the rest." };
 
   redirect("/profile");
+}
+
+/**
+ * /welcome: a new account picks its username (and optionally a display name)
+ * before using the app. Then on to the feed.
+ */
+export async function chooseUsername(
+  _prevState: EditProfileState,
+  formData: FormData,
+): Promise<EditProfileState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await getSignedInUser(supabase);
+  if (!user) redirect("/login");
+
+  const username = String(formData.get("username") ?? "").trim().toLowerCase();
+  const displayName = String(formData.get("display_name") ?? "").trim();
+  const nameError = checkNames(username, displayName);
+  if (nameError) return { error: nameError };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ username, display_name: displayName })
+    .eq("id", user.id);
+  if (error) return { error: saveError(error.code, username, "your username") };
+
+  // Tell the proxy they're set, so it doesn't look up the username again.
+  (await cookies()).set(USERNAME_CHOSEN_COOKIE, user.id, USERNAME_CHOSEN_COOKIE_OPTIONS);
+  redirect("/feed");
+}
+
+// Rules for usernames and display names, with messages a person can act on.
+function checkNames(username: string, displayName: string): string | null {
+  if (!USERNAME_PATTERN.test(username)) {
+    return "Usernames are 3–20 characters: lowercase letters, numbers, and _ only.";
+  }
+  // Looks like the automatic "user_5acf5a3af2f7" names, which mean "not picked yet".
+  if (isPlaceholderUsername(username)) return "Pick a username of your own.";
+  if (!displayName) return "Add a display name.";
+  // No slurs, derogatory terms, or official-sounding names (see name-rules.ts).
+  const problem = nameProblem(username, "username") ?? nameProblem(displayName, "display name");
+  if (problem) return problem;
+  if (displayName.length > DISPLAY_NAME_LIMIT) {
+    return `Name must be ${DISPLAY_NAME_LIMIT} characters or fewer.`;
+  }
+  return null;
+}
+
+function saveError(code: string | undefined, username: string, what: string) {
+  return code === "23505" // Postgres code for "already exists"
+    ? `@${username} is taken. Try another username.`
+    : `Couldn't save ${what}. Please try again.`;
 }

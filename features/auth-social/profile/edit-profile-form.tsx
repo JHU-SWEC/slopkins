@@ -150,25 +150,25 @@ export function EditProfileForm({
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="display_name" className={labelClass}>
-              Display name
+              Display Name
             </label>
             <input
               id="display_name"
               name="display_name"
+              required
               maxLength={DISPLAY_NAME_LIMIT}
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="e.g. Johns Hopkins"
               aria-invalid={Boolean(displayNameProblem)}
-              aria-describedby="display-name-hint"
+              aria-describedby={displayNameProblem ? "display-name-hint" : undefined}
               className={inputClass}
             />
-            <p
-              id="display-name-hint"
-              className={`mt-1 text-xs ${displayNameProblem ? "text-red-700 dark:text-red-300" : "text-slate-500"}`}
-            >
-              {displayNameProblem ?? "Shown big on your profile. Optional."}
-            </p>
+            {displayNameProblem && (
+              <p id="display-name-hint" className="mt-1 text-xs text-red-700 dark:text-red-300">
+                {displayNameProblem}
+              </p>
+            )}
           </div>
           <div>
             <label htmlFor="username" className={labelClass}>
@@ -277,7 +277,7 @@ export function EditProfileForm({
         </Link>
         <button
           type="submit"
-          disabled={saving || uploading || !usernameOk || Boolean(displayNameProblem)}
+          disabled={saving || uploading || !usernameOk || !displayName.trim() || Boolean(displayNameProblem)}
           className="rounded-xl bg-heritage-blue px-6 py-3 font-semibold text-white transition hover:bg-heritage-blue/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {saving ? "Saving…" : "Save changes"}
