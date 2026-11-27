@@ -49,7 +49,7 @@ async function UserProfile({ username }: { username: string }) {
   // Do you follow them, and do they follow you? (For the Follow button.)
   const [{ iFollow, followsMe }, posts] = await Promise.all([
     getRelationships(supabase, viewerId, [data.profile.id]),
-    getUserPosts(supabase, viewerId, data.profile.id),
+    getUserPosts(supabase, data.profile.id),
   ]);
 
   return (

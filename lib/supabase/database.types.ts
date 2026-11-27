@@ -718,6 +718,14 @@ export type Database = {
         Args: { p_meal_id: number }
         Returns: undefined
       }
+      get_feed: {
+        Args: { p_limit?: number }
+        Returns: Json
+      }
+      get_posts: {
+        Args: { p_author_ids: string[]; p_limit?: number }
+        Returns: Json
+      }
       meal_save_counts: {
         Args: { p_meal_ids: number[] }
         Returns: {
