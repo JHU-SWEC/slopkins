@@ -53,25 +53,35 @@ Sign in with Google to use the app. Pages like the feed show a log-in prompt whe
 
 ```
 app/
-  page.tsx              sign-in (placeholder)
-  (app)/                screens with the bottom nav: feed, dining, profile
-  rank/                 Add + Rank flow (my-list/ redirects to the profile)
+  page.tsx              Google sign-in (/login shows the same screen)
+  welcome/              pick a username after first sign-in
+  auth/                 OAuth callback and error page
+  (app)/                screens with the bottom nav; each page handles signed-out visitors
+    feed/ dining/ rank/ profile/ activity/ search/ u/[username]/
+    my-list/            redirects to your profile's Ranked Plates tab
 features/
-  ranking/              ranking logic, components, Supabase queries and actions
-  dining/  auth-social/ feature notes
+  ranking/              log + rank flow: binary insertion, band scores, queries, actions
+  feed/                 feed posts, likes, comments, saves, edit/delete
+  auth-social/          sign-in, profiles, follows, search, notifications
+  tour/                 first-visit guided tour
+  dining/               feature notes
 lib/
-  supabase/             browser, server and proxy clients, generated DB types
-  halls.ts              the three dining halls
-  mock-data.ts          mock feed posts and menus
+  supabase/             browser, server, admin (secret key) and proxy clients, generated DB types
+  halls.ts              the three dining halls and their Nutrislice menus
+  menus.ts              fetches and caches Nutrislice menus (server-only)
+  nutrition.ts          nutrition per serving or per 100 g
+  dates.ts              menu dates in Baltimore time
 supabase/migrations/    database migrations
-docs/                   project plan, schema, UI design
-proxy.ts                refreshes the Supabase session on each request
+docs/                   project plan, schema, UI design, to-do
+proxy.ts                refreshes the Supabase session; sends new users to /welcome
 ```
 
 ## Docs
 
 - [Project plan](docs/project-plan.md): team, goals, stretch goals, marketing
 - [Database schema](docs/database-schema.md) and [diagram](docs/schema-diagram.md)
+- [To-do](docs/todo.md): next features, in order
+- [UI/UX roadmap](docs/ux-roadmap.md): planned UI and UX improvements, by phase
 - [UI refactor](docs/ui-refactor.md): the current skeleton screens
 
 ## Workflow
