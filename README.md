@@ -83,9 +83,3 @@ proxy.ts                refreshes the Supabase session on each request
   - Never edit a migration that has already been applied. Write a new one.
   - Don't change the schema in the Supabase dashboard.
 - Before opening a PR, run `npx tsc --noEmit`, `npm run lint` and `npm run build`.
-
-## Team
-
-- **Devs:** Miles, Shawn, Kyle, Jonny, Lucas
-- **Marketing:** Leo, Sophie
-- **Meetings:** Slopkins meeting Tuesdays 7pm, GBM Thursdays 8pm
