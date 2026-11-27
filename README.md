@@ -16,16 +16,6 @@ Built by JHU-SWEC (HopBuilds). Deadline: **Dec 11, 2026**. Full plan: [docs/proj
 - **Users:** students on the JHU meal plan
 - **Data:** the public [Nutrislice](https://hopkinsdining.api.nutrislice.com/menu/api/schools/) menu API
 
-## Features and owners
-
-| feature                 | owner                     | status                                                        |
-| ----------------------- | ------------------------- | ------------------------------------------------------------- |
-| Auth + Profile + Social | Lucas Kohlmeyer, Amy Yang | skeleton: sign-in placeholder, mock feed, profile placeholder |
-| Dining hall pages       | Kyle Li                   | skeleton: real hall list, mock menus, meal multi-select       |
-| Add + Rank flow         | Jonny                     | log a meal, `/rank`, ranked list on the profile; in Supabase  |
-
-Auth, profiles, follows, Activity, meals and rankings use Supabase. The feed (`lib/mock-data.ts`) is still mock data.
-
 ## Stack
 
 - [Next.js 16](https://nextjs.org) (App Router) with React 19, TypeScript and Tailwind 4
