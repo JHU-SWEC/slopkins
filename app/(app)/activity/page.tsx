@@ -9,13 +9,13 @@ import { MarkActivitySeen } from "@/features/auth-social/activity/mark-seen";
 import { getActivity } from "@/features/auth-social/activity/queries";
 import { ACTIVITY_SEEN_COOKIE } from "@/features/auth-social/activity/shared";
 
-export const metadata: Metadata = { title: "Activity · Slopkins" };
+export const metadata: Metadata = { title: "Notifications · Slopkins" };
 
 // /activity — things people did to you: follows, and likes, comments and bookmarks on your posts.
 export default function ActivityPage() {
   return (
     <div className="text-heritage-blue dark:text-white">
-      <h1 className="mb-4 text-2xl font-bold tracking-tight">Activity</h1>
+      <h1 className="mb-4 text-2xl font-bold tracking-tight">Notifications</h1>
       <Suspense fallback={<ActivitySkeleton />}>
         <Activity />
       </Suspense>
@@ -74,7 +74,7 @@ function Empty({ children }: { children: React.ReactNode }) {
 
 function ActivitySkeleton() {
   return (
-    <div className="animate-pulse space-y-4" aria-label="Loading activity">
+    <div className="animate-pulse space-y-4" aria-label="Loading notifications">
       {[0, 1, 2, 3, 4].map((i) => (
         <div key={i} className="flex items-center gap-3">
           <div className="size-11 rounded-full bg-slate-100 dark:bg-white/10" />

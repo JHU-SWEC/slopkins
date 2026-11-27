@@ -5,9 +5,7 @@ import { FollowButton } from "../social/follow-button";
 import type { ActivityItem } from "./queries";
 import { timeAgo } from "./shared";
 
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-
-// Groups like Instagram: New (since your last visit), This week, Earlier.
+// Two groups: New (since your last visit) and Earlier (everything else).
 export function ActivityList({
   items,
   lastSeen,
@@ -19,12 +17,10 @@ export function ActivityList({
   now: number;
 }) {
   const isNew = (item: ActivityItem) => lastSeen !== null && item.at > lastSeen;
-  const weekAgo = new Date(now - WEEK_MS).toISOString();
 
   const groups = [
     { title: "New", items: items.filter(isNew) },
-    { title: "This week", items: items.filter((i) => !isNew(i) && i.at >= weekAgo) },
-    { title: "Earlier", items: items.filter((i) => !isNew(i) && i.at < weekAgo) },
+    { title: "Earlier", items: items.filter((i) => !isNew(i)) },
   ].filter((group) => group.items.length > 0);
 
   return (
@@ -67,11 +63,6 @@ function Row({ item, highlighted, now }: { item: ActivityItem; highlighted: bool
             {timeAgo(item.at, now)}
           </time>
         </p>
-        {item.kind === "comment" && (
-          <p className="mt-1 border-l-2 border-slate-200 pl-3 italic text-slate-600 dark:border-white/20 dark:text-white/70">
-            {item.body}
-          </p>
-        )}
       </div>
 
       {item.kind === "follow" && (
@@ -95,7 +86,8 @@ function Sentence({ item }: { item: ActivityItem }) {
     case "comment":
       return (
         <>
-          commented on your {item.meal ?? "meal"}
+          commented: <span className="italic text-slate-500 dark:text-white/60">{item.body}</span> on your{" "}
+          {item.meal ?? "meal"}
           {item.hall && (
             <>
               {" "}

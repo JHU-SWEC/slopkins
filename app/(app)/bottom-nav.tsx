@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { NotificationsPanel } from "@/features/auth-social/activity/notifications-panel";
 import { startTour } from "@/features/tour/Tour";
 import { GearIcon, SettingsMenu } from "./settings-menu";
 
@@ -100,14 +102,47 @@ function Icon({ children }: { children: React.ReactNode }) {
 // to show each name, like Instagram. It slides over the page rather than
 // pushing it.
 export function NavLinks({ pathname }: { pathname?: string }) {
+  // Laptops: the bell opens a slide-out panel instead of the /activity page.
+  // Remembering the page it opened on closes it when you go somewhere else.
+  const [panelOpenOn, setPanelOpenOn] = useState<string | null>(null);
+  const here = pathname ?? "";
+  const panelOpen = panelOpenOn === here;
+
   return (
+    <>
     <nav
       data-tour="tabs"
-      className="group/nav fixed inset-x-0 bottom-0 z-40 h-16 border-t border-gray-200 bg-white md:inset-x-auto md:inset-y-0 md:left-0 md:h-auto md:w-[72px] md:overflow-hidden md:border-t-0 md:bg-transparent! md:transition-[width] md:duration-200 md:hover:w-56 md:focus-within:w-56"
+      // The notifications panel replaces the sidebar while it's open (laptops only;
+      // phones never open it). Closing the panel brings the sidebar back.
+      className={`group/nav fixed inset-x-0 bottom-0 z-40 h-16 border-t border-gray-200 bg-white md:inset-x-auto md:inset-y-0 md:left-0 md:h-auto md:w-[72px] md:overflow-hidden md:border-t-0 md:bg-transparent! md:transition-[width] md:duration-200 md:hover:w-56 md:focus-within:w-56 ${
+        panelOpen ? "md:hidden" : ""
+      }`}
     >
       <ul className="mx-auto flex h-full max-w-2xl md:mx-0 md:max-w-none md:flex-col md:justify-center md:gap-1 md:px-3">
         {tabs.map((tab) => {
-          const active = pathname?.startsWith(tab.href);
+          const isBell = tab.href === "/activity";
+          const active = isBell ? panelOpen || (!panelOpenOn && pathname?.startsWith(tab.href)) : !panelOpen && pathname?.startsWith(tab.href);
+          if (isBell) {
+            return (
+              <li key={tab.href} className="hidden md:block">
+                <button
+                  type="button"
+                  onClick={() => setPanelOpenOn(panelOpen ? null : here)}
+                  data-tour={`tab-${tab.label.toLowerCase()}`}
+                  aria-label={tab.label}
+                  aria-expanded={panelOpen}
+                  className={`${ROW} cursor-pointer ${
+                    active ? "text-heritage-blue dark:text-white" : "text-gray-400 hover:text-gray-600 md:text-gray-600 md:hover:text-gray-900"
+                  }`}
+                >
+                  <Icon>{tab.icon}</Icon>
+                  <span aria-hidden="true" className={`${LABEL} ${active ? "font-semibold" : ""}`}>
+                    {tab.label}
+                  </span>
+                </button>
+              </li>
+            );
+          }
           return (
             <li key={tab.href} className={tab.laptopOnly ? "hidden md:block" : "flex-1 md:flex-none"}>
               <Link
@@ -155,5 +190,7 @@ export function NavLinks({ pathname }: { pathname?: string }) {
         </SettingsMenu>
       </div>
     </nav>
+    {panelOpen && <NotificationsPanel onClose={() => setPanelOpenOn(null)} />}
+    </>
   );
 }

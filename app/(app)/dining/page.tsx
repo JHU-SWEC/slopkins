@@ -6,7 +6,7 @@ import { halls } from "@/lib/halls";
 export default function Dining() {
   return (
     <>
-      <h1 className="text-2xl font-bold tracking-tight">Dining halls</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-heritage-blue dark:text-white">Dining halls</h1>
       <p className="mt-1 text-gray-500">Where did you just eat?</p>
 
       {/* Logged meals with dishes still waiting to be ranked. */}
@@ -14,15 +14,15 @@ export default function Dining() {
         <PendingMeals />
       </Suspense>
 
-      <ul className="mt-6 divide-y divide-gray-100 rounded-2xl border border-gray-200">
+      <ul className="mt-6 space-y-3">
         {halls.map((hall) => (
           <li key={hall.slug}>
             <Link
               href={`/dining/${hall.slug}`}
-              className="flex items-center justify-between px-4 py-4 transition hover:bg-gray-50"
+              className="flex items-center justify-between rounded-2xl border border-gray-200 px-4 py-4 transition hover:border-gray-300 hover:bg-gray-50"
             >
               <div>
-                <p className="font-semibold">{hall.name}</p>
+                <p className="font-semibold text-heritage-blue dark:text-white">{hall.name}</p>
                 <p className="text-sm text-gray-500">{hall.description}</p>
               </div>
               <span className="text-gray-300">›</span>
