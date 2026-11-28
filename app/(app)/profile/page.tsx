@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { createClient, getSignedInUser } from "@/lib/supabase/server";
 import { getProfileData } from "@/features/auth-social/profile/queries";
 import { getUserPosts } from "@/features/feed/queries";
+import { getRankedPlates } from "@/features/ranking/queries";
 import { ProfileView } from "@/features/auth-social/profile/profile-view";
 import { ProfileMessage, ProfileSkeleton } from "@/features/auth-social/profile/profile-shell";
 import { connection } from "next/server";
@@ -29,9 +30,10 @@ async function MyProfile() {
   } = await getSignedInUser(supabase);
   if (!user) redirect("/login");
 
-  const [data, posts] = await Promise.all([
+  const [data, posts, rankedPlates] = await Promise.all([
     getProfileData(supabase, { id: user.id }),
     getUserPosts(supabase, user.id),
+    getRankedPlates(supabase, user.id),
   ]);
   if (!data) {
     return (
@@ -44,5 +46,5 @@ async function MyProfile() {
     );
   }
 
-  return <ProfileView data={data} posts={posts} isOwner />;
+  return <ProfileView data={data} posts={posts} rankedPlates={rankedPlates} isOwner />;
 }

@@ -1,17 +1,14 @@
-import Link from "next/link";
 import { shownName } from "@/features/auth-social/profile/shared";
+import { getHall } from "@/lib/halls";
 import type { SavedPlate, WantToTryItem } from "../types";
+import { EmptyTab, LIST_BOX, LIST_ROW, ListCount, PlateThumb, RowText } from "./list-row";
 import { RemoveSavedPlate, RemoveWantToTry } from "./want-to-try-buttons";
-import { primaryButton, sectionHeading } from "./styles";
-import { DishMeta } from "./ui";
-
-/** Each saved plate or dish is its own card, like Ranked Plates. */
-const CARD = "rounded-2xl border border-gray-200 px-4 py-4 transition hover:border-gray-300";
 
 /**
- * Someone's saved dishes and plates, newest first. Public on every profile;
+ * Someone's saved plates and dishes, newest first, in the same rows as the
+ * Rankings tab: plates (whole meals saved from friends' posts) with their
+ * photo, then dishes (bookmarked on a menu). Public on every profile;
  * `isOwner` adds the remove buttons and changes the empty state.
- * Plates are whole meals saved from other people's feed posts.
  */
 export default function WantToTry({
   items,
@@ -23,73 +20,67 @@ export default function WantToTry({
   isOwner: boolean;
 }) {
   if (items.length === 0 && plates.length === 0) {
-    if (!isOwner) {
-      return (
-        <p className="rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center text-sm text-gray-500">
-          Nothing saved yet.
-        </p>
-      );
-    }
-    return (
-      <div className="mt-6 text-center">
-        <p className="text-gray-500">
-          Tap the bookmark on any dish or friend&apos;s post to save it here.
-        </p>
-        <Link href="/dining" className={`mt-4 ${primaryButton}`}>
-          Browse menus
-        </Link>
-      </div>
+    return isOwner ? (
+      <EmptyTab
+        message="Tap the bookmark on a dish or a friend's post to save it here."
+        action={{ label: "Browse menus", href: "/dining" }}
+      />
+    ) : (
+      <EmptyTab message="Nothing saved yet." />
     );
   }
 
-  const dishList = (
-    <ul className="space-y-3">
-      {items.map(({ dish }) => (
-        <li key={dish.id} className={`flex items-center gap-3 ${CARD}`}>
-          <div className="min-w-0 flex-1">
-            <p className="font-medium">{dish.name}</p>
-            <DishMeta dish={dish} />
-          </div>
-          {isOwner && <RemoveWantToTry dishId={dish.id} name={dish.name} />}
-        </li>
-      ))}
-    </ul>
-  );
-
-  // Only dishes saved: keep the original plain list.
-  if (plates.length === 0) return dishList;
-
   return (
     <div className="space-y-6">
-      <section>
-        <ul className="space-y-3">
-          {plates.map((plate) => (
-            <li key={plate.id} className={`flex items-start gap-3 ${CARD}`}>
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">
-                  {plate.from ? `${shownName(plate.from)}'s ${plate.meal ?? "meal"}` : `A ${plate.meal ?? "meal"}`}
-                  {plate.hall && <span className="font-normal text-gray-500"> · {plate.hall.name}</span>}
-                </p>
-                <ul className="mt-2 flex flex-wrap gap-1.5">
-                  {plate.dishes.map((dish) => (
-                    <li key={dish.id} className="rounded-full bg-gray-100 px-2.5 py-0.5 text-sm text-gray-700">
-                      {dish.name}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              {isOwner && <RemoveSavedPlate plateId={plate.id} />}
-            </li>
-          ))}
-        </ul>
-      </section>
+      {plates.length > 0 && (
+        <section>
+          <div className="mb-3">
+            <ListCount count={plates.length} one="plate" many="plates" />
+          </div>
+          <ul className={LIST_BOX}>
+            {plates.map((plate) => (
+              <li key={plate.id} className={LIST_ROW}>
+                <PlateThumb photoPath={plate.photo_path} />
+                <RowText
+                  title={plateTitle(plate)}
+                  detail={[
+                    plate.from && `from ${shownName(plate.from)}`,
+                    plate.dishes.map((dish) => dish.name).join(", "),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                />
+                {isOwner && <RemoveSavedPlate plateId={plate.id} />}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {items.length > 0 && (
         <section>
-          <h3 className={sectionHeading}>Dishes · {items.length}</h3>
-          <div className="mt-2">{dishList}</div>
+          <div className="mb-3">
+            <ListCount count={items.length} one="dish" many="dishes" />
+          </div>
+          <ul className={LIST_BOX}>
+            {items.map(({ dish }) => (
+              <li key={dish.id} className={LIST_ROW}>
+                <RowText
+                  title={dish.name}
+                  detail={[dish.hall_slug && getHall(dish.hall_slug)?.name, dish.station].filter(Boolean).join(" · ")}
+                />
+                {isOwner && <RemoveWantToTry dishId={dish.id} name={dish.name} />}
+              </li>
+            ))}
+          </ul>
         </section>
       )}
     </div>
   );
+}
+
+/** "FFC · Lunch", like a ranked plate's title. */
+function plateTitle(plate: SavedPlate): string {
+  const hall = plate.hall?.name ?? "A dining hall";
+  return plate.meal ? `${hall} · ${plate.meal[0].toUpperCase()}${plate.meal.slice(1)}` : hall;
 }

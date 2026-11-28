@@ -68,7 +68,19 @@ export function WantToTryToggle({
   );
 }
 
-/** "Remove" on the profile's Want to try list. */
+// A quiet × at the end of a Want to Try row; dims while removing.
+const REMOVE_BUTTON =
+  "grid size-8 shrink-0 place-items-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40";
+
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" className="size-4" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round">
+      <path d="M4 4l8 8M12 4l-8 8" />
+    </svg>
+  );
+}
+
+/** "Remove" (×) on the profile's Want to try list. */
 export function RemoveWantToTry({ dishId, name }: { dishId: number; name: string }) {
   const [pending, startTransition] = useTransition();
   return (
@@ -77,14 +89,15 @@ export function RemoveWantToTry({ dishId, name }: { dishId: number; name: string
       disabled={pending}
       onClick={() => startTransition(async () => void (await removeWantToTryAction(dishId)))}
       aria-label={`Remove ${name} from want to try`}
-      className="shrink-0 text-sm text-gray-500 transition hover:text-gray-700 disabled:opacity-40"
+      title="Remove"
+      className={REMOVE_BUTTON}
     >
-      {pending ? "Removing…" : "Remove"}
+      <CloseIcon />
     </button>
   );
 }
 
-/** "Remove" on a plate saved from someone's post. */
+/** "Remove" (×) on a plate saved from someone's post. */
 export function RemoveSavedPlate({ plateId }: { plateId: number }) {
   const [pending, startTransition] = useTransition();
   return (
@@ -93,9 +106,10 @@ export function RemoveSavedPlate({ plateId }: { plateId: number }) {
       disabled={pending}
       onClick={() => startTransition(async () => void (await removeSavedPlate(plateId)))}
       aria-label="Remove this plate from want to try"
-      className="shrink-0 text-sm text-gray-500 transition hover:text-gray-700 disabled:opacity-40"
+      title="Remove"
+      className={REMOVE_BUTTON}
     >
-      {pending ? "Removing…" : "Remove"}
+      <CloseIcon />
     </button>
   );
 }

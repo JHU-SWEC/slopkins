@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 
 export type ProfileTab = {
-  /** Also the URL hash, so /profile#ranked opens that tab. */
+  /** Also the URL hash, so /profile#rankings opens that tab. */
   id: string;
   label: string;
   panel: React.ReactNode;

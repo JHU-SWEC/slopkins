@@ -82,5 +82,7 @@ export type SavedPlate = {
   dishes: { id: number; name: string }[];
   /** Whose plate it was, if their post still exists. */
   from: { username: string; display_name: string | null } | null;
+  /** The original post's photo, if it has one and still exists. */
+  photo_path: string | null;
   saved_at: string;
 };

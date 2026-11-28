@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { PostList } from "@/features/feed/queries";
-import MyList from "@/features/ranking/components/MyList";
+import { RankingsList } from "@/features/ranking/components/rankings-list";
 import WantToTry from "@/features/ranking/components/WantToTry";
+import type { RankedPlate } from "@/features/ranking/types";
 import { ProfileTabs } from "./profile-tabs";
 import { ProfilePosts } from "./profile-posts";
 import { FollowButton } from "../social/follow-button";
@@ -23,12 +24,15 @@ export type Viewer = { signedIn: boolean; iFollow: boolean; followsMe: boolean }
 export function ProfileView({
   data,
   posts,
+  rankedPlates,
   isOwner,
   viewer = { signedIn: false, iFollow: false, followsMe: false },
 }: {
   data: ProfileData;
   /** Their logged meals, shown like the feed. */
   posts: PostList;
+  /** Every plate they ranked, best first (Rankings tab). */
+  rankedPlates: RankedPlate[];
   isOwner: boolean;
   viewer?: Viewer;
 }) {
@@ -43,17 +47,16 @@ export function ProfileView({
     <div className="pt-6 text-heritage-blue md:pt-0 dark:text-white">
       {/* New accounts start with a placeholder username; nudge them to pick a real one. */}
       {isOwner && isPlaceholderUsername(profile.username) && (
+        // One quiet line, like the empty states: no colored block.
         <Link
           href="/profile/edit"
-          className="mb-4 flex items-center justify-between gap-4 rounded-2xl bg-spirit-blue/25 px-4 py-3 transition hover:bg-spirit-blue/35"
+          className="mb-4 flex items-center justify-between gap-3 border-b border-gray-200 pb-3 text-sm transition hover:text-brand"
         >
           <span>
-            <span className="block font-semibold">Finish setting up your profile</span>
-            <span className="text-sm text-heritage-blue/80 dark:text-white/70">
-              Add a photo and pick your name and username.
-            </span>
+            <span className="font-semibold">Finish your profile:</span>{" "}
+            <span className="text-gray-500">add a photo and pick your username.</span>
           </span>
-          <span aria-hidden="true" className="text-xl">
+          <span aria-hidden="true" className="font-semibold text-brand">
             ›
           </span>
         </Link>
@@ -61,9 +64,9 @@ export function ProfileView({
 
       {/* ---------- 1. Header: photo | name, username, stats; then tags, bio, Follow ---------- */}
       <section className="relative pt-2">
-        {/* Top right: edit (your own profile only) and share. */}
-        <div data-tour="profile-actions" className="absolute right-0 top-0 flex gap-1">
-          {isOwner && (
+        {/* Top right: the pencil (your profile) or Follow (anyone else's), then share. */}
+        <div data-tour="profile-actions" className="absolute right-0 top-0 flex items-center gap-1">
+          {isOwner ? (
             <Link href="/profile/edit" aria-label="Edit profile" title="Edit profile" className="grid h-10 w-10 cursor-pointer place-items-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-900">
               {/* Pencil */}
               <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -71,6 +74,15 @@ export function ProfileView({
                 <path d="m15 5 4 4" />
               </svg>
             </Link>
+          ) : (
+            <FollowButton
+              targetId={profile.id}
+              username={profile.username}
+              following={viewer.iFollow}
+              followsMe={viewer.followsMe}
+              signedIn={viewer.signedIn}
+              size="compact"
+            />
           )}
           <ShareButton username={profile.username} className="grid h-10 w-10 cursor-pointer place-items-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-900" />
         </div>
@@ -81,9 +93,10 @@ export function ProfileView({
             <Avatar src={avatarSrc(profile.avatar_url)} name={name} size={80} eager />
           </div>
           <div className="min-w-0 flex-1">
-            {/* pr keeps a long name from running under the edit/share icons. */}
-            <div className="pr-20">
-              <h1 className="truncate text-xl font-bold tracking-tight text-gray-900">{name}</h1>
+            {/* pr keeps a long name from running under the buttons on the right. */}
+            <div className={isOwner ? "pr-20" : "pr-36"}>
+              {/* Long names wrap to a second line instead of cutting off. */}
+              <h1 className="line-clamp-2 break-words text-xl font-bold leading-tight tracking-tight text-gray-900">{name}</h1>
               <p className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
                 {profile.display_name && <span className="truncate">@{profile.username}</span>}
                 {!isOwner && viewer.followsMe && (
@@ -118,20 +131,9 @@ export function ProfileView({
         {/* Only if they've written one. */}
         {profile.bio && <p className="mt-4 whitespace-pre-line text-sm text-gray-700">{profile.bio}</p>}
 
-        {!isOwner && (
-          <div className="mt-5">
-            <FollowButton
-              targetId={profile.id}
-              username={profile.username}
-              following={viewer.iFollow}
-              followsMe={viewer.followsMe}
-              signedIn={viewer.signedIn}
-            />
-          </div>
-        )}
       </section>
 
-      {/* ---------- 2. Tabs: Activity (default), Ranked Plates, Want to Try ---------- */}
+      {/* ---------- 2. Tabs: Activity (posts by date), Rankings (your list, best first), Want to Try ---------- */}
       <ProfileTabs
         tabs={[
           {
@@ -140,9 +142,9 @@ export function ProfileView({
             panel: <ProfilePosts list={posts} isOwner={isOwner} signedIn={isOwner || viewer.signedIn} />,
           },
           {
-            id: "ranked",
-            label: "Ranked Plates",
-            panel: <MyList plates={posts.posts} isOwner={isOwner} />,
+            id: "rankings",
+            label: "Rankings",
+            panel: <RankingsList plates={rankedPlates} isOwner={isOwner} />,
           },
           // Public, like the rest of the profile; only you can remove things.
           {

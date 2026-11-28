@@ -24,4 +24,3 @@ export const secondaryButton =
 
 /** A bordered list, like the menu and hall lists. */
 export const listBox = "divide-y divide-gray-100 rounded-2xl border border-gray-200";
-export const sectionHeading = "text-sm font-semibold uppercase tracking-wide text-gray-400";

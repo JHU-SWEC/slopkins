@@ -58,7 +58,7 @@ app/
   auth/                 OAuth callback and error page
   (app)/                screens with the bottom nav; each page handles signed-out visitors
     feed/ dining/ rank/ profile/ activity/ search/ u/[username]/
-    my-list/            redirects to your profile's Ranked Plates tab
+    my-list/            redirects to your profile's Rankings tab
 features/
   ranking/              log + rank flow: binary insertion, band scores, queries, actions
   feed/                 feed posts, likes, comments, saves, edit/delete

@@ -37,7 +37,8 @@ Plates replaced per-dish ranking on 2026-11-26. The old `rankings`, `comparisons
 | `components/RankMeal.tsx` | Rank step + summary for one meal. |
 | `components/RankPlate.tsx` | Verdict / compare / comment for one plate. |
 | `components/PendingMeals.tsx` | "Plate to rank" banner. |
-| `components/MyList.tsx` | Ranked plates, best first, shown under "Ranked Plates" on every profile (`/my-list` redirects to yours). |
+| `components/rankings-list.tsx` | The profile's Rankings tab: ranked plates as numbered rows with a Best / Worst switch (`/my-list` redirects to yours). |
+| `components/score-circle.tsx` | A plate's score as a circle in its verdict color (Rankings rows, the result screen). |
 
 Everything is in Supabase; you need to be signed in to log or rank. The browser sends only Nutrislice food ids. `logAndRankMealAction` re-fetches today's menu on the server, adds any new `dishes` (`rankable` from `isMain`, only on insert so admin fixes stick) and `menu_items` with the secret-key client (`lib/supabase/admin.ts`), then calls `log_meal` and `rank_plate` as the user. Dish ids everywhere else are `dishes.id`. Hall and station labels come from the `dish_places` view (latest `menu_items` row).
 

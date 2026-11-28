@@ -4,6 +4,7 @@ import { createClient, getSignedInUser } from "@/lib/supabase/server";
 import { getProfileData } from "@/features/auth-social/profile/queries";
 import { getRelationships } from "@/features/auth-social/social/queries";
 import { getUserPosts } from "@/features/feed/queries";
+import { getRankedPlates } from "@/features/ranking/queries";
 import { ProfileView } from "@/features/auth-social/profile/profile-view";
 import { ProfileMessage, ProfileSkeleton } from "@/features/auth-social/profile/profile-shell";
 import { connection } from "next/server";
@@ -47,15 +48,17 @@ async function UserProfile({ username }: { username: string }) {
   const viewerId = user?.id ?? null;
   const isOwner = data.profile.id === viewerId;
   // Do you follow them, and do they follow you? (For the Follow button.)
-  const [{ iFollow, followsMe }, posts] = await Promise.all([
+  const [{ iFollow, followsMe }, posts, rankedPlates] = await Promise.all([
     getRelationships(supabase, viewerId, [data.profile.id]),
     getUserPosts(supabase, data.profile.id),
+    getRankedPlates(supabase, data.profile.id),
   ]);
 
   return (
     <ProfileView
       data={data}
       posts={posts}
+      rankedPlates={rankedPlates}
       isOwner={isOwner}
       viewer={{
         signedIn: viewerId !== null,

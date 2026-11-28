@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { Post } from "@/features/feed/post";
 import type { PostList } from "@/features/feed/queries";
-import { primaryButton } from "@/features/ranking/components/styles";
+import { EmptyTab } from "@/features/ranking/components/list-row";
 
 /**
  * The Posts tab: every meal this person logged, newest first, as the same
@@ -20,16 +19,9 @@ export function ProfilePosts({
 
   if (posts.length === 0) {
     return isOwner ? (
-      <div className="mt-6 text-center">
-        <p className="text-gray-500">Rank a plate to start!</p>
-        <Link href="/dining" className={`mt-4 ${primaryButton}`}>
-          Browse menus
-        </Link>
-      </div>
+      <EmptyTab message="Meals you log will show up here." action={{ label: "Log a meal", href: "/dining" }} />
     ) : (
-      <p className="rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center text-sm text-gray-500">
-        Nothing yet.
-      </p>
+      <EmptyTab message="No meals logged yet." />
     );
   }
 

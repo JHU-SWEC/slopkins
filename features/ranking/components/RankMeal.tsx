@@ -6,10 +6,10 @@ import { logAndRankMealAction, rankPlateAction, rerankPlateAction, type ActionRe
 import { clearDraft, draftAsMeal, parseDraft, readDraftRaw } from "../draft";
 import { mealTitle } from "../format";
 import type { MealWithDishes, RankedPlate } from "../types";
-import { formatScore } from "../score";
 import { Confetti } from "./Confetti";
 import { DishNames, MyPlateCard, RankPlate, type RankResult } from "./RankPlate";
-import { SENTIMENT_LABELS, SENTIMENT_STYLES, primaryButton, secondaryButton } from "./styles";
+import { ScoreCircle } from "./score-circle";
+import { SENTIMENT_LABELS, primaryButton, secondaryButton } from "./styles";
 
 /**
  * Ranking for one logged meal: the plate as a whole, then a summary.
@@ -193,17 +193,7 @@ function Summary({
             <MyPlateCard
               meal={meal}
               label="This plate"
-              corner={
-                <span
-                  role="img"
-                  aria-label={`Plate score ${formatScore(ranking.score)} out of 10`}
-                  className={`grid size-16 place-items-center rounded-full border-[3px] border-current bg-white text-xl font-bold tracking-tight tabular-nums shadow-lg transition delay-300 duration-500 ease-out starting:scale-0 starting:opacity-0 motion-reduce:transition-none ${
-                    SENTIMENT_STYLES[ranking.sentiment].number
-                  }`}
-                >
-                  {formatScore(ranking.score)}
-                </span>
-              }
+              corner={<ScoreCircle score={ranking.score} sentiment={ranking.sentiment} size="lg" pop />}
             />
           </div>
         </div>
@@ -226,8 +216,8 @@ function Summary({
       )}
 
       <div className="mt-6 space-y-2">
-        <Link href="/profile#ranked" className={primaryButton}>
-          View my ranked plates
+        <Link href="/profile#rankings" className={primaryButton}>
+          View my rankings
         </Link>
         <Link href="/feed" className={secondaryButton}>
           Done

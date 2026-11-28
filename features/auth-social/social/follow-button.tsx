@@ -13,6 +13,7 @@ export function FollowButton({
   followsMe,
   signedIn,
   tone = "light",
+  size = "regular",
   className = "",
 }: {
   targetId: string;
@@ -24,6 +25,8 @@ export function FollowButton({
   signedIn: boolean;
   /** "dark" = on the blue profile header. */
   tone?: "light" | "dark";
+  /** "compact" = a small, softly rounded button (like Instagram's) for the top right of a profile. */
+  size?: "regular" | "compact";
   className?: string;
 }) {
   const [shown, setShown] = useOptimistic(following);
@@ -38,7 +41,8 @@ export function FollowButton({
     tone === "dark"
       ? "border border-white/40 text-white hover:bg-white/10"
       : "border border-gray-300 bg-white text-heritage-blue hover:bg-gray-50 dark:border-white/30 dark:bg-transparent dark:text-white dark:hover:bg-white/10";
-  const base = `rounded-xl px-4 py-2 text-sm font-semibold transition ${className}`;
+  const shape = size === "compact" ? "inline-flex h-9 items-center rounded-lg px-4" : "rounded-xl px-4 py-2";
+  const base = `group ${shape} text-sm font-semibold whitespace-nowrap transition ${className}`;
 
   // Signed-out visitors get sent to log in first.
   if (!signedIn) {
@@ -68,7 +72,17 @@ export function FollowButton({
         aria-label={shown ? `Unfollow @${username}` : `Follow @${username}`}
         className={`${base} ${shown ? outlined : filled}`}
       >
-        {shown ? "Following" : followsMe ? "Follow back" : "Follow"}
+        {shown ? (
+          // Says "Unfollow" while you hover (mice only; phones never hover), like X.
+          <>
+            <span className="group-hover:hidden">Following</span>
+            <span className="hidden group-hover:inline">Unfollow</span>
+          </>
+        ) : followsMe ? (
+          "Follow back"
+        ) : (
+          "Follow"
+        )}
       </button>
       {error && (
         <span role="alert" className={`mt-1 text-xs ${tone === "dark" ? "text-red-200" : "text-red-700"}`}>

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
@@ -18,14 +17,8 @@ export const metadata: Metadata = { title: "Edit profile · Slopkins" };
 export default function EditProfilePage() {
   return (
     <>
-      <Link
-        href="/profile"
-        className="text-sm font-semibold text-brand underline-offset-2 hover:underline"
-      >
-        ‹ Back to profile
-      </Link>
-      <h1 className="mt-3 mb-6 text-2xl font-bold tracking-tight text-heritage-blue dark:text-white">Edit profile</h1>
-      <Suspense fallback={<div className="h-96 animate-pulse rounded-3xl bg-gray-100" />}>
+      <h1 className="mb-8 text-2xl font-bold tracking-tight text-heritage-blue dark:text-white">Edit profile</h1>
+      <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-gray-100" />}>
         <EditProfile />
       </Suspense>
     </>

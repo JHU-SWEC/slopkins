@@ -204,7 +204,7 @@ export async function getSavedPlates(supabase: SupabaseClient, userId: string): 
   const { data } = await supabase
     .from("saved_plates")
     .select(
-      "id, meal_id, meal, dish_ids, created_at, hall:dining_halls(slug, name), source:meals(person:profiles!meals_user_id_fkey(username, display_name))",
+      "id, meal_id, meal, dish_ids, created_at, hall:dining_halls(slug, name), source:meals(photo_path, person:profiles!meals_user_id_fkey(username, display_name))",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
@@ -226,6 +226,7 @@ export async function getSavedPlates(supabase: SupabaseClient, userId: string): 
       return name ? [{ id, name }] : [];
     }),
     from: one<{ username: string; display_name: string | null }>(one<{ person: unknown }>(row.source)?.person),
+    photo_path: one<{ photo_path: string | null }>(row.source)?.photo_path ?? null,
     saved_at: row.created_at as string,
   }));
 }
